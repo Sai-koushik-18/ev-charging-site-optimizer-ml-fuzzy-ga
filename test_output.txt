@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: /mnt/d/Claude/vitap-ev-charging-ml-fuzzy-ga
+configfile: pyproject.toml
+plugins: anyio-4.15.1, platformdirs-4.12.4, cov-7.1.0
+collected 4 items
+
+test_api_fallback.py ....                                                [100%]
+
+============================== 4 passed in 4.82s ===============================

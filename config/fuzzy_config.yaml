@@ -1,0 +1,216 @@
+# Fuzzy Logic Configuration
+# All membership function parameters and rules
+# Provenance: SYNTHETIC (expert-defined parameters)
+
+fuzzy:
+  inference_method: "mamdani"
+  aggregation_method: "max"
+  defuzzification_method: "centroid"
+  universe_resolution: 1000
+
+  inputs:
+    # Input 1: Predicted Demand (kWh/hour) - from ML model
+    predicted_demand:
+      name: "Predicted Demand"
+      universe_min: 0
+      universe_max: 100
+      unit: "kWh/h"
+      terms:
+        very_low:
+          type: "trapmf"
+          params: [0, 0, 5, 15]
+        low:
+          type: "trimf"
+          params: [10, 25, 40]
+        medium:
+          type: "trimf"
+          params: [35, 50, 65]
+        high:
+          type: "trimf"
+          params: [60, 75, 90]
+        very_high:
+          type: "trapmf"
+          params: [85, 95, 100, 100]
+
+    # Input 2: Traffic Accessibility (0-1 normalized)
+    traffic_accessibility:
+      name: "Traffic Accessibility"
+      universe_min: 0
+      universe_max: 1
+      unit: "normalized"
+      terms:
+        poor:
+          type: "trapmf"
+          params: [0, 0, 0.2, 0.35]
+        fair:
+          type: "trimf"
+          params: [0.25, 0.45, 0.65]
+        good:
+          type: "trimf"
+          params: [0.55, 0.75, 0.85]
+        very_good:
+          type: "trimf"
+          params: [0.8, 0.9, 0.95]
+        excellent:
+          type: "trapmf"
+          params: [0.9, 0.97, 1, 1]
+
+    # Input 3: Grid Connection Cost (INR Lakhs)
+    grid_connection_cost:
+      name: "Grid Connection Cost"
+      universe_min: 0
+      universe_max: 50
+      unit: "INR Lakhs"
+      terms:
+        very_low:
+          type: "trapmf"
+          params: [0, 0, 2, 5]
+        low:
+          type: "trimf"
+          params: [4, 8, 12]
+        medium:
+          type: "trimf"
+          params: [10, 18, 26]
+        high:
+          type: "trimf"
+          params: [24, 32, 40]
+        very_high:
+          type: "trapmf"
+          params: [38, 45, 50, 50]
+
+    # Input 4: Land Cost Tier (Ordinal 0-3)
+    land_cost_tier:
+      name: "Land Cost Tier"
+      universe_min: 0
+      universe_max: 3
+      unit: "ordinal"
+      terms:
+        very_low:
+          type: "trapmf"
+          params: [0, 0, 0, 0.5]
+        low:
+          type: "trimf"
+          params: [0.3, 0.7, 1.2]
+        medium:
+          type: "trimf"
+          params: [1.0, 1.5, 2.0]
+        high:
+          type: "trapmf"
+          params: [1.8, 2.5, 3, 3]
+
+    # Input 5: POI Attractiveness Score (0-100)
+    poi_attractiveness:
+      name: "POI Attractiveness"
+      universe_min: 0
+      universe_max: 100
+      unit: "score"
+      terms:
+        very_low:
+          type: "trapmf"
+          params: [0, 0, 10, 20]
+        low:
+          type: "trimf"
+          params: [15, 30, 45]
+        medium:
+          type: "trimf"
+          params: [40, 55, 70]
+        high:
+          type: "trimf"
+          params: [65, 80, 90]
+        very_high:
+          type: "trapmf"
+          params: [85, 95, 100, 100]
+
+    # Input 6: Competition Index (Count within 3km)
+    competition_index:
+      name: "Competition Index"
+      universe_min: 0
+      universe_max: 10
+      unit: "count"
+      terms:
+        none:
+          type: "trapmf"
+          params: [0, 0, 0, 1]
+        low:
+          type: "trimf"
+          params: [0.5, 2, 3.5]
+        moderate:
+          type: "trimf"
+          params: [3, 5, 7]
+        high:
+          type: "trimf"
+          params: [6, 8, 9]
+        saturated:
+          type: "trapmf"
+          params: [8.5, 9.5, 10, 10]
+
+  output:
+    suitability:
+      name: "Location Suitability"
+      universe_min: 0
+      universe_max: 1
+      unit: "score"
+      terms:
+        unsuitable:
+          type: "trapmf"
+          params: [0, 0, 0.1, 0.25]
+        poor:
+          type: "trimf"
+          params: [0.15, 0.3, 0.45]
+        fair:
+          type: "trimf"
+          params: [0.35, 0.5, 0.65]
+        good:
+          type: "trimf"
+          params: [0.55, 0.7, 0.85]
+        excellent:
+          type: "trapmf"
+          params: [0.75, 0.9, 1, 1]
+
+  rules:
+    # Format: [demand, accessibility, grid_cost, land_cost, poi, competition] -> suitability
+    # Using term names from above
+    - [very_high, excellent, very_low, very_low, very_high, none, excellent]
+    - [very_high, very_good, low, low, high, low, excellent]
+    - [high, excellent, low, very_low, high, none, excellent]
+    - [high, very_good, low, low, high, low, good]
+    - [high, good, medium, low, medium, low, good]
+    - [medium, excellent, very_low, very_low, high, none, good]
+    - [medium, very_good, low, low, medium, low, good]
+    - [medium, good, medium, medium, medium, moderate, fair]
+    - [medium, fair, low, low, high, none, fair]
+    - [low, very_good, very_low, very_low, high, none, fair]
+    - [low, good, low, low, medium, low, fair]
+    - [very_low, "*", "*", "*", "*", "*", unsuitable]
+    - ["*", poor, "*", "*", "*", "*", unsuitable]
+    - ["*", "*", very_high, "*", "*", "*", poor]
+    - ["*", "*", "*", high, "*", "*", poor]
+    - ["*", "*", "*", "*", very_low, "*", unsuitable]
+    - ["*", "*", "*", "*", "*", saturated, poor]
+    - [high, "*", high, high, "*", "*", poor]
+    - [medium, "*", high, medium, low, high, poor]
+    - ["*", "*", "*", "*", very_low, high, unsuitable]
+    - [high, good, medium, medium, low, moderate, fair]
+    - [high, good, very_low, low, high, none, good]
+    - [high, fair, very_low, low, high, none, good]
+    - [high, fair, very_low, high, high, none, fair]
+    # Additional rules to fill coverage gaps for common moderate scenarios
+    - [medium, fair, medium, medium, medium, moderate, fair]
+    - [medium, good, medium, medium, medium, low, good]
+    - [low, fair, medium, medium, medium, low, fair]
+    - [medium, fair, low, low, medium, moderate, fair]
+    # Additional rules for medium demand / good traffic combinations
+    - [medium, good, medium, low, medium, low, good]
+    - [medium, good, medium, low, medium, moderate, good]
+    - [medium, good, low, low, medium, low, good]
+    # Additional rules for low demand / fair traffic combinations
+    - [low, fair, low, low, low, low, fair]
+    - [low, fair, low, low, medium, low, fair]
+    - [low, fair, medium, low, medium, low, fair]
+    - [low, fair, low, low, low, none, fair]
+
+  provenance:
+    method: "SYNTHETIC"
+    source: "Expert-defined membership functions and rules for campus EV charging context"
+    notes: "Parameters based on literature review of fuzzy site selection for EV charging. Not calibrated to VIT-AP specific data."
+

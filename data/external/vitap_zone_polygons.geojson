@@ -1,0 +1,237 @@
+{
+  "type": "FeatureCollection",
+  "name": "vitap_zone_polygons",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "academic",
+        "zone_name": "Academic Zone",
+        "land_cost_tier": "very_low",
+        "primary_use": "academic",
+        "description": "Academic blocks, library, laboratories - manually digitized from satellite imagery",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4780, 16.5065],
+          [80.4835, 16.5065],
+          [80.4835, 16.5110],
+          [80.4780, 16.5110],
+          [80.4780, 16.5065]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "hostel_boys",
+        "zone_name": "Boys Hostel Zone",
+        "land_cost_tier": "low",
+        "primary_use": "residential",
+        "description": "Boys hostel blocks and mess - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4740, 16.5050],
+          [80.4780, 16.5050],
+          [80.4780, 16.5095],
+          [80.4740, 16.5095],
+          [80.4740, 16.5050]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "hostel_girls",
+        "zone_name": "Girls Hostel Zone",
+        "land_cost_tier": "low",
+        "primary_use": "residential",
+        "description": "Girls hostel blocks and mess - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4835, 16.5050],
+          [80.4875, 16.5050],
+          [80.4875, 16.5095],
+          [80.4835, 16.5095],
+          [80.4835, 16.5050]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "staff_quarters",
+        "zone_name": "Staff Quarters Zone",
+        "land_cost_tier": "medium",
+        "primary_use": "residential",
+        "description": "Faculty and staff residential quarters - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4780, 16.5110],
+          [80.4835, 16.5110],
+          [80.4835, 16.5145],
+          [80.4780, 16.5145],
+          [80.4780, 16.5110]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "admin",
+        "zone_name": "Administrative Zone",
+        "land_cost_tier": "medium",
+        "primary_use": "administrative",
+        "description": "Administrative buildings, VC office - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4740, 16.5110],
+          [80.4780, 16.5110],
+          [80.4780, 16.5145],
+          [80.4740, 16.5145],
+          [80.4740, 16.5110]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "commercial",
+        "zone_name": "Commercial Zone",
+        "land_cost_tier": "high",
+        "primary_use": "commercial",
+        "description": "Campus shopping, canteens, banks - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4835, 16.5110],
+          [80.4880, 16.5110],
+          [80.4880, 16.5140],
+          [80.4835, 16.5140],
+          [80.4835, 16.5110]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "sports",
+        "zone_name": "Sports Complex Zone",
+        "land_cost_tier": "very_low",
+        "primary_use": "recreation",
+        "description": "Stadium, sports complex, gymnasium - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4720, 16.5080],
+          [80.4740, 16.5080],
+          [80.4740, 16.5110],
+          [80.4720, 16.5110],
+          [80.4720, 16.5080]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "gate_north",
+        "zone_name": "North Gate Zone",
+        "land_cost_tier": "high",
+        "primary_use": "transport",
+        "description": "North gate entry/exit area - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4760, 16.5145],
+          [80.4800, 16.5145],
+          [80.4800, 16.5160],
+          [80.4760, 16.5160],
+          [80.4760, 16.5145]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "gate_south",
+        "zone_name": "South Gate Zone",
+        "land_cost_tier": "high",
+        "primary_use": "transport",
+        "description": "South gate entry/exit area - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4760, 16.5020],
+          [80.4800, 16.5020],
+          [80.4800, 16.5050],
+          [80.4760, 16.5050],
+          [80.4760, 16.5020]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "gate_main",
+        "zone_name": "Main Gate Zone",
+        "land_cost_tier": "high",
+        "primary_use": "transport",
+        "description": "Main gate entry/exit area - manually digitized",
+        "provenance": "DERIVED",
+        "source": "manual_digitization",
+        "note": "NOT from official VIT-AP master plan. Manually digitized from public satellite imagery and campus maps."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4835, 16.5020],
+          [80.4875, 16.5020],
+          [80.4875, 16.5050],
+          [80.4835, 16.5050],
+          [80.4835, 16.5020]
+        ]]
+      }
+    }
+  ]
+}

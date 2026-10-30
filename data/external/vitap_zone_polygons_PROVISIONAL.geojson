@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "name": "vitap_zone_polygons_PROVISIONAL",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone_id": "campus_core_provisional",
+        "zone_name": "Campus Core (Provisional)",
+        "land_cost_tier": "medium",
+        "primary_use": "mixed",
+        "description": "PROVISIONAL zone covering Google Maps landmarks + OSM parking cluster. NOT official boundary.",
+        "provenance": "DERIVED",
+        "source": "convex_hull_of_landmarks_and_parking",
+        "note": "Single provisional zone. Does not represent official VIT-AP zoning. Land cost tier and primary use are provisional assumptions for pipeline compatibility only."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [80.4935, 16.4878],
+          [80.5055, 16.4878],
+          [80.5055, 16.5011],
+          [80.4935, 16.5011],
+          [80.4935, 16.4878]
+        ]]
+      }
+    }
+  ]
+}

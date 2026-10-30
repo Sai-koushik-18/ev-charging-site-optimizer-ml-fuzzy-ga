@@ -1,0 +1,276 @@
+# Data Sources Configuration
+# Defines all external data sources, their access methods, and provenance
+
+data_sources:
+  # OpenStreetMap - REAL data
+  openstreetmap:
+    source_name: "OpenStreetMap"
+    provenance: "REAL"
+    access_method: "overpass_api"
+    mode: "local"  # Can be "api" or "local"
+    endpoint: "https://overpass-api.de/api/interpreter"
+    timeout_seconds: 300
+    rate_limit_per_minute: 60
+    bbox:  # [min_lon, min_lat, max_lon, max_lat]
+      min_lon: 80.455
+      min_lat: 16.485
+      max_lon: 80.505
+      max_lat: 16.530
+    queries:
+      roads:
+        description: "Road network for routing and distances"
+        tags:
+          highway: ["motorway", "trunk", "primary", "secondary", "tertiary", "residential", "service", "unclassified", "path"]
+        geometry_type: "way"
+      buildings:
+        description: "Building footprints for population estimation"
+        tags:
+          building: true
+        geometry_type: "way"
+      pois:
+        description: "Points of interest for attractiveness scoring"
+        tags:
+          amenity: true
+          shop: true
+          office: true
+          leisure: true
+          tourism: true
+          public_transport: true
+        geometry_type: "node,way"
+      power:
+        description: "Electrical infrastructure for grid connection"
+        tags:
+          power: ["substation", "transformer", "pole", "line", "cable", "plant"]
+        geometry_type: "node,way"
+      parking:
+        description: "Existing parking areas for candidate sites (raw nodes - preserved but NOT used for candidates)"
+        tags:
+          amenity: "parking"
+        geometry_type: "way,relation"
+    output_files:
+      roads: "data/raw/osm/roads.geojson"
+      buildings: "data/raw/osm/buildings.geojson"
+      pois: "data/raw/osm/pois.geojson"
+      power: "data/raw/osm/power.geojson"
+      parking: "data/raw/osm/parking.geojson"
+
+  # Validated Parking - DERIVED (manually verified OSM polygons)
+  # These are the 2 Polygon features from OSM ways that represent actual parking lots
+  # Located at ~80.4985, 16.4967 (OUTSIDE all campus zones)
+  # NOT used as proof of official campus ownership - only as geometric reference
+  validated_parking:
+    source_name: "OpenStreetMap - Validated Parking Polygons"
+    provenance: "DERIVED"
+    access_method: "local_file"
+    description: "Two OSM parking ways (1485919489, 1485919490) validated as Polygon geometries with area_sqm ~1013. Located outside all campus zones (~1.3km south of gate_main). Used as geometric reference only, not proof of campus parking ownership."
+    input_file: "data/processed/parking_osm_validated.geojson"
+    geometry_type: "Polygon"
+    feature_count: 2
+    note: "These are OSM way features manually verified as parking polygons. They are OUTSIDE the manually digitized campus zones. Do not assume campus ownership."
+
+  # OpenChargeMap - REAL data
+  openchargemap:
+    source_name: "OpenChargeMap"
+    provenance: "REAL"
+    access_method: "rest_api"
+    base_url: "https://api.openchargemap.io/v3/poi/"
+    api_key_env: "OCM_API_KEY"
+    params:
+      output: "json"
+      countrycode: "IN"
+      latitude: 16.5075
+      longitude: 80.4800
+      distance: 10
+      distanceunit: "KM"
+      maxresults: 500
+      compact: true
+      verbose: false
+    rate_limit_per_hour: 1000
+    output_file: "data/raw/openchargemap/stations.json"
+    required_fields:
+      - "ID"
+      - "UUID"
+      - "DataProvider"
+      - "OperatorInfo"
+      - "UsageType"
+      - "StatusType"
+      - "DateLastConfirmed"
+      - "AddressInfo"
+      - "Connections"
+      - "NumberOfPoints"
+      - "GeneralComments"
+
+  # Open-Meteo Weather - REAL data
+  open_meteo:
+    source_name: "Open-Meteo Historical Weather API"
+    provenance: "REAL"
+    access_method: "rest_api"
+    base_url: "https://archive-api.open-meteo.com/v1/archive"
+    params:
+      latitude: 16.5075
+      longitude: 80.4800
+      start_date: "2024-01-01"
+      end_date: "2024-12-31"
+      hourly:
+        - "temperature_2m"
+        - "relative_humidity_2m"
+        - "precipitation"
+        - "wind_speed_10m"
+        - "cloud_cover"
+      timezone: "Asia/Kolkata"
+    rate_limit_per_minute: 60
+    output_file: "data/raw/weather/weather_hourly_2024.csv"
+    notes: "Free tier, no API key required. Historical data for 2024."
+
+  # Campus Zone Polygons - DERIVED (manually digitized)
+  campus_zones:
+    source_name: "Manually Digitized Campus Zones"
+    provenance: "DERIVED"
+    access_method: "local_file"
+    description: "Zone boundaries manually digitized from satellite imagery and public campus maps. NOT from official VIT-AP master plan unless verified."
+    input_file: "data/external/vitap_zone_polygons.geojson"
+    required_properties:
+      - "zone_id"
+      - "zone_name"
+      - "land_cost_tier"
+      - "primary_use"
+    zone_ids:
+      - "academic"
+      - "hostel_boys"
+      - "hostel_girls"
+      - "staff_quarters"
+      - "admin"
+      - "commercial"
+      - "sports"
+      - "gate_north"
+      - "gate_south"
+      - "gate_main"
+
+  # Indian EV Adoption Data - REAL (reference)
+  indian_ev_data:
+    source_name: "NITI Aayog / Government Reports"
+    provenance: "REAL"
+    access_method: "local_file"
+    description: "Reference data for EV adoption rates, charging patterns in India"
+    files:
+      - "data/external/indian_ev_adoption_curve.csv"
+      - "data/external/indian_charging_patterns.csv"
+    notes: "Used to calibrate synthetic demand parameters. Not VIT-AP specific."
+
+  # Synthetic Data Generators - SYNTHETIC
+  synthetic_generators:
+    demand:
+      source_name: "Synthetic Demand Generator"
+      provenance: "SYNTHETIC"
+      description: "Statistical model calibrated to Indian campus EV charging patterns"
+      module: "src.data.synthetic_generator.DemandGenerator"
+      config_ref: "settings.yaml -> demand_simulation"
+    traffic:
+      source_name: "Synthetic Traffic Generator"
+      provenance: "SYNTHETIC"
+      description: "Traffic volume model based on road hierarchy and temporal patterns"
+      module: "src.data.synthetic_generator.TrafficGenerator"
+      config_ref: "settings.yaml -> traffic_simulation"
+
+# Data validation rules
+validation_rules:
+  candidates:
+    required_columns:
+      - candidate_id
+      - name
+      - zone
+      - latitude
+      - longitude
+      - area_sqm
+      - parking_type
+      - max_chargers
+      - land_cost_tier
+      - land_cost_inr_lakhs
+      - grid_dist_m
+      - grid_connection_cost_inr_lakhs
+      - nearest_transformer_id
+      - poi_score
+      - catchment_population
+      - existing_chargers_500m
+      - existing_chargers_1km
+      - existing_chargers_3km
+      - traffic_accessibility_score
+      - construction_cost_inr_lakhs
+      - total_capex_inr_lakhs
+      - data_provenance
+    coordinate_bounds:
+      lat_min: 16.485
+      lat_max: 16.530
+      lon_min: 80.455
+      lon_max: 80.505
+    value_ranges:
+      area_sqm: [50, 5000]
+      max_chargers: [2, 20]
+      grid_dist_m: [0, 5000]
+      poi_score: [0, 100]
+      catchment_population: [0, 10000]
+      traffic_accessibility_score: [0, 1]
+
+  existing_stations:
+    required_columns:
+      - station_id
+      - name
+      - latitude
+      - longitude
+      - operator
+      - power_kw
+      - num_connectors
+      - connector_types
+      - access_type
+      - is_operational
+      - source
+      - distance_to_campus_km
+
+  demand_history:
+    required_columns:
+      - candidate_id
+      - timestamp
+      - hour
+      - day_of_week
+      - month
+      - is_weekend
+      - is_holiday
+      - is_exam_period
+      - demand_kwh
+      - session_count
+      - avg_session_kwh
+      - temperature_c
+      - humidity_pct
+      - precipitation_mm
+      - data_provenance
+    row_count_expected: 219000  # 25 candidates * 8760 hours
+    value_ranges:
+      demand_kwh: [0, 100]
+      session_count: [0, 20]
+      temperature_c: [10, 50]
+      humidity_pct: [0, 100]
+      precipitation_mm: [0, 100]
+
+  weather_hourly:
+    required_columns:
+      - timestamp
+      - temperature_c
+      - relative_humidity_pct
+      - precipitation_mm
+      - wind_speed_kmph
+      - cloud_cover_pct
+      - heat_index_c
+      - data_provenance
+    row_count_expected: 8760
+    value_ranges:
+      temperature_c: [10, 50]
+      relative_humidity_pct: [0, 100]
+      precipitation_mm: [0, 200]
+      wind_speed_kmph: [0, 100]
+      cloud_cover_pct: [0, 100]
+
+# Provenance tracking schema
+provenance_schema:
+  column_level: true
+  format: "json_string"  # Stored as JSON string in data_provenance column
+  required_for_outputs: true

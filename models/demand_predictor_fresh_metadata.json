@@ -1,0 +1,36 @@
+{
+  "model_type": "random_forest",
+  "feature_names": [
+    "hour",
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "is_holiday",
+    "is_exam_period",
+    "temperature_c",
+    "humidity_pct",
+    "precipitation_mm",
+    "zone_academic",
+    "zone_admin",
+    "zone_commercial",
+    "zone_gate_north",
+    "zone_gate_south",
+    "zone_hostel_boys",
+    "zone_hostel_girls",
+    "zone_sports",
+    "zone_staff_quarters"
+  ],
+  "seed": 42,
+  "is_trained": true,
+  "zone_columns": [
+    "zone_academic",
+    "zone_admin",
+    "zone_commercial",
+    "zone_gate_north",
+    "zone_gate_south",
+    "zone_hostel_boys",
+    "zone_hostel_girls",
+    "zone_sports",
+    "zone_staff_quarters"
+  ]
+}

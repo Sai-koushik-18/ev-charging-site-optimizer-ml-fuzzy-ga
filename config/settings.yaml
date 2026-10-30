@@ -1,0 +1,235 @@
+project:
+  name: vitap-ev-charging-ml-fuzzy-ga
+  version: 1.0.0
+  description: Smart EV Charging Infrastructure Planning for VIT-AP University Using
+    ML–Fuzzy–GA
+  study_area:
+    name: VIT-AP University, Amaravati, Andhra Pradesh, India
+    campus_center:
+      latitude: 16.4940
+      longitude: 80.4993
+    bbox:
+      min_lon: 80.4935
+      min_lat: 16.4878
+      max_lon: 80.5055
+      max_lat: 16.5011
+    crs: EPSG:4326
+    provisional: true
+    provenance_note: "Derived from Google Maps landmarks + OSM parking cluster. NOT official VIT-AP boundary."
+    # ORIGINAL VALUES (misplaced ~2.7km NW of campus landmarks):
+    # campus_center: latitude: 16.5075, longitude: 80.48
+    # bbox: min_lon: 80.455, min_lat: 16.485, max_lon: 80.505, max_lat: 16.53
+provenance:
+  track_all_columns: true
+  require_provenance_column: true
+  allowed_values:
+  - REAL
+  - DERIVED
+  - SYNTHETIC
+  - META
+  default_provenance: SYNTHETIC
+seeds:
+  numpy: 42
+  python_random: 42
+  xgboost: 42
+  ga: 42
+  synthetic_demand: 123
+  synthetic_traffic: 456
+  osm_sampling: 789
+candidates:
+  target_count: 25
+  min_area_sqm: 50
+  max_area_sqm: 5000
+  min_chargers: 2
+  max_chargers: 20
+  area_per_charger_sqm: 25
+  parking_types:
+  - surface
+  - basement
+  - open
+  - street
+  zones:
+  - academic
+  - hostel_boys
+  - hostel_girls
+  - staff_quarters
+  - admin
+  - commercial
+  - sports
+  - gate
+costs:
+  currency: INR
+  unit: lakhs
+  land_cost_per_sqm_by_tier:
+    very_low: 500
+    low: 2000
+    medium: 5000
+    high: 15000
+  grid_connection:
+    rate_per_km: 2.0
+    max_distance_km: 5.0
+  construction:
+    base_cost: 15.0
+    per_charger_cost: 3.0
+  charger_specs:
+    type: DC_Fast
+    power_kw: 60
+    connectors_per_charger: 2
+    connector_types:
+    - CCS2
+    - Type2
+demand_simulation:
+  base_year: 2025
+  ev_adoption_rate: 0.03
+  campus_population:
+    students: 12000
+    faculty_staff: 1500
+    visitors_daily: 500
+  four_wheeler_ownership:
+    faculty_staff: 0.4
+    students: 0.05
+    visitors: 0.6
+  base_demand_kwh_per_hour_by_zone:
+    academic: 8.0
+    hostel_boys: 5.0
+    hostel_girls: 4.0
+    staff_quarters: 3.0
+    admin: 2.0
+    commercial: 6.0
+    sports: 1.5
+    gate: 4.0
+    gate_north: 4.0
+    gate_south: 4.0
+    gate_main: 4.0
+  avg_session_kwh: 15.0
+  session_duration_min: 45
+  temporal_patterns:
+    weekday_peak_hours:
+    - 8
+    - 9
+    - 10
+    - 17
+    - 18
+    - 19
+    weekend_factor: 0.6
+    holiday_factor: 0.4
+    exam_period_factor: 1.2
+  weather_sensitivity:
+    temp_threshold_low: 20
+    temp_threshold_high: 38
+    hvac_multiplier: 1.15
+  noise_cv: 0.15
+  ev_growth_rate_annual: 0.2
+traffic_simulation:
+  base_volume_vph_by_hierarchy:
+    primary: 1200
+    secondary: 600
+    tertiary: 300
+    residential: 100
+    service: 50
+  peak_hours:
+  - 8
+  - 9
+  - 17
+  - 18
+  - 19
+  weekend_factor: 0.5
+  noise_cv: 0.2
+  speed_flow_model: greenshields
+  free_flow_speed_kmph_by_hierarchy:
+    primary: 60
+    secondary: 50
+    tertiary: 40
+    residential: 30
+    service: 20
+weather:
+  source: open-meteo
+  location:
+    latitude: 16.5075
+    longitude: 80.48
+    timezone: Asia/Kolkata
+  years:
+  - 2024
+  variables:
+  - temperature_2m
+  - relative_humidity_2m
+  - precipitation
+  - wind_speed_10m
+  - cloud_cover
+openchargemap:
+  api_key: null
+  max_results: 500
+  distance_km: 10
+  compact: true
+  verbose: false
+osm:
+  overpass_endpoint: https://overpass-api.de/api/interpreter
+  timeout: 300
+  bbox_buffer_km: 2
+  tags_of_interest:
+    roads:
+    - highway
+    buildings:
+    - building
+    pois:
+    - amenity
+    - shop
+    - office
+    - leisure
+    - tourism
+    - public_transport
+    power:
+    - power
+    parking:
+    - amenity=parking
+zones:
+  source: manual_digitization
+  note: Zone boundaries manually digitized from campus satellite imagery and public
+    maps. Not from official VIT-AP master plan unless verified.
+  zone_definitions:
+    academic:
+      description: Academic blocks, library, laboratories
+      land_cost_tier: very_low
+    hostel_boys:
+      description: Boys hostel blocks and mess
+      land_cost_tier: low
+    hostel_girls:
+      description: Girls hostel blocks and mess
+      land_cost_tier: low
+    staff_quarters:
+      description: Faculty and staff residential quarters
+      land_cost_tier: medium
+    admin:
+      description: Administrative buildings, VC office
+      land_cost_tier: medium
+    commercial:
+      description: Campus shopping, canteens, banks
+      land_cost_tier: high
+    sports:
+      description: Stadium, sports complex, gymnasium
+      land_cost_tier: very_low
+    gate_north:
+      description: North gate entry/exit area
+      land_cost_tier: high
+    gate_south:
+      description: South gate entry/exit area
+      land_cost_tier: high
+    gate_main:
+      description: Main gate entry/exit area
+      land_cost_tier: high
+paths:
+  raw: data/raw
+  processed: data/processed
+  synthetic: data/synthetic
+  external: data/external
+  samples: data/samples
+  outputs: outputs
+  logs: logs
+  config: config
+validation:
+  max_missing_pct: 5.0
+  min_rows_candidates: 20
+  max_rows_candidates: 50
+  demand_history_hours_per_year: 8760
+  weather_hours_per_year: 8760
+  coord_precision: 6

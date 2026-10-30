@@ -1,0 +1,40 @@
+<analysis>
+Analysis of the test failures and required test updates:
+
+After applying the fix to src/data/osm_loader.py (making _elements_to_geodataframe respect geometry_type for nodes), we have:
+- 12 tests passing
+- 2 tests failing: the exact two tests mentioned in the original request
+
+The failing tests expect nodes to be returned when geometry_type="way", but the corrected implementation correctly returns only the requested geometry types.
+
+**Required changes to tests/test_osm_loader.py:**
+
+1. **test_elements_to_geodataframe_ways_linestring**
+   - Current expectation: 3 features (2 nodes + 1 way) when geometry_type="way"
+   - Correct expectation: 1 feature (the way only) when geometry_type="way"
+   - Updates needed:
+     * Docstring: Remove "and nodes are also returned"
+     * Length assertion: Change from 3 to 1
+     * Geometry type assertions: Update to expect 0 points and 1 linestring
+     * Keep all way property assertions (osm_id, highway, geometry, coordinates)
+
+2. **test_elements_to_geodataframe_way_insufficient_nodes**
+   - Current expectation: 1 feature (the node) when geometry_type="way"
+   - Correct expectation: 0 features (both ways skipped, no nodes returned)
+   - Updates needed:
+     * Docstring: Remove "but nodes are returned"
+     * Length assertion: Change from 1 to 0
+     * Remove assertions about the node (osm_id, osm_type) since no features expected
+
+**Why this is correct:**
+- The function's geometry_type parameter is designed to constrain what feature types are returned
+- All caller methods (fetch_roads, fetch_buildings, etc.) respect this contract by:
+  * Passing their geometry_type to _elements_to_geodataframe
+  * Immediately filtering results to keep only requested osm_types
+- The POI and power loaders explicitly use geometry_type="node,way" when they want both types
+- This provides a clean, predictable API: ask for what you want, get exactly that
+- The two tests were written to document a historical behavior where nodes were always returned, but this contradicts the function's parameterized design
+</analysis>
+<summary>
+The fix to src/data/osm_loader.py is correct: _elements_to_geodataframe now respects the geometry_type parameter for all feature types, including nodes. This provides a clean API where geometry_type controls what is returned. The two failing tests expect outdated behavior (always returning nodes) and need to be updated to reflect the proper contract: when geometry_type="way", only way features should be returned, not nodes. The exact test updates are shown in the proposed diff below.
+</summary>
