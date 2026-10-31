@@ -3,15 +3,18 @@
 Main pipeline entry point for VIT-AP EV Charging Infrastructure Planning.
 Usage: python run_pipeline.py <stage> [options]
 
-Stages:
+Stages (real VIT-AP campus):
+  candidates   - Build zones and candidate sites from the OSM campus extract
+  ml           - Train the GA-tuned demand model and predict annual demand per site
+  fuzzy        - Score every site with the fuzzy suitability system
+  ga           - Pick the station set with the genetic algorithm
+  evaluate     - Compare the GA plan with baselines and the exhaustive optimum
+  visualize    - Write a shareable campus map (outputs/maps/campus_map.html)
+  all          - Run candidates -> ml -> fuzzy -> ga -> evaluate -> visualize
+
+Legacy stages (original study area, superseded by 'candidates'):
   data-prep    - Fetch real data, generate synthetic data, create candidates
   validate     - Validate all generated datasets
-  ml           - Train ML demand prediction model (TODO)
-  fuzzy        - Run fuzzy suitability scoring (TODO)
-  ga           - Run genetic algorithm optimization (TODO)
-  evaluate     - Evaluate and compare results (TODO)
-  visualize    - Generate interactive map (TODO)
-  all          - Run full pipeline (TODO)
 """
 
 import sys
@@ -28,7 +31,7 @@ from loguru import logger
 def setup_logging(verbose: bool = False):
     """Configure logging."""
     logger.remove()
-    level = "DEBUG" if verbose else "INFO"
+    level = "DEBUG" if verbose else "WARNING"
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
@@ -68,33 +71,47 @@ def run_validate(args):
     return 0
 
 
+def run_candidates(args):
+    """Build zones and candidate sites on the real campus."""
+    from src.pipeline.campus_pipeline import stage_candidates
+    stage_candidates(refresh_osm=args.force_refresh)
+    return 0
+
+
 def run_ml(args):
-    """Train ML model (placeholder)."""
-    logger.warning("ML stage not yet implemented")
+    """Train the GA-tuned demand model."""
+    from src.pipeline.campus_pipeline import stage_ml
+    stage_ml()
     return 0
 
 
 def run_fuzzy(args):
-    """Run fuzzy logic (placeholder)."""
-    logger.warning("Fuzzy stage not yet implemented")
+    """Run fuzzy suitability scoring."""
+    from src.pipeline.campus_pipeline import stage_fuzzy
+    stage_fuzzy()
     return 0
 
 
 def run_ga(args):
-    """Run genetic algorithm (placeholder)."""
-    logger.warning("GA stage not yet implemented")
-    return 0
+    """Run the placement genetic algorithm."""
+    from src.pipeline.campus_pipeline import stage_ga
+    solution = stage_ga()
+    return 0 if len(solution) else 1
 
 
 def run_evaluate(args):
-    """Run evaluation (placeholder)."""
-    logger.warning("Evaluation stage not yet implemented")
+    """Compare the GA plan with baselines."""
+    from src.evaluation.evaluate import run_evaluation
+    from src.pipeline.campus_pipeline import GA_CONFIG, SCORED_CSV, SOLUTION_CSV
+    run_evaluation(SCORED_CSV, SOLUTION_CSV, GA_CONFIG)
     return 0
 
 
 def run_visualize(args):
-    """Generate visualizations (placeholder)."""
-    logger.warning("Visualization stage not yet implemented")
+    """Write the shareable campus map."""
+    from src.pipeline.campus_pipeline import SCORED_CSV, SOLUTION_CSV
+    from src.visualization.campus_map import build_campus_map
+    build_campus_map(SCORED_CSV, SOLUTION_CSV)
     return 0
 
 
@@ -106,7 +123,7 @@ def main():
     )
     parser.add_argument(
         "stage",
-        choices=["data-prep", "validate", "ml", "fuzzy", "ga", "evaluate", "visualize", "all"],
+        choices=["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "all", "data-prep", "validate"],
         help="Pipeline stage to run",
     )
     parser.add_argument(
@@ -117,7 +134,7 @@ def main():
     parser.add_argument(
         "--force-refresh",
         action="store_true",
-        help="Force re-download of real data",
+        help="Force re-download of real data (OSM extract for 'candidates')",
     )
 
     args = parser.parse_args()
@@ -128,6 +145,7 @@ def main():
     stage_map = {
         "data-prep": run_data_prep,
         "validate": run_validate,
+        "candidates": run_candidates,
         "ml": run_ml,
         "fuzzy": run_fuzzy,
         "ga": run_ga,
@@ -137,7 +155,7 @@ def main():
 
     if args.stage == "all":
         # Run all stages in sequence
-        for stage in ["data-prep", "validate", "ml", "fuzzy", "ga", "evaluate", "visualize"]:
+        for stage in ["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize"]:
             logger.info(f"\n{'='*60}\nRunning stage: {stage}\n{'='*60}")
             if stage_map[stage](args) != 0:
                 logger.error(f"Stage {stage} failed, stopping pipeline")
