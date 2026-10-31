@@ -51,9 +51,14 @@ class OCMDataLoader:
             "compact": str(self.ocm_config.params.compact).lower(),
             "verbose": str(self.ocm_config.params.verbose).lower(),
         }
-        if self.api_key:
-            params["key"] = self.api_key
         return params
+
+    def _build_headers(self) -> Dict[str, str]:
+        """Send the key as a header so it never appears in URLs, errors or logs."""
+        headers = {"User-Agent": "vitap-ev-charging-planner/1.0"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        return headers
 
     def fetch_stations(self) -> gpd.GeoDataFrame:
         """Fetch charging stations from OpenChargeMap."""
@@ -66,14 +71,15 @@ class OCMDataLoader:
         params = self._build_params()
 
         try:
-            response = requests.get(url, params=params, timeout=60)
+            response = requests.get(url, params=params, headers=self._build_headers(), timeout=60)
             response.raise_for_status()
             data = response.json()
         except requests.exceptions.RequestException as e:
-            logger.error(f"OpenChargeMap API request failed: {e}")
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            logger.error(f"OpenChargeMap API request failed ({type(e).__name__}, HTTP {status})")
             data = None
 
-        if not data:
+        if data is None:
             logger.warning("No stations returned from OpenChargeMap API")
             # Try to load from cache
             cache_geojson = self.output_dir / "stations.geojson"
@@ -103,7 +109,8 @@ class OCMDataLoader:
             # Return empty GeoDataFrame with expected CRS
             return gpd.GeoDataFrame(columns=[], geometry=[], crs="EPSG:4326")
 
-        logger.info(f"Received {len(data)} stations from OpenChargeMap")
+        logger.info(f"Received {len(data)} stations from OpenChargeMap within "
+                    f"{self.ocm_config.params.distance} {self.ocm_config.params.distanceunit}")
         return self._parse_stations(data)
 
     def _parse_stations(self, data: List[Dict]) -> pd.DataFrame:
@@ -111,7 +118,7 @@ class OCMDataLoader:
         records = []
         for station in data:
             try:
-                addr = station.get("AddressInfo", {})
+                addr = station.get("AddressInfo") or {}
                 connections = station.get("Connections", [])
 
                 # Calculate total power and connector info
@@ -120,7 +127,7 @@ class OCMDataLoader:
                 for conn in connections:
                     power = conn.get("PowerKW") or 0
                     total_power += power
-                    conn_type = conn.get("ConnectionType", {}).get("Title", "")
+                    conn_type = (conn.get("ConnectionType") or {}).get("Title", "")
                     if conn_type:
                         connector_types.add(conn_type)
 
@@ -131,20 +138,21 @@ class OCMDataLoader:
                     "address": addr.get("AddressLine1", ""),
                     "town": addr.get("Town", ""),
                     "state": addr.get("StateOrProvince", ""),
-                    "country": addr.get("Country", {}).get("Title", ""),
+                    "country": (addr.get("Country") or {}).get("Title", ""),
                     "latitude": addr.get("Latitude"),
                     "longitude": addr.get("Longitude"),
-                    "operator": station.get("OperatorInfo", {}).get("Title", ""),
-                    "operator_id": station.get("OperatorInfo", {}).get("ID", ""),
-                    "usage_type": station.get("UsageType", {}).get("Title", ""),
-                    "status": station.get("StatusType", {}).get("Title", ""),
+                    "operator": (station.get("OperatorInfo") or {}).get("Title", ""),
+                    "operator_id": (station.get("OperatorInfo") or {}).get("ID", ""),
+                    "usage_type": (station.get("UsageType") or {}).get("Title", ""),
+                    "status": (station.get("StatusType") or {}).get("Title", ""),
                     "date_last_confirmed": station.get("DateLastConfirmed", ""),
                     "num_connectors": station.get("NumberOfPoints", len(connections)),
                     "total_power_kw": total_power,
                     "max_power_kw": max([c.get("PowerKW", 0) for c in connections], default=0),
                     "connector_types": json.dumps(list(connector_types)),
-                    "access_type": station.get("UsageType", {}).get("Title", "").lower(),
-                    "is_operational": station.get("StatusType", {}).get("Title", "").lower() == "operational",
+                    "access_type": (station.get("UsageType") or {}).get("Title", "").lower(),
+                    # IsOperational is None when OpenChargeMap has no status for the station
+                    "is_operational": (station.get("StatusType") or {}).get("IsOperational"),
                     "source": "openchargemap",
                 }
                 records.append(record)
@@ -155,10 +163,13 @@ class OCMDataLoader:
         df = pd.DataFrame(records)
 
         if df.empty:
-            return df
+            empty = gpd.GeoDataFrame(columns=["station_id", "name", "distance_to_campus_km"],
+                                     geometry=[], crs="EPSG:4326")
+            empty.to_file(self.output_dir / "stations.geojson", driver="GeoJSON")
+            return empty
 
-        # Filter to operational stations
-        df = df[df["is_operational"]].copy()
+        # Drop stations OpenChargeMap marks as not operational; keep those with unknown status
+        df = df[df["is_operational"] != False].copy()  # noqa: E712
 
         # Calculate distance to campus center
         campus_lat = self.config.project.study_area.campus_center.latitude
@@ -168,8 +179,9 @@ class OCMDataLoader:
             axis=1
         )
 
-        # Filter to reasonable distance (within 10km)
-        df = df[df["distance_to_campus_km"] <= 10].copy()
+        # Keep stations within the configured search radius
+        radius_km = float(self.ocm_config.params.distance)
+        df = df[df["distance_to_campus_km"] <= radius_km].copy()
 
         # Create geometry
         geometry = [Point(lon, lat) for lon, lat in zip(df["longitude"], df["latitude"])]
@@ -188,7 +200,7 @@ class OCMDataLoader:
         output_csv = self.output_dir / "stations.csv"
         df.to_csv(output_csv, index=False)
 
-        logger.info(f"Saved {len(gdf)} operational stations within 10km to {output_geojson}")
+        logger.info(f"Saved {len(gdf)} stations within {radius_km:g} km to {output_geojson}")
 
         # Add provenance
         tracker = ProvenanceTracker("existing_stations", "ocm_loader.fetch_stations")

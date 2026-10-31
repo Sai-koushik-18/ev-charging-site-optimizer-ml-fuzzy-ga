@@ -63,6 +63,9 @@ data/raw/osm/*
 !data/raw/weather/
 data/raw/weather/*
 !data/raw/weather/weather_hourly_2024.csv
+!data/raw/openchargemap/
+data/raw/openchargemap/*
+!data/raw/openchargemap/stations.geojson
 
 # Outputs: keep the small result files shown in the dashboard and README
 outputs/*

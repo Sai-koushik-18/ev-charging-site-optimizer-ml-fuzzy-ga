@@ -31,6 +31,7 @@ from shapely.ops import nearest_points, polygonize, unary_union
 
 from src.data.candidate_generator import CandidateGenerator
 from src.data.config_loader import get_config
+from src.data.ocm_loader import OCMDataLoader
 from src.data.provenance import Provenance, ProvenanceTracker
 from src.data.synthetic_generator import generate_synthetic_demand
 from src.data.weather_loader import WeatherLoader
@@ -297,6 +298,24 @@ def build_sites(features_utm: gpd.GeoDataFrame, campus, gates):
     return gpd.GeoDataFrame(kept, crs=UTM_CRS)
 
 
+def load_existing_chargers(config) -> gpd.GeoDataFrame:
+    """Real public chargers from OpenChargeMap (key from OCM_API_KEY), or the cached copy."""
+    stations = OCMDataLoader(config).fetch_stations()
+    if stations.empty:
+        print("Existing chargers (OpenChargeMap): none within the search radius")
+    else:
+        nearest = stations.sort_values("distance_to_campus_km").iloc[0]
+        print(f"Existing chargers (OpenChargeMap): {len(stations)} within "
+              f"{config_radius_km()} km; nearest {nearest['distance_to_campus_km']:.1f} km "
+              f"({nearest['name']}, {nearest['town']})")
+    return stations
+
+
+def config_radius_km() -> float:
+    from src.data.config_loader import get_data_sources_config
+    return float(get_data_sources_config().data_sources.openchargemap.params.distance)
+
+
 def build_candidates(features: gpd.GeoDataFrame, config):
     """Build zones, power points and candidate features on the real campus."""
     features_utm = features.to_crs(UTM_CRS)
@@ -338,7 +357,8 @@ def build_candidates(features: gpd.GeoDataFrame, config):
     cands = cands.rename(columns={"poi_score": "poi_score_raw"})
     cands["poi_score"] = cands["poi_score_raw"] / max(cands["poi_score_raw"].max(), 1e-9)
     cands = gen._calculate_catchment_population(cands, no_data)
-    cands = gen._calculate_competition(cands, no_data)
+    stations = load_existing_chargers(config)
+    cands = gen._calculate_competition(cands, stations)
     cands = gen._calculate_traffic_accessibility(cands, roads, gates_wgs84=gates_wgs84)
     cands = gen._calculate_costs(cands)
 
@@ -361,7 +381,9 @@ def build_candidates(features: gpd.GeoDataFrame, config):
         "poi_score_raw": (Provenance.DERIVED, "osm", "Weighted, distance-decayed POI count within 1 km"),
         "poi_score": (Provenance.DERIVED, "osm", "poi_score_raw scaled 0-1 by the campus maximum"),
         "traffic_accessibility_score": (Provenance.DERIVED, "osm", "Inverse distance to OSM-derived campus entry points"),
-        "existing_chargers_3km": (Provenance.SYNTHETIC, "assumption", "0 - OpenChargeMap unavailable"),
+        "existing_chargers_500m": (Provenance.DERIVED, "openchargemap", "OpenChargeMap stations within 500 m"),
+        "existing_chargers_1km": (Provenance.DERIVED, "openchargemap", "OpenChargeMap stations within 1 km"),
+        "existing_chargers_3km": (Provenance.DERIVED, "openchargemap", "OpenChargeMap stations within 3 km"),
         "catchment_population": (Provenance.SYNTHETIC, "assumption", "0 - no building population data"),
         "total_capex_inr_lakhs": (Provenance.SYNTHETIC, "cost_config", "Land + assumed grid + construction"),
     }
