@@ -208,6 +208,34 @@ fuzzy:
     - [low, fair, low, low, medium, low, fair]
     - [low, fair, medium, low, medium, low, fair]
     - [low, fair, low, low, low, none, fair]
+    # Covering rules: full demand x traffic grid so at least one rule fires for every site
+    # (demand and traffic terms each span their whole universe). Cost, POI and competition
+    # still act through the rules above when they match.
+    - [very_low, poor, "*", "*", "*", "*", unsuitable]
+    - [very_low, fair, "*", "*", "*", "*", unsuitable]
+    - [very_low, good, "*", "*", "*", "*", poor]
+    - [very_low, very_good, "*", "*", "*", "*", poor]
+    - [very_low, excellent, "*", "*", "*", "*", poor]
+    - [low, poor, "*", "*", "*", "*", unsuitable]
+    - [low, fair, "*", "*", "*", "*", poor]
+    - [low, good, "*", "*", "*", "*", poor]
+    - [low, very_good, "*", "*", "*", "*", fair]
+    - [low, excellent, "*", "*", "*", "*", fair]
+    - [medium, poor, "*", "*", "*", "*", poor]
+    - [medium, fair, "*", "*", "*", "*", fair]
+    - [medium, good, "*", "*", "*", "*", fair]
+    - [medium, very_good, "*", "*", "*", "*", good]
+    - [medium, excellent, "*", "*", "*", "*", good]
+    - [high, poor, "*", "*", "*", "*", poor]
+    - [high, fair, "*", "*", "*", "*", fair]
+    - [high, good, "*", "*", "*", "*", good]
+    - [high, very_good, "*", "*", "*", "*", good]
+    - [high, excellent, "*", "*", "*", "*", excellent]
+    - [very_high, poor, "*", "*", "*", "*", fair]
+    - [very_high, fair, "*", "*", "*", "*", good]
+    - [very_high, good, "*", "*", "*", "*", good]
+    - [very_high, very_good, "*", "*", "*", "*", excellent]
+    - [very_high, excellent, "*", "*", "*", "*", excellent]
 
   provenance:
     method: "SYNTHETIC"
