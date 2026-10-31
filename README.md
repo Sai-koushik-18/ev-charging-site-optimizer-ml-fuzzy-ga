@@ -1,7 +1,7 @@
 # Smart EV Charging Station Planning for VIT-AP University (ML · Fuzzy Logic · Genetic Algorithm)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
-[![Tests](https://img.shields.io/badge/tests-40%20passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-41%20passing-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > University project — VIT-AP University, Amaravati, Andhra Pradesh, India
@@ -86,7 +86,7 @@ flowchart LR
 - **GA-tuned demand model:** a genetic algorithm searches Random Forest settings on a time-based validation window.
 - **Complete fuzzy rule base:** 35 detailed rules plus 25 covering rules guarantee every site gets a score.
 - **Hard constraints:** plans that break the budget or minimum spacing are never returned.
-- **Real existing chargers:** all 1,947 operational public chargers in India from the OpenChargeMap API, clustered on the map; those near each site feed the fuzzy system's competition input.
+- **Real existing chargers:** the 83 public chargers in Andhra Pradesh from the OpenChargeMap API, selected with the OSM state boundary (OpenChargeMap's state labels are often wrong); those near each site feed the fuzzy system's competition input.
 - **Verified optimum:** with 21 sites there are only 1,330 possible 3-station plans, so the evaluation checks all of them.
 - **Data provenance:** every dataset carries a `data_provenance` column labelling each field `REAL`, `DERIVED`, `SYNTHETIC` or `META`.
 - **Interactive dashboard:** satellite map with OSM buildings, zones, candidate sites and chosen stations, plus rankings, cost breakdown, evaluation and model accuracy.
@@ -236,7 +236,7 @@ The model is trained on synthetic demand, so these figures show the method works
 | Charging demand history | Statistical model | SYNTHETIC |
 | Land, construction and grid costs | Rates in `config/settings.yaml` | SYNTHETIC |
 | Grid connection point | OSM campus power building (no transformer is mapped) | SYNTHETIC assumption |
-| Existing public chargers | OpenChargeMap API: 1,947 operational chargers across India; 3 within 50 km of campus, the nearest 18.9 km away in Vijayawada; none within 3 km of any site | REAL |
+| Existing public chargers | OpenChargeMap API, filtered to the Andhra Pradesh boundary (OSM relation 2022095): 83 chargers; 3 within 50 km of campus, the nearest 18.9 km away in Vijayawada; none within 3 km of any site | REAL |
 
 ## Project Structure
 
@@ -275,7 +275,7 @@ The model is trained on synthetic demand, so these figures show the method works
 python -m pytest            # or: make test (adds coverage)
 ```
 
-40 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; candidate provenance; and the OpenChargeMap loader (key handling, parsing, search radius).
+41 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; candidate provenance; and the OpenChargeMap loader (key handling, parsing, search radius, state boundary).
 
 ## Limitations and Future Work
 
