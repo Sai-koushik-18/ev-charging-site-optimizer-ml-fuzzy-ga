@@ -86,7 +86,7 @@ flowchart LR
 - **GA-tuned demand model:** a genetic algorithm searches Random Forest settings on a time-based validation window.
 - **Complete fuzzy rule base:** 35 detailed rules plus 25 covering rules guarantee every site gets a score.
 - **Hard constraints:** plans that break the budget or minimum spacing are never returned.
-- **Real existing chargers:** public chargers near campus come from the OpenChargeMap API and feed the fuzzy system's competition input.
+- **Real existing chargers:** all 1,947 operational public chargers in India from the OpenChargeMap API, clustered on the map; those near each site feed the fuzzy system's competition input.
 - **Verified optimum:** with 21 sites there are only 1,330 possible 3-station plans, so the evaluation checks all of them.
 - **Data provenance:** every dataset carries a `data_provenance` column labelling each field `REAL`, `DERIVED`, `SYNTHETIC` or `META`.
 - **Interactive dashboard:** satellite map with OSM buildings, zones, candidate sites and chosen stations, plus rankings, cost breakdown, evaluation and model accuracy.
@@ -236,7 +236,7 @@ The model is trained on synthetic demand, so these figures show the method works
 | Charging demand history | Statistical model | SYNTHETIC |
 | Land, construction and grid costs | Rates in `config/settings.yaml` | SYNTHETIC |
 | Grid connection point | OSM campus power building (no transformer is mapped) | SYNTHETIC assumption |
-| Existing public chargers | OpenChargeMap API: 3 within 50 km, the nearest 18.9 km away in Vijayawada, none within 3 km of any site | REAL |
+| Existing public chargers | OpenChargeMap API: 1,947 operational chargers across India; 3 within 50 km of campus, the nearest 18.9 km away in Vijayawada; none within 3 km of any site | REAL |
 
 ## Project Structure
 
