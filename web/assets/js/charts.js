@@ -3,34 +3,88 @@
   "use strict";
   const { D, fmt, zone, COLORS, escape } = EV;
 
-  /** Horizontal sketch bar chart. Bars grow in when their card is revealed. */
-  function barChart(el, items, { max, style }) {
+  /**
+   * Horizontal sketch bar chart. On reveal the bars spring in one after another,
+   * their hatching sketches itself line by line and the values count up.
+   * Returns { play, reorder } so charts can replay and re-sort with motion.
+   */
+  function barChart(el, items, { max, style, format = fmt.score, onPlay }) {
     el.replaceChildren();
-    items.forEach((it) => {
+    let played = false;
+    items.forEach((it, i) => {
       const row = document.createElement("div");
       row.className = `bar ${it.ga ? "bar--ga" : ""}`;
       row.tabIndex = 0;
       row.innerHTML = `<div class="bar__label">${it.labelHtml}</div><div class="bar__track"><svg aria-hidden="true"></svg></div>
-        <div class="bar__value">${escape(it.valueText)}</div>`;
+        <div class="bar__value">${escape(EV.reduceMotion ? it.valueText : format(0))}</div>`;
       if (it.tip) EV.bindTooltip(row, it.tip);
       el.appendChild(row);
-      it.svgEl = row.querySelector("svg");
+      Object.assign(it, { row, seed: i + 3, svgEl: row.querySelector("svg"), valueEl: row.querySelector(".bar__value") });
     });
-    const draw = () => items.forEach((it, i) => {
+
+    const draw = () => items.forEach((it) => {
       const box = it.svgEl.parentElement;
       const w = box.clientWidth, h = box.clientHeight;
       if (!w) return;
       it.svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
       const g = EV.svg("g", { class: "bar__fill" });
-      g.style.setProperty("--d", `${(i * 0.045).toFixed(2)}s`);
-      const s = style(it, i);
       g.appendChild(EV.rough(it.svgEl).rectangle(1, 3, Math.max(3, (w - 2) * (it.value / max)), h - 6, {
-        roughness: 1.15, bowing: 0.8, seed: i + 3, hachureGap: 5, hachureAngle: -41, fillWeight: 1.6, ...s,
+        roughness: 1.15, bowing: 0.8, seed: it.seed, hachureGap: 5, hachureAngle: -41, fillWeight: 1.6, ...style(it),
       }));
+      if (!played && !EV.reduceMotion) g.style.opacity = "0";
       it.svgEl.replaceChildren(g);
     });
+
+    function play() {
+      played = true;
+      items.forEach((it, i) => {
+        const g = it.svgEl.querySelector(".bar__fill");
+        if (!g) return;
+        g.style.opacity = "";
+        if (EV.reduceMotion) { it.valueEl.textContent = it.valueText; return; }
+        const delay = i * 60;
+        g.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: 1050, delay, easing: "cubic-bezier(.34,1.32,.64,1)", fill: "backwards" });
+        g.querySelectorAll("path").forEach((p, j) => {
+          const len = Math.ceil(p.getTotalLength ? p.getTotalLength() : 0);
+          if (!len) return;
+          p.animate([{ strokeDasharray: `${len}`, strokeDashoffset: `${len}` }, { strokeDasharray: `${len}`, strokeDashoffset: "0" }],
+            { duration: 1150, delay: delay + 160 + j * 150, easing: "cubic-bezier(.45,0,.2,1)", fill: "backwards" });
+        });
+        it.valueEl.textContent = format(0);
+        setTimeout(() => EV.countUp(it.valueEl, it.value, format, 950), delay);
+      });
+      if (onPlay) onPlay(items.length * 60 + 1050);
+    }
+
+    /** Re-sort rows; each row glides from its old position to its new one (FLIP). */
+    function reorder(compare) {
+      const first = new Map(items.map((it) => [it, it.row.getBoundingClientRect().top]));
+      items.sort(compare);
+      items.forEach((it) => el.appendChild(it.row));
+      if (EV.reduceMotion) return;
+      items.forEach((it, i) => {
+        const dy = first.get(it) - it.row.getBoundingClientRect().top;
+        if (dy) it.row.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }],
+          { duration: 650, delay: i * 14, easing: "cubic-bezier(.22,1,.36,1)", fill: "backwards" });
+      });
+    }
+
     draw();
     new ResizeObserver(EV.debounce(draw, 160)).observe(el);
+    EV.onReveal(el.closest(".chart-card"), play);
+    return { play, reorder };
+  }
+
+  /** Replay button (and optional extra controls) in a chart card's header row. */
+  function chartTools(chart, el, extraHtml = "") {
+    const card = el.closest(".chart-card");
+    const tools = document.createElement("div");
+    tools.className = "chart-tools";
+    tools.innerHTML = `${extraHtml}<button type="button" class="replay" aria-label="Replay the chart animation"><span aria-hidden="true">↻</span> replay</button>`;
+    tools.querySelector(".replay").addEventListener("click", () => chart.play());
+    (card.querySelector(".chart-legend, h3") || card).appendChild(tools);
+    return tools;
   }
 
   const zoneDot = (id) => `<i style="--c:${zone(id).color}"></i>`;
@@ -48,7 +102,8 @@
           tip: `<b>${escape(c.name)}</b><br>${escape(c.candidate_id)} · ${escape(zone(c.zone).label)}<br>Suitability <b>${fmt.score(c.fuzzy_suitability_score)}</b><br>Demand ${fmt.num(c.predicted_annual_demand_kwh)} kWh/yr${ga ? "<br>✓ chosen by the GA" : ""}`,
         };
       });
-    barChart(document.getElementById("fuzzy-chart"), items, {
+    const fuzzyEl = document.getElementById("fuzzy-chart");
+    const chart = barChart(fuzzyEl, items, {
       max: 1,
       style: (it) => it.ga
         ? { fill: COLORS.lime, fillStyle: "solid", stroke: COLORS.ink, strokeWidth: 1.6 }
@@ -63,6 +118,21 @@
     document.getElementById("fuzzy-legend").innerHTML =
       `<span>${sw(COLORS.lime, "solid", COLORS.ink)}Chosen by the GA</span><span>${sw(COLORS.purple, "hachure", COLORS.purple)}Other candidates</span>
        <span>${Object.values(EV.ZONES).slice(0, 3).map((z) => `<i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${z.color}"></i>`).join("")} dot = campus zone</span>`;
+
+    const SORTS = {
+      score: (a, b) => b.value - a.value,
+      zone: (a, b) => zone(a.c.zone).label.localeCompare(zone(b.c.zone).label) || b.value - a.value,
+      ga: (a, b) => (EV.selectedRank.get(a.c.candidate_id) ?? 99) - (EV.selectedRank.get(b.c.candidate_id) ?? 99) || b.value - a.value,
+    };
+    const tools = chartTools(chart, fuzzyEl,
+      `<div class="seg seg--inline" role="radiogroup" aria-label="Sort bars">
+        <button type="button" role="radio" aria-checked="true" data-sort="score">By score</button>
+        <button type="button" role="radio" aria-checked="false" data-sort="zone">By zone</button>
+        <button type="button" role="radio" aria-checked="false" data-sort="ga">GA picks first</button></div>`);
+    tools.querySelectorAll("[data-sort]").forEach((btn) => btn.addEventListener("click", () => {
+      tools.querySelectorAll("[data-sort]").forEach((b) => b.setAttribute("aria-checked", b === btn));
+      chart.reorder(SORTS[btn.dataset.sort]);
+    }));
 
     const top = items[0];
     const minSel = Math.min(...items.filter((i) => i.ga).map((i) => i.value));
@@ -101,12 +171,29 @@
         tip: `<b>${escape(r.method)}</b><br>Fitness <b>${fmt.score(r.fitness)}</b><br>Demand covered ${fmt.score(r.demand_coverage)} · campus covered ${fmt.pct(r.spatial_coverage * 100, 0)}<br>Cost ${fmt.lakh(r.total_cost_lakhs, 1)} · closest pair ${fmt.num(r.min_spacing_m)} m${r.sites ? `<br>${escape(r.sites)}` : ""}${r.note ? `<br><i>${escape(r.note)}</i>` : ""}`,
       };
     });
-    barChart(document.getElementById("method-chart"), items, {
+    const methodEl = document.getElementById("method-chart");
+    const gaRow = rows.find((r) => r.method.startsWith("GA"));
+    const exRow = rows.find((r) => r.method.startsWith("Exhaustive"));
+    const note = document.createElement("p");
+    note.className = "method-note";
+    if (gaRow && exRow) {
+      const same = Math.abs(gaRow.fitness - exRow.fitness) < 1e-9;
+      note.textContent = same
+        ? `GA ${fmt.score(gaRow.fitness)} = exhaustive search ${fmt.score(exRow.fitness)} → the GA found the true optimum ✓`
+        : `GA ${fmt.score(gaRow.fitness)} vs exhaustive search ${fmt.score(exRow.fitness)}`;
+      methodEl.after(note);
+    }
+    const methodChartCtl = barChart(methodEl, items, {
+      onPlay: (ms) => {
+        note.classList.remove("is-on");
+        setTimeout(() => note.classList.add("is-on"), EV.reduceMotion ? 0 : ms);
+      },
       max: max * 1.04,
       style: (it) => it.kind === "ga" ? { fill: COLORS.lime, fillStyle: "solid", stroke: COLORS.lime, strokeWidth: 1.6 }
         : it.kind === "opt" ? { fill: COLORS.blueLight, fillStyle: "cross-hatch", stroke: COLORS.blueLight, strokeWidth: 1.4 }
         : { fill: COLORS.onNight2, fillStyle: "hachure", stroke: COLORS.onNight2, strokeWidth: 1.1 },
     });
+    chartTools(methodChartCtl, methodEl);
     const w = D.ga.weights;
     const pc = (x) => Math.round(x * 100);
     document.getElementById("fitness-formula").textContent =
@@ -172,7 +259,7 @@
       const W = svgEl.parentElement.clientWidth, H = 54;
       svgEl.setAttribute("viewBox", `0 0 ${W} ${H}`);
       const rc = EV.rough(svgEl);
-      const g = EV.svg("g", { class: "bar__fill" });
+      const g = EV.svg("g", { class: "budget__fill" });
       g.appendChild(rc.rectangle(3, 6, (W - 6) * (total / budget), H - 12, { fill: COLORS.lime, fillStyle: "solid", stroke: COLORS.ink, strokeWidth: 1.6, roughness: 1.2, seed: 8 }));
       svgEl.replaceChildren(g, rc.rectangle(3, 6, W - 6, H - 12, { stroke: COLORS.ink, strokeWidth: 2, roughness: 1.3, seed: 9 }));
     };
@@ -209,12 +296,14 @@
       labelHtml: `<span>${it.label}<br><small class="muted">${it.sub}</small></span>`,
       tip: `<b>${it.label}</b><br>Test RMSE <b>${fmt.score(it.value)}</b> kWh/h`,
     }));
-    barChart(document.getElementById("ml-chart"), items, {
+    const mlEl = document.getElementById("ml-chart");
+    const mlChart = barChart(mlEl, items, {
       max: Math.max(base, def, tuned) * 1.08,
       style: (it) => it.key === "ga" ? { fill: COLORS.purple, fillStyle: "solid", stroke: COLORS.ink, strokeWidth: 1.6 }
         : it.key === "def" ? { fill: COLORS.blue, fillStyle: "hachure", stroke: COLORS.blue, strokeWidth: 1.2 }
         : { fill: COLORS.grey, fillStyle: "hachure", stroke: COLORS.grey, strokeWidth: 1.2 },
     });
+    chartTools(mlChart, mlEl);
 
     const vsBase = ((base - tuned) / base) * 100;
     const vsDef = ((def - tuned) / def) * 100;
