@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_f77b08d54a368c1b2a6d0212ace8e6fa {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    
+                    <style>
+                        .foliumtooltip {
+                            
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    
+                    <style>
+                        .foliumtooltip {
+                            
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_f77b08d54a368c1b2a6d0212ace8e6fa" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_f77b08d54a368c1b2a6d0212ace8e6fa = L.map(
+                "map_f77b08d54a368c1b2a6d0212ace8e6fa",
+                {
+                    center: [16.49391367159074, 80.49859357544639],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 16,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_8f1c5b7831e8682ffbb60d4ca8d4a4da = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "Tiles \u0026copy; Esri \u0026mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_8f1c5b7831e8682ffbb60d4ca8d4a4da.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+            var tile_layer_965951d63f24a5601b1df80d60304793 = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "Tiles \u0026copy; Esri \u0026mdash; Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS User Community",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_965951d63f24a5601b1df80d60304793.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+        function geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_styler(feature) {
+            switch(feature.properties.osm_id) {
+                default:
+                    return {"color": "#ffffff", "dashArray": "6 4", "fillOpacity": 0, "weight": 3};
+            }
+        }
+
+        function geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_6d120ecbcb1dd9e59b878c1f3a36875f = L.geoJson(null, {
+                onEachFeature: geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_onEachFeature,
+            
+                style: geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_styler,
+            ...{
+}
+        });
+
+        function geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_add (data) {
+            geo_json_6d120ecbcb1dd9e59b878c1f3a36875f
+                .addData(data);
+        }
+            geo_json_6d120ecbcb1dd9e59b878c1f3a36875f_add({"crs": {"properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}, "type": "name"}, "features": [{"geometry": {"coordinates": [[[80.5017484, 16.4971281], [80.4946552, 16.4970656], [80.4946802, 16.4944354], [80.4947118, 16.4911099], [80.5018052, 16.4911715], [80.5017484, 16.4971281]]], "type": "Polygon"}, "properties": {"name": "VIT-AP University", "osm_id": "way/750542244"}, "type": "Feature"}], "name": "campus_boundary", "type": "FeatureCollection"});
+
+        
+    
+            geo_json_6d120ecbcb1dd9e59b878c1f3a36875f.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+        function geo_json_5cd27d3641a3f94e02704e3264861dea_styler(feature) {
+            switch(feature.properties.osm_id) {
+                default:
+                    return {"color": "#f2a541", "fillColor": "#f2a541", "fillOpacity": 0.35, "weight": 1};
+            }
+        }
+
+        function geo_json_5cd27d3641a3f94e02704e3264861dea_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_5cd27d3641a3f94e02704e3264861dea = L.geoJson(null, {
+                onEachFeature: geo_json_5cd27d3641a3f94e02704e3264861dea_onEachFeature,
+            
+                style: geo_json_5cd27d3641a3f94e02704e3264861dea_styler,
+            ...{
+}
+        });
+
+        function geo_json_5cd27d3641a3f94e02704e3264861dea_add (data) {
+            geo_json_5cd27d3641a3f94e02704e3264861dea
+                .addData(data);
+        }
+            geo_json_5cd27d3641a3f94e02704e3264861dea_add({"crs": {"properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}, "type": "name"}, "features": [{"geometry": {"coordinates": [[[80.5009441, 16.4889861], [80.5010375, 16.4889698], [80.5010306, 16.4889338], [80.5009373, 16.4889501], [80.5009441, 16.4889861]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151467"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5007422, 16.4889385], [80.5008527, 16.488911], [80.500834, 16.4888416], [80.5007235, 16.4888691], [80.5007422, 16.4889385]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151468"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5016448, 16.4886132], [80.50163, 16.4885733], [80.5015552, 16.4885988], [80.5015699, 16.4886387], [80.5016448, 16.4886132]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151469"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5020967, 16.4885759], [80.5021137, 16.4886222], [80.5021633, 16.4886055], [80.5021463, 16.4885592], [80.5020967, 16.4885759]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151470"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5018593, 16.488554], [80.5019197, 16.4885502], [80.5019163, 16.4885014], [80.5018559, 16.4885052], [80.5018593, 16.488554]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151471"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.50206720000001, 16.4884975], [80.5020605, 16.4884589], [80.50199, 16.4884701], [80.5019967, 16.4885087], [80.50206720000001, 16.4884975]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151472"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5017919, 16.4885082], [80.5017905, 16.4884748], [80.5017102, 16.48847770000001], [80.5017115, 16.4885112], [80.5017919, 16.4885082]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151497"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5012384, 16.4884344], [80.5012503, 16.4885157], [80.5013267, 16.4885054], [80.5013148, 16.4884242], [80.5012384, 16.4884344]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151503"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5008361, 16.4885322], [80.5008587, 16.4886258], [80.5009338, 16.488609], [80.5009112, 16.4885155], [80.5008361, 16.4885322]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151521"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5007496, 16.4885351], [80.5009259, 16.4884879], [80.5009098, 16.4884326], [80.5007335, 16.4884798], [80.5007496, 16.4885351]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/606151522"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4983709, 16.4955851], [80.4981454, 16.4957806], [80.49794, 16.4959588], [80.4979881, 16.4961224], [80.4977657, 16.4961919], [80.4976493, 16.4958243], [80.4978393, 16.4956503], [80.4978284, 16.4956209], [80.4978214, 16.4955783], [80.4978285, 16.4955357], [80.497849, 16.4954973], [80.4978657, 16.4954814], [80.4978809, 16.4954668], [80.4979211, 16.4954474], [80.4979545, 16.4954424], [80.4979656, 16.4954408], [80.4980132, 16.4954487], [80.498042, 16.4954646], [80.498241, 16.4952823], [80.4986067, 16.4954271], [80.4985248, 16.4956352], [80.4983709, 16.4955851]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "university", "name": "AB-2", "osm_id": "way/750542242"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.497817, 16.495095], [80.4978495, 16.4950962], [80.4978911, 16.4950917], [80.4979432, 16.4950698], [80.4979846, 16.4950385], [80.498017, 16.4950004], [80.49804, 16.4949559], [80.498053, 16.4949126], [80.4980552, 16.4948662], [80.498148, 16.4948665], [80.49814830000001, 16.4947667], [80.4981484, 16.4947229], [80.4981491, 16.4945169], [80.497934, 16.4945163], [80.4977293, 16.4945157], [80.4977285, 16.4947608], [80.4977271, 16.4951971], [80.4978166, 16.4951973], [80.4978168, 16.4951584], [80.497817, 16.495095]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690397"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4948816, 16.4948873], [80.4949713, 16.4948856], [80.4949673, 16.4946812], [80.4948775, 16.4946828], [80.4948816, 16.4948873]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690398"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4954417, 16.494838], [80.4956184, 16.4948226], [80.495613, 16.4947665], [80.4956495, 16.4947633], [80.4956466, 16.4947328], [80.4957082, 16.4947274], [80.49569980000001, 16.4946393], [80.4956375, 16.4946447], [80.4955762, 16.49465], [80.4954251, 16.4946632], [80.4954417, 16.494838]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690399"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4986908, 16.4923051], [80.498693, 16.4922487], [80.498474, 16.492241], [80.4984706, 16.4923297], [80.4986327, 16.4923354], [80.4986308, 16.4923837], [80.4986877, 16.4923857], [80.4986908, 16.4923051]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690400"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4990055, 16.490546], [80.4991665, 16.49051], [80.4991449, 16.4904212], [80.4989839, 16.4904572], [80.4990055, 16.490546]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690402"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4983959, 16.490854], [80.4984753, 16.4908362], [80.4984549, 16.4907524], [80.4983755, 16.4907701], [80.4983959, 16.490854]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690403"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4987393, 16.4908231], [80.498806, 16.4908082], [80.4987768, 16.4906881], [80.49871010000001, 16.490703], [80.4987393, 16.4908231]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690404"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4986997, 16.4907041], [80.4986212, 16.4907217], [80.4986501, 16.4908405], [80.4987286, 16.4908229], [80.4986997, 16.4907041]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690405"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4985575, 16.4908649], [80.4986391, 16.4908467], [80.4986085, 16.4907209], [80.498527, 16.4907391], [80.4985575, 16.4908649]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690406"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4989304, 16.4902785], [80.4991889, 16.4902207], [80.4991664, 16.490128], [80.4989078, 16.4901858], [80.4989304, 16.4902785]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690407"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4983537, 16.4907607], [80.4985143, 16.4907248], [80.4984905, 16.490627], [80.4983299, 16.4906629], [80.4983537, 16.4907607]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690408"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4983188, 16.4906411], [80.4984334, 16.4906155], [80.4983577, 16.4903042], [80.4982431, 16.4903298], [80.4983188, 16.4906411]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690409"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4984436, 16.4903695], [80.4988808, 16.4902718], [80.4988566, 16.4901721], [80.4984194, 16.4902698], [80.4984436, 16.4903695]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690410"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4984718, 16.4904788], [80.498909, 16.4903811], [80.4988847, 16.4902814], [80.4984475, 16.4903791], [80.4984718, 16.4904788]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690411"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4984986, 16.4905894], [80.4989358, 16.4904917], [80.4989115, 16.490392], [80.4984743, 16.4904897], [80.4984986, 16.4905894]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690412"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.498524, 16.490699], [80.4989612, 16.4906013], [80.498937, 16.4905016], [80.4984998, 16.4905993], [80.498524, 16.490699]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690413"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4956346, 16.4920202], [80.495817, 16.4918402], [80.4955916, 16.4916303], [80.49540930000002, 16.4918103], [80.4956346, 16.4920202]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690416"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.500583, 16.4914509], [80.5006666, 16.4915288], [80.5007632, 16.4914335], [80.5007524, 16.4914442], [80.5008143, 16.4915018], [80.5007752, 16.4915405], [80.5008664, 16.4916254], [80.5009154, 16.4915771], [80.5009571, 16.491616], [80.50104090000002, 16.4915332], [80.5007631, 16.4912701], [80.500583, 16.4914509]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690418"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5010211, 16.4916403], [80.5011489, 16.4917645], [80.5012508, 16.491668], [80.501123, 16.4915439], [80.5010211, 16.4916403]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690419"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5015957, 16.493128], [80.5016033, 16.4928158], [80.5015032, 16.4928136], [80.5013488, 16.4929569], [80.5013448, 16.4931224], [80.5015957, 16.493128]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690422"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4977743, 16.496829], [80.4980582, 16.4968349], [80.4980623, 16.4966588], [80.4977784, 16.4966528], [80.4977743, 16.496829]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690425"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4995614, 16.4970566], [80.4995077, 16.4969807], [80.4994299, 16.49691], [80.499497, 16.49682], [80.4994407, 16.496775], [80.49937760000002, 16.4967441], [80.4992918, 16.4967184], [80.4992623, 16.4969036], [80.4993334, 16.496937], [80.499391, 16.4969743], [80.4994313, 16.4970051], [80.4994728, 16.4970566], [80.4994943, 16.4970887], [80.4995614, 16.4970566]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690426"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4987641, 16.497054], [80.4988177, 16.4969781], [80.4988955, 16.4969074], [80.4988284, 16.4968174], [80.4988848, 16.4967724], [80.4989478, 16.4967415], [80.4990336, 16.4967158], [80.4990631, 16.496901], [80.4989921, 16.4969344], [80.4989344, 16.4969717], [80.4988942, 16.4970026], [80.4988526, 16.497054], [80.4988311, 16.4970862], [80.4987641, 16.497054]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690427"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.499137, 16.4968591], [80.4991966, 16.4968588], [80.4991963, 16.4967925], [80.4991367, 16.4967928], [80.499137, 16.4968591]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690428"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5011713, 16.4968431], [80.501461, 16.4968452], [80.5014623, 16.4966729], [80.5011727, 16.4966708], [80.5011713, 16.4968431]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1255690434"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4988722, 16.4946723], [80.4988725, 16.4946126], [80.4988861, 16.4945687], [80.4989098, 16.4945232], [80.4989393, 16.494487], [80.4989723, 16.4944518], [80.499013, 16.4944231], [80.4990493, 16.4943988], [80.4991051, 16.4943763], [80.4991523, 16.4943619], [80.4991792, 16.4943606], [80.4992005, 16.4943597], [80.4992519, 16.4943627], [80.4993014, 16.494375], [80.4993502, 16.4943957], [80.4993921, 16.4944275], [80.4994297, 16.494459], [80.4994585, 16.4944962], [80.4994789, 16.4945282], [80.4994943, 16.4945602], [80.4995083, 16.4946213], [80.4995125, 16.4946843], [80.4998619, 16.494687], [80.49986, 16.4946053], [80.49985180000002, 16.4945388], [80.4998292, 16.4944501], [80.4997969, 16.4943789], [80.4997564, 16.4943097], [80.4997065, 16.4942512], [80.4996302, 16.4941742], [80.4995338, 16.4941068], [80.4994274, 16.4940583], [80.4993172, 16.4940308], [80.4992059, 16.4940201], [80.4991883, 16.4940209], [80.4990937, 16.4940251], [80.49896250000002, 16.4940601], [80.4988606, 16.4941073], [80.4987679, 16.4941679], [80.4986862, 16.4942442], [80.4986144, 16.4943393], [80.4985609, 16.4944449], [80.4985289, 16.4945575], [80.4985179, 16.4946737], [80.4988722, 16.4946723]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "university", "name": "CB", "osm_id": "way/1255690439"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4984297, 16.4939579], [80.4982159, 16.4937434], [80.4980485, 16.4935756], [80.4982616, 16.4933803], [80.4986427, 16.4937627], [80.4985872, 16.4938136], [80.498501, 16.4938926], [80.4984297, 16.4939579]]], "type": "Polygon"}, "properties": {"amenity": "food_court", "building": "yes", "name": "Food Street", "osm_id": "way/1321555307"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.491984, 16.4926408], [80.4920612, 16.4926408], [80.4924698, 16.4926408], [80.4924678, 16.4924791], [80.4919759, 16.4924791], [80.491984, 16.4926408]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322828642"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.49641190000001, 16.4931389], [80.4963365, 16.493063], [80.49643120000002, 16.4929765], [80.4965077, 16.4930536], [80.4964731, 16.4930851], [80.4964474, 16.4930592], [80.496417, 16.4930869], [80.4964417, 16.4931118], [80.49641190000001, 16.4931389]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "house", "name": null, "osm_id": "way/1322830417"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4967076, 16.4928913], [80.4966193, 16.4928066], [80.4966557, 16.4927717], [80.4966172, 16.4927347], [80.4966688, 16.4926852], [80.4967156, 16.4927301], [80.4967618, 16.4926859], [80.4967393, 16.4926643], [80.4967692, 16.4926357], [80.4968718, 16.4927342], [80.4967897, 16.4928129], [80.49675830000001, 16.4927829], [80.4967173, 16.4928222], [80.4967485, 16.4928521], [80.4967076, 16.4928913]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "house", "name": null, "osm_id": "way/1322830419"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4994735, 16.4903981], [80.4995245, 16.4903955], [80.4995084, 16.490128], [80.4994467, 16.4901409], [80.4994735, 16.4903981]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835994"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4995728, 16.4903801], [80.4996291, 16.4903801], [80.4995996, 16.4901126], [80.499554, 16.4901178], [80.4995728, 16.4903801]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835995"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4996881, 16.4903724], [80.4997578, 16.4903647], [80.4997095, 16.4900972], [80.49966130000001, 16.4901075], [80.4996881, 16.4903724]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835996"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4994306, 16.4901023], [80.4998142, 16.4900149], [80.4998195, 16.4899814], [80.4994172, 16.4900766], [80.4994306, 16.4901023]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835997"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5002809, 16.4904727], [80.5003399, 16.4904547], [80.5002567, 16.4901872], [80.5001816, 16.4902078], [80.5002809, 16.4904727]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835998"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5003908, 16.4904315], [80.5004579, 16.4904109], [80.500356, 16.4901409], [80.5002916, 16.4901666], [80.5003908, 16.4904315]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322835999"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.50048470000002, 16.4904058], [80.5005357, 16.4903878], [80.5004311, 16.4901075], [80.5003721, 16.4901332], [80.50048470000002, 16.4904058]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836000"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5005732, 16.4903724], [80.5006269, 16.4903466], [80.5005276, 16.4900715], [80.5004632, 16.4901023], [80.5005732, 16.4903724]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836001"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5008361, 16.489287], [80.500887, 16.4892716], [80.5008656, 16.4891662], [80.5008012, 16.4891764], [80.5008361, 16.489287]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836002"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5009729, 16.4892742], [80.5010882, 16.4892459], [80.5010748, 16.4891944], [80.5009514, 16.4892202], [80.5009729, 16.4892742]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836003"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5009434, 16.489197], [80.5010533, 16.4891764], [80.5010426, 16.4891121], [80.5009434, 16.4891404], [80.5009434, 16.489197]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836004"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5011579, 16.4894079], [80.5011874, 16.4894002], [80.501166, 16.4893153], [80.5011258, 16.4893256], [80.5011579, 16.4894079]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836005"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5011888, 16.4889385], [80.5013482, 16.4888954], [80.5013269, 16.4888231], [80.5011675, 16.4888662], [80.5011888, 16.4889385]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836006"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5016837, 16.4898323], [80.5017802, 16.4898091], [80.5017936, 16.4897423], [80.501681, 16.4897525], [80.5016837, 16.4898323]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836007"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5020757, 16.4895372], [80.5021859, 16.4895151], [80.5021637, 16.4894131], [80.5020534, 16.4894352], [80.5020757, 16.4895372]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836008"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4969943, 16.4916051], [80.4972066, 16.4916099], [80.4972086, 16.4915315], [80.49699620000001, 16.4915266], [80.4969943, 16.4916051]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1322836026"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4928886, 16.4986125], [80.4929084, 16.4986124], [80.4929086, 16.4986628], [80.4930392, 16.4986623], [80.493039, 16.4986088], [80.4930382, 16.4984201], [80.4933175, 16.4984191], [80.4933167, 16.4982176], [80.4930491, 16.4982187], [80.493048, 16.4979692], [80.4928721, 16.4979699], [80.4928724, 16.49803], [80.492838, 16.4980301], [80.4928389, 16.4982552], [80.4929, 16.4982549], [80.4929006, 16.4983983], [80.4928578, 16.4983984], [80.49285870000001, 16.4986126], [80.4928886, 16.4986125]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "office", "name": null, "osm_id": "way/1325619096"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4933896, 16.4987838], [80.4939116, 16.4987831], [80.4939112, 16.4985121], [80.4933892, 16.4985129], [80.4933896, 16.4987838]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "university", "name": "National Institute of Design, Andhra Pradesh", "osm_id": "way/1325619097"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5016085, 16.4887958], [80.5016661, 16.4887784], [80.50165, 16.4887295], [80.5015925, 16.4887469], [80.5016085, 16.4887958]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827264"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5019774, 16.4888189], [80.5020363, 16.4888009], [80.5020235, 16.4887624], [80.5019645, 16.4887805], [80.5019774, 16.4888189]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827266"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5019706, 16.488855], [80.50197960000001, 16.4889065], [80.5020371, 16.4888973], [80.5020281, 16.4888457], [80.5019706, 16.488855]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827267"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5022469, 16.4889244], [80.5023307, 16.48891], [80.50232080000002, 16.4888574], [80.502237, 16.4888719], [80.5022469, 16.4889244]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827268"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5008763, 16.488902499999988], [80.5009519, 16.4888837], [80.5009367, 16.4888277], [80.5008612, 16.4888465], [80.5008763, 16.488902499999988]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827269"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5009487, 16.4890684], [80.5010234, 16.4890553], [80.5010122, 16.4889964], [80.5009375, 16.4890095], [80.5009487, 16.4890684]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827270"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5012451, 16.4891224], [80.5013494, 16.4890942], [80.501335, 16.4890453], [80.5012307, 16.4890735], [80.5012451, 16.4891224]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827271"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.501221, 16.4890594], [80.501335, 16.4890286], [80.5013109, 16.488947], [80.5013325, 16.4889411], [80.5013405, 16.4889682], [80.50137040000001, 16.4889601], [80.5013529, 16.4889007], [80.5011874, 16.4889455], [80.501221, 16.4890594]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1327827272"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4933769, 16.4994279], [80.4938988, 16.4994272], [80.4938984, 16.4991563], [80.4933765, 16.499157], [80.4933769, 16.4994279]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "university", "name": null, "osm_id": "way/1339127383"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4933823, 16.4981318], [80.4939042, 16.498131], [80.4939038, 16.4978601], [80.4933819, 16.4978608], [80.4933823, 16.4981318]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1339127386"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5004488, 16.4943083], [80.5004496, 16.4942033], [80.5005464, 16.494204], [80.5005468, 16.4941597], [80.5004511, 16.494159], [80.5004522, 16.4940268], [80.5007719, 16.4940292], [80.5007716, 16.4940683], [80.5008557, 16.494069], [80.500854, 16.4942798], [80.500777, 16.4942792], [80.5007768, 16.4943107], [80.5004488, 16.4943083]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-1", "osm_id": "way/1434460208"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5011741, 16.4936251], [80.5011763, 16.4934845], [80.5012801, 16.493486], [80.5012806, 16.493456], [80.5011854, 16.4934547], [80.5011881, 16.4932792], [80.5013117, 16.493281], [80.5013104, 16.4933634], [80.5013452, 16.4933639], [80.5013464, 16.493282], [80.5014731, 16.4932837], [80.5014706, 16.4934525], [80.5013653, 16.493451], [80.5013647, 16.49349], [80.5014715, 16.4934915], [80.5014698, 16.4936063], [80.5013697, 16.4936049], [80.5013692, 16.4936347], [80.5013895, 16.493635], [80.501389, 16.4936625], [80.5014318, 16.4936631], [80.5014307, 16.4937331], [80.5013765, 16.4937323], [80.5013761, 16.4937588], [80.5012637, 16.4937572], [80.501264, 16.4937318], [80.5012071, 16.493731], [80.5012082, 16.4936575], [80.5012791, 16.4936585], [80.5012796, 16.4936266], [80.5011741, 16.4936251]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-2", "osm_id": "way/1434460210"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5011795, 16.4923957], [80.5015742, 16.492399], [80.5015755, 16.4922637], [80.50152310000001, 16.4922633], [80.5015249, 16.4920586], [80.50149980000002, 16.4920584], [80.5015008, 16.491944], [80.5014506, 16.4919436], [80.501451, 16.4918928], [80.5012963, 16.4918916], [80.5012958, 16.4919409], [80.5012499, 16.4919405], [80.501249, 16.4920482], [80.5012243, 16.492048], [80.5012224, 16.4922621], [80.5011807, 16.4922618], [80.5011795, 16.4923957]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-3", "osm_id": "way/1434460214"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4993372, 16.4918483], [80.4999361, 16.4924323], [80.5000516, 16.4923234], [80.4998367, 16.4921139], [80.4998981, 16.4920559], [80.5001101, 16.4922627], [80.5002163, 16.4921626], [80.49961750000001, 16.4915783], [80.4995092, 16.4916804], [80.4997255, 16.4918915], [80.4996687, 16.491945], [80.4994553, 16.4917369], [80.4993372, 16.4918483]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-6", "osm_id": "way/1434890457"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5005767, 16.4960063], [80.5003563, 16.4957887], [80.5001719, 16.4956066], [80.5000031, 16.4956585], [80.4999228, 16.4954479], [80.5003018, 16.4953233], [80.5004899, 16.4954992], [80.5005201, 16.4954877], [80.5005643, 16.4954795], [80.500609, 16.4954848], [80.5006497, 16.4955031], [80.5006721, 16.4955232], [80.5006826, 16.4955326], [80.5007043, 16.4955704], [80.5007128, 16.4956128], [80.5007061, 16.4956587], [80.5006906, 16.4956868], [80.5008877, 16.4958711], [80.5007497, 16.4962267], [80.5005299, 16.4961556], [80.5005767, 16.4960063]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "university", "name": "AB-1", "osm_id": "way/1485919486"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5000833, 16.4916492], [80.5000846, 16.4915514], [80.4999905, 16.4915502], [80.4999919, 16.4914494], [80.5004439, 16.4914549], [80.5004413, 16.4916536], [80.5000833, 16.4916492]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1485935403"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5000268, 16.4925375], [80.5006257, 16.4931216], [80.5007412, 16.4930127], [80.5005263, 16.4928031], [80.5005878, 16.4927452], [80.5007997, 16.492952], [80.500906, 16.4928519], [80.5003071, 16.4922676], [80.5001988, 16.4923696], [80.50041520000002, 16.4925807], [80.5003584, 16.4926342], [80.500145, 16.4924261], [80.5000268, 16.4925375]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-7", "osm_id": "way/1485935404"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4967083, 16.4918167], [80.49681, 16.491918], [80.4967352, 16.491987], [80.4967568, 16.4920087], [80.4968254, 16.4919453], [80.49695240000001, 16.4920718], [80.4968633, 16.4921539], [80.4968037, 16.4920945], [80.4967786, 16.4921177], [80.4968379, 16.4921766], [80.4967467, 16.492261], [80.4966245, 16.4921394], [80.4967004, 16.4920694], [80.4966722, 16.4920413], [80.4965952, 16.4921123], [80.4965121, 16.4920297], [80.4965842, 16.4919631], [80.4965627, 16.4919416], [80.4965481, 16.4919551], [80.4965282, 16.4919352], [80.4964974, 16.4919637], [80.4964468, 16.4919132], [80.4964859, 16.4918772], [80.4964667, 16.4918581], [80.4965477, 16.49178339999999], [80.4965661, 16.4918016], [80.4966071, 16.4917638], [80.4966603, 16.4918167], [80.4966092, 16.4918639], [80.4966323, 16.4918869], [80.4967083, 16.4918167]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "LH-1", "osm_id": "way/1485935405"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4976941, 16.4916139], [80.498027, 16.4916162], [80.4980754, 16.4914871], [80.4977366, 16.4914758], [80.4976941, 16.4916139]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1485935412"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4965481, 16.4930176], [80.49647260000002, 16.4929416], [80.4965673, 16.4928552], [80.4966439, 16.4929323], [80.4966093, 16.4929638], [80.49658350000001, 16.4929379], [80.4965531, 16.4929656], [80.4965778, 16.4929905], [80.4965481, 16.4930176]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "house", "name": null, "osm_id": "way/1485935414"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4986544, 16.4916219], [80.499066, 16.4916245], [80.499067, 16.4914673], [80.4986555, 16.4914647], [80.4986544, 16.4916219]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "yes", "name": null, "osm_id": "way/1485935419"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5010093, 16.4942708], [80.501507, 16.4942708], [80.5015071, 16.4939578], [80.5010094, 16.4939577], [80.5010093, 16.4942708]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-5", "osm_id": "relation/20292102"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.5005346, 16.4918967], [80.5008763, 16.4922437], [80.5011137, 16.4920288], [80.5007721, 16.4916818], [80.5005346, 16.4918967]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "MH-4", "osm_id": "relation/20292198"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.4973081, 16.4921335], [80.4976563, 16.4917925], [80.4974231, 16.4915734], [80.4970749, 16.4919143], [80.4973081, 16.4921335]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "LH-2", "osm_id": "relation/20292199"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.49749410000001, 16.4929972], [80.4978535, 16.492667], [80.4976278, 16.492441], [80.4972683, 16.492771], [80.49749410000001, 16.4929972]]], "type": "Polygon"}, "properties": {"amenity": null, "building": "dormitory", "name": "LH-3", "osm_id": "relation/20292200"}, "type": "Feature"}], "name": "buildings", "type": "FeatureCollection"});
+
+        
+    
+    geo_json_5cd27d3641a3f94e02704e3264861dea.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name"];
+    let aliases = ["Building:"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_5cd27d3641a3f94e02704e3264861dea.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+        function geo_json_3a33744ea63acc9354be4e6773f2077e_styler(feature) {
+            switch(feature.properties.zone_id) {
+                case "commercial": 
+                    return {"color": "#9467bd", "fillColor": "#9467bd", "fillOpacity": 0.15, "weight": 2};
+                case "hostel_girls": 
+                    return {"color": "#e377c2", "fillColor": "#e377c2", "fillOpacity": 0.15, "weight": 2};
+                case "hostel_boys": 
+                    return {"color": "#ff7f0e", "fillColor": "#ff7f0e", "fillOpacity": 0.15, "weight": 2};
+                case "academic": 
+                    return {"color": "#1f77b4", "fillColor": "#1f77b4", "fillOpacity": 0.15, "weight": 2};
+                case "gate": 
+                    return {"color": "#bcbd22", "fillColor": "#bcbd22", "fillOpacity": 0.15, "weight": 2};
+                case "campus_general": 
+                    return {"color": "#7f7f7f", "fillColor": "#7f7f7f", "fillOpacity": 0.15, "weight": 2};
+                default:
+                    return {"color": "#8c564b", "fillColor": "#8c564b", "fillOpacity": 0.15, "weight": 2};
+            }
+        }
+
+        function geo_json_3a33744ea63acc9354be4e6773f2077e_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_3a33744ea63acc9354be4e6773f2077e = L.geoJson(null, {
+                onEachFeature: geo_json_3a33744ea63acc9354be4e6773f2077e_onEachFeature,
+            
+                style: geo_json_3a33744ea63acc9354be4e6773f2077e_styler,
+            ...{
+}
+        });
+
+        function geo_json_3a33744ea63acc9354be4e6773f2077e_add (data) {
+            geo_json_3a33744ea63acc9354be4e6773f2077e
+                .addData(data);
+        }
+            geo_json_3a33744ea63acc9354be4e6773f2077e_add({"crs": {"properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}, "type": "name"}, "features": [{"geometry": {"coordinates": [[[80.49844422826209, 16.49317414930894], [80.49842249254021, 16.493157930274762], [80.49839921926426, 16.49314383630115], [80.49837463084334, 16.493132002075775], [80.49834896225452, 16.49312254069125], [80.49832245879729, 16.49311554256432], [80.4982953737493, 16.49311107457186], [80.4982679659461, 16.493109179411753], [80.49824049730753, 16.493109875194882], [80.49821323033485, 16.493113155272024], [80.49818642560207, 16.49311898829744], [80.49816033926595, 16.493127318528373], [80.49813522061798, 16.493138066357787], [80.49811130970221, 16.4931511290751], [80.49808883502119, 16.493166381847693], [80.49806801135239, 16.493183678913887], [80.49785491138508, 16.493378978720887], [80.49783493844708, 16.493399275111255], [80.49781723999992, 16.493421449415806], [80.49780200453782, 16.4934452654719], [80.49778939432372, 16.49347046963171], [80.49777954366114, 16.493496793463553], [80.49777255746362, 16.493523956610865], [80.49776851013748, 16.493551669777997], [80.49764110816776, 16.494939169556055], [80.4976400211486, 16.494965331342037], [80.49764155419811, 16.494991472330316], [80.49764569302704, 16.49501734884837], [80.49765239905642, 16.495042719688822], [80.49766160977713, 16.495067348357882], [80.49767323933253, 16.4950910052798], [80.49768717931873, 16.49511346993685], [80.49770329979503, 16.495134532924947], [80.49772145049525, 16.495153997905554], [80.49774146222822, 16.495171683435903], [80.49776314845512, 16.495187424660315], [80.49778630702806, 16.495201074846918], [80.49781072207468, 16.495212506755415], [80.49783616601007, 16.49522161382318], [80.4978624016586, 16.49522831115859], [80.49788918446446, 16.49523253633234], [80.49791626477146, 16.495234249959413], [80.49794339015027, 16.495233436066172], [80.49797030775136, 16.495230102239322], [80.49799676666201, 16.495224279555124], [80.49802252024529, 16.49521602228976], [80.49804732843899, 16.495205407413366], [80.49807095999351, 16.49519253387259], [80.4980931946274, 16.495177521668182], [80.49811382508074, 16.495160510736444], [80.49813265904714, 16.495141659644794], [80.49814952096634, 16.49512114411367], [80.4981642536606, 16.495099155378515], [80.49888585271523, 16.493898754527766], [80.49889863904006, 16.493874819291523], [80.49890890204185, 16.49384977866508], [80.49891654053783, 16.493823879525902], [80.49892147922056, 16.49379737721548], [80.49892366940034, 16.493770533021927], [80.49892308948517, 16.493743611603904], [80.49891974519362, 16.493716878381324], [80.49891366949836, 16.49369059691856], [80.49890492230114, 16.49366502632595], [80.49889358984201, 16.493640418705223], [80.49887978384918, 16.493617016664043], [80.49886364043736, 16.49359505092411], [80.4988453187659, 16.493574738046483], [80.49846421871403, 16.493192338407997], [80.49844422826209, 16.49317414930894]]], "type": "Polygon"}, "properties": {"description": "Around OSM features: Food Street, Rock Plaza", "land_cost_tier": "high", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "commercial", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "commercial", "zone_name": "Commercial (Food Street, Rock Plaza)"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.49757484000848, 16.491345120895737], [80.49755022449627, 16.491331530117687], [80.49752431477118, 16.491320401744527], [80.4974973746119, 16.491311849070573], [80.49746967828742, 16.491305959167764], [80.49744150776495, 16.491302791999228], [80.49741314983929, 16.491302379808815], [80.4973848932131, 16.491304726792897], [80.49735702555772, 16.49130980905755], [80.49654102661303, 16.491500208833276], [80.49651614080778, 16.491507201727224], [80.49645674087843, 16.491526801703777], [80.49642852004665, 16.49153779360282], [80.49640169636277, 16.491551664755587], [80.4963765842814, 16.491568252550348], [80.4963534781923, 16.491587362528147], [80.49627247820379, 16.491662062454537], [80.49625416582724, 16.491680625544735], [80.49623775135198, 16.491700773461424], [80.49622338135768, 16.491722326286403], [80.49621118416715, 16.491745091555774], [80.49620126870052, 16.491768865978628], [80.49618136863604, 16.491823965952012], [80.49617320898159, 16.491851001430007], [80.49616799896053, 16.49187870748407], [80.49616579474433, 16.491906785410265], [80.4961666200983, 16.4919349324953], [80.49617046612546, 16.491962845280145], [80.49617729136236, 16.491990222831667], [80.49618702222601, 16.492016769987085], [80.49619955380716, 16.49204220053613], [80.49626485369791, 16.492158700608993], [80.49627811856811, 16.492179976767584], [80.49629334472597, 16.49219999327387], [80.49631040454281, 16.492218582344787], [80.4963935045331, 16.492301182423297], [80.4963944516649, 16.492302119322737], [80.49729335157771, 16.493187020168467], [80.49731340926755, 16.49320493368177], [80.49733517543643, 16.49322088302279], [80.49735844427988, 16.49323471738622], [80.49738299578499, 16.493246305964437], [80.49740859781085, 16.493255539184254], [80.49743500828346, 16.49326232974306], [80.49746197748465, 16.493266613434212], [80.49748925041321, 16.49326834975422], [80.49751656919612, 16.493267522285674], [80.49754367552674, 16.493264138852478], [80.49757031310726, 16.4932582314459], [80.49759623007209, 16.49324985592207], [80.4976211813693, 16.493239091473807], [80.49764493107774, 16.49322603988189], [80.49766725463775, 16.493210824552627], [80.49768794097437, 16.493193589351016], [80.49804734102786, 16.49286338902505], [80.49806713436011, 16.49284324187951], [80.49808468925391, 16.492821248094327], [80.49809982177175, 16.492797638118027], [80.49811237335763, 16.492772659333355], [80.49812221249844, 16.492746573465148], [80.49812923610192, 16.49271965383809], [80.49813337057678, 16.49269218251275], [80.49813457260373, 16.49266444733021], [80.49813282958937, 16.492636738896095], [80.49812815979799, 16.492609347535662], [80.49793095860747, 16.491734847757424], [80.49792384522561, 16.49170934987595], [80.49791419535568, 16.491684640309458], [80.4979021004851, 16.491660953319325], [80.49788767528128, 16.49163851347222], [80.49787105650442, 16.491617533511068], [80.49785240171094, 16.49159821233816], [80.49761920171002, 16.49137911255306], [80.49759791070497, 16.491361035715407], [80.49757484000848, 16.491345120895737]]], "type": "Polygon"}, "properties": {"description": "Around OSM features: LH-1, LH-2, LH-3", "land_cost_tier": "low", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "residential", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "hostel_girls", "zone_name": "Ladies\u0027 Hostels (LH-1 to LH-3)"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.49958946527917, 16.49130846198543], [80.49956270994699, 16.491312311663876], [80.49953646207771, 16.491318624919856], [80.49951096477785, 16.491327343280286], [80.4994864542023, 16.491338385996084], [80.49946315736699, 16.491351650790122], [80.49944129004645, 16.491367014804446], [80.49942105477515, 16.491384335738186], [80.49931275478603, 16.4914864356385], [80.49930928399624, 16.491489765208655], [80.49913728400195, 16.491657665047207], [80.49911869422039, 16.491677709119664], [80.49910225385129, 16.491699431275944], [80.49908812461716, 16.491722617838047], [80.49907644550629, 16.4917470407227], [80.49906733140556, 16.49177245968502], [80.49906087197027, 16.491798624681728], [80.49905713074226, 16.491825278330797], [80.49905614452462, 16.491852158443304], [80.49905792301985, 16.491879000602495], [80.4990624487342, 16.491905540764858], [80.49906967714976, 16.49193151785751], [80.49907953716243, 16.49195667634629], [80.50019113444486, 16.494416677617906], [80.50020308928073, 16.494440008660668], [80.50021730720641, 16.494462126619236], [80.50023365727012, 16.494482827778707], [80.50025198888211, 16.4945019214734], [80.50027213320166, 16.49451923184293], [80.50029390469213, 16.494534599451992], [80.50031710282988, 16.494547882758834], [80.50034151395117, 16.494558959418914], [80.50036691321998, 16.49456772741176], [80.50039306669902, 16.494574105980615], [80.50041973350434, 16.49457803637629], [80.50044666802394, 16.494579482398226], [80.50077466848062, 16.49458188241403], [80.500792693931, 16.494581456330906], [80.50152289494656, 16.49454155630414], [80.50155045485343, 16.494538729957483], [80.50157759229545, 16.494533298821935], [80.50160404344436, 16.494525315698567], [80.5016295511441, 16.494514858198716], [80.50165386741087, 16.494502027989384], [80.50167675584393, 16.494486949804884], [80.50169799392405, 16.49446977023412], [80.50171737517677, 16.494450656295516], [80.50173471117967, 16.494429793813165], [80.50174983339427, 16.49440738561037], [80.5017625948045, 16.494383649537657], [80.50177287134598, 16.494358816354957], [80.50177487170288, 16.494352135588013], [80.5017974854137, 16.491980581023917], [80.50177500298699, 16.491884361529344], [80.50176688921042, 16.49185660795202], [80.50175576684885, 16.49182984249121], [80.50174176166044, 16.491804367775327], [80.50172503199838, 16.49178047183862], [80.50170576702035, 16.491758424864507], [80.50165596701106, 16.49170722491222], [80.50163550661077, 16.491688213110063], [80.50161316180272, 16.491671290805478], [80.50158916079998, 16.491656630829755], [80.50156374873049, 16.491644382908508], [80.50153718513357, 16.491634672132438], [80.50085828592373, 16.491423672429047], [80.50082853249616, 16.491416131451057], [80.50079810312216, 16.491411772651208], [80.49964350470103, 16.49130827283562], [80.49961648026766, 16.491307111540085], [80.49958946527917, 16.49130846198543]]], "type": "Polygon"}, "properties": {"description": "Around OSM features: MH-1, MH-2, MH-3, MH-4, MH-5, MH-6, MH-7", "land_cost_tier": "low", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "residential", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "hostel_boys", "zone_name": "Men\u0027s Hostels (MH-1 to MH-7)"}, "type": "Feature"}, {"geometry": {"coordinates": [[[80.49908073062312, 16.493754198662227], [80.49904948386916, 16.493757286101776], [80.49901878924331, 16.493763717749225], [80.4989221214495, 16.493789505662644], [80.49892147922056, 16.49379737721548], [80.49891654053783, 16.493823879525902], [80.49890890204185, 16.49384977866508], [80.49889863904006, 16.493874819291523], [80.49888585271523, 16.493898754527766], [80.4981642536606, 16.495099155378515], [80.49814952096634, 16.49512114411367], [80.49813265904714, 16.495141659644794], [80.49811382508074, 16.495160510736444], [80.4980931946274, 16.495177521668182], [80.49807095999351, 16.49519253387259], [80.49804732843899, 16.495205407413366], [80.49802252024529, 16.49521602228976], [80.49799676666201, 16.495224279555124], [80.49797030775136, 16.495230102239322], [80.49794339015027, 16.495233436066172], [80.49791626477146, 16.495234249959413], [80.49788918446446, 16.49523253633234], [80.4978624016586, 16.49522831115859], [80.49783616601007, 16.49522161382318], [80.49781072207468, 16.495212506755415], [80.49778630702806, 16.495201074846918], [80.49776314845512, 16.495187424660315], [80.49774146222822, 16.495171683435903], [80.49773475999855, 16.49516576028696], [80.49761199909582, 16.495351487996576], [80.49760682147476, 16.495359634460264], [80.49740712122288, 16.495686634225976], [80.49739366144044, 16.495711539154932], [80.49738294381307, 16.4957376536372], [80.49737508330647, 16.495764697550836], [80.49737016423913, 16.49579238080406], [80.49736823937764, 16.495820406446956], [80.49736932937071, 16.495848473856785], [80.4973734225276, 16.495876281962673], [80.49738047494348, 16.49590353247506], [80.49749687447435, 16.496271132609227], [80.49750610183608, 16.496295901692115], [80.49751777452725, 16.49631969111578], [80.49753178259584, 16.496342276791644], [80.49754799409116, 16.49636344596996], [80.49756625630684, 16.49638299924385], [80.49758639721921, 16.49640075242767], [80.4976082271077, 16.496416538292028], [80.49763154034201, 16.496430208139], [80.49765611731897, 16.49644163320285], [80.49768172653128, 16.496450705862983], [80.49770812674812, 16.4964573406577], [80.49773506928761, 16.496461475089234], [80.49776230035926, 16.496463070212492], [80.50074630451269, 16.49649787037424], [80.50077495618756, 16.4964967932631], [80.50080334505641, 16.496492905673033], [80.50083117571563, 16.49648624805678], [80.50085815857014, 16.4964768896909], [80.50088401284691, 16.496464927954896], [80.50090846951659, 16.496450487317905], [80.50093127409292, 16.49643371804354], [80.50095218928088, 16.496414794626265], [80.50097099744583, 16.496393913975645], [80.5009875028782, 16.496371293367392], [80.5010015338299, 16.49634716818246], [80.50101294430145, 16.496321789457724], [80.50115094389821, 16.49596618927591], [80.50115936640464, 16.495940730673208], [80.50116515081719, 16.49591459590414], [80.50116824096575, 16.495888038757773], [80.50116860684366, 16.495861317124678], [80.50116624489912, 16.49583469049263], [80.5011611780695, 16.495808417426762], [80.50115345555872, 16.49578275305871], [80.50114315235929, 16.49575794660907], [80.50113036852406, 16.495734238967316], [80.50092526823228, 16.495395739193295], [80.50090955489428, 16.49537260118235], [80.50024312297602, 16.49449268699406], [80.50023365727012, 16.494482827778707], [80.50021730720641, 16.494462126619236], [80.50020308928073, 16.494440008660668], [80.50020280426153, 16.494439452417648], [80.49998335417062, 16.494149702150587], [80.499973440676, 16.49413737372172], [80.49992354065189, 16.494078873771965], [80.49990967633003, 16.49406379855287], [80.49983337631875, 16.49398679862543], [80.49981501365981, 16.493969869562186], [80.49979514208614, 16.49395460876309], [80.49969874213329, 16.49388720883912], [80.499676925592, 16.493873398415122], [80.49965387567632, 16.493861599317764], [80.49954747577681, 16.49381309938057], [80.49952305516317, 16.49380329573581], [80.49949778753965, 16.493795750116046], [80.49938758767613, 16.49376825015626], [80.49936647483119, 16.493763809243386], [80.49934507077826, 16.493760946217026], [80.49923377093013, 16.493750246235788], [80.49919293046692, 16.49374919866477], [80.49908073062312, 16.493754198662227]]], "type": "Polygon"}, "properties": {"description": "Around OSM features: AB-1, AB-2, CB", "land_cost_tier": "very_low", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "academic", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "academic", "zone_name": "Academic Blocks (AB-1, AB-2, CB)"}, "type": "Feature"}, {"geometry": {"coordinates": [[[[80.50034902346934, 16.494632511911835], [80.50090955489428, 16.49537260118235], [80.50092526823228, 16.495395739193295], [80.50103306924345, 16.49557365533447], [80.50121777033742, 16.4955287777395], [80.50122637817273, 16.495727171054977], [80.50122762951872, 16.495740416119094], [80.50123021980339, 16.4957534791945], [80.5012341241062, 16.49576623460325], [80.50123930486475, 16.495778559627418], [80.50124571223589, 16.4957903356897], [80.50125328457544, 16.49580144949427], [80.50126194903116, 16.495811794116776], [80.50127162224372, 16.495821270033016], [80.5012822111486, 16.4958297860765], [80.50129361387147, 16.495837260315522], [80.50130572070836, 16.495843620841427], [80.50131841518109, 16.495848806460437], [80.50133157515782, 16.49585276728239], [80.50134507402821, 16.495855465200723], [80.50135878192135, 16.495856874259122], [80.50137256695545, 16.495856980901213], [80.50154166707321, 16.495850280899848], [80.50155540791584, 16.495849082561893], [80.50156896076514, 16.495846590175073], [80.50158219501539, 16.495842827757958], [80.50159498313111, 16.49583783156809], [80.50160720187621, 16.495831649752613], [80.50161873350149, 16.495824341884255], [80.50162946687936, 16.49581597838727], [80.50163929857487, 16.495806639858746], [80.5016481338424, 16.4957964162919], [80.50165588753863, 16.495785406208867], [80.50166248494324, 16.495773715711234], [80.50166786247881, 16.495761457457554], [80.50167196832354, 16.495748749577704], [80.50167476291061, 16.495735714534465], [80.50167621930956, 16.4957224779434], [80.50167632348567, 16.495709167362318], [80.50166172324111, 16.49537036736526], [80.50166047546232, 16.495357119769956], [80.50165788825305, 16.495344053879226], [80.50165398651302, 16.49533129543977], [80.50164880779295, 16.495318967239278], [80.5016478279771, 16.495317165520387], [80.50164783457902, 16.49531698779283], [80.50163789399654, 16.494510456185385], [80.5016295511441, 16.494514858198716], [80.50160404344436, 16.494525315698567], [80.50157759229545, 16.494533298821935], [80.50155045485343, 16.494538729957483], [80.50152289494656, 16.49454155630414], [80.500792693931, 16.494581456330906], [80.50077466848062, 16.49458188241403], [80.50047481060564, 16.4945796883408], [80.50034902346934, 16.494632511911835]]], [[[80.49486342381498, 16.49326289332491], [80.49485590603481, 16.493274824882427], [80.49484969993439, 16.49328743908956], [80.49484487132491, 16.49330060218227], [80.49484147141037, 16.493314174576014], [80.49483953624456, 16.493328012345888], [80.49483908634878, 16.493341968752848], [80.49485208590522, 16.49395606874915], [80.49485306457706, 16.493969510602252], [80.49485542126146, 16.493982792364477], [80.49485913268472, 16.493995782868886], [80.49486416219416, 16.494008353824864], [80.49487046011997, 16.49402038108514], [80.49487796426578, 16.494031745871798], [80.49488660052295, 16.494042335949313], [80.4948962836023, 16.494052046732957], [80.4949069178765, 16.49406078232164], [80.49491839832446, 16.494068456445035], [80.49493061156842, 16.494074993315554], [80.49494343699372, 16.49408032837679], [80.4953756171078, 16.494236020658505], [80.49537506071765, 16.49423845414931], [80.49537341093284, 16.494252542628633], [80.49537329496286, 16.494266720295002], [80.49537569492527, 16.49431882029555], [80.49537707135849, 16.494332655936514], [80.49537990861675, 16.494346282944374], [80.49538417688824, 16.494359558135127], [80.49538983132493, 16.494372342021435], [80.49539681251382, 16.494384500278247], [80.49540504710119, 16.494395905154196], [80.49541444856332, 16.494406436813946], [80.49542491811572, 16.494415984597378], [80.49546661812067, 16.494450284615382], [80.49547762251406, 16.49445846567122], [80.49548941031792, 16.494465558579734], [80.49550186635425, 16.494471494036443], [80.49551486891573, 16.494476214046273], [80.49552829095498, 16.49447967249021], [80.49554200132586, 16.494481835575954], [80.49560980137187, 16.494489235582265], [80.4956255669593, 16.494490095003485], [80.4962476032746, 16.494490235171035], [80.49624460217733, 16.49450122289393], [80.4962424119545, 16.494514359192706], [80.49624156670134, 16.49452763934771], [80.49623936657633, 16.494700939342803], [80.49623987469779, 16.49471423846948], [80.49624173164266, 16.494727425486584], [80.49624491952376, 16.494740373367364], [80.49624940763346, 16.494752957388588], [80.49625515273928, 16.49476505633194], [80.49626209950051, 16.49477655365171], [80.4962701810011, 16.494787338597437], [80.49627931939442, 16.49479730728073], [80.49628942665302, 16.49480636367603], [80.49630040541656, 16.494814420545563], [80.49631214992975, 16.494821400279715], [80.49632454706098, 16.494827235644596], [80.49633747739209, 16.494831870429742], [80.49635081636873, 16.49483525998949], [80.4963644355002, 16.49483737167314], [80.49637820359706, 16.494838185139397], [80.49671310383012, 16.494842085148495], [80.49672688516253, 16.494841592797997], [80.49674055013439, 16.494839799724144], [80.49675396717416, 16.49483672319133], [80.49676700709745, 16.494832392821586], [80.49677954435091, 16.49482685030936], [80.49679145822115, 16.494820149020047], [80.49680263399698, 16.494812353476213], [80.49681296407385, 16.49480353873631], [80.49682234899002, 16.494793789671967], [80.4968306983841, 16.494783200150845], [80.49683793186517, 16.494771872132826], [80.49684397978677, 16.494759914688295], [80.4968487839175, 16.494747442947972], [80.49685229800163, 16.494734576994393], [80.49685448820452, 16.494721440705682], [80.49685533343835, 16.494708160562855], [80.49685753331335, 16.494534860557955], [80.4968570251714, 16.494521561416796], [80.4968551682049, 16.4945083743874], [80.4968519803018, 16.494495426496854], [80.49685017659769, 16.494490369188796], [80.49696630101721, 16.494490394816395], [80.49752853462707, 16.494497981785035], [80.49754220551519, 16.494497523929173], [80.49755576551543, 16.494495786027816], [80.49756908617208, 16.494492784544313], [80.49758204129674, 16.49448854791213], [80.49759285722376, 16.494483835557922], [80.4975915433136, 16.494488829854305], [80.49758947688512, 16.494501985378175], [80.4975887568402, 16.49451527296322], [80.49758795666328, 16.494760372957813], [80.49758858054707, 16.494773569253883], [80.4975905324284, 16.494786644355408], [80.49759379378193, 16.49479947416453], [80.49759833365385, 16.49481193691147], [80.49760410895581, 16.494823914310295], [80.49761106487365, 16.494835292681543], [80.49761913538781, 16.494845964031224], [80.49762824389988, 16.49485582707577], [80.49763830395962, 16.494864788203365], [80.49764733242374, 16.494871383437918], [80.49776851013748, 16.493551669777997], [80.49777255746362, 16.493523956610865], [80.49777954366114, 16.493496793463553], [80.49778939432372, 16.49347046963171], [80.49780200453782, 16.4934452654719], [80.49781421114437, 16.49342618411973], [80.49762230096385, 16.493238476203565], [80.4976211813693, 16.493239091473807], [80.49759623007209, 16.49324985592207], [80.49757031310726, 16.4932582314459], [80.49754367552674, 16.493264138852478], [80.49751656919612, 16.493267522285674], [80.49748925041321, 16.49326834975422], [80.49746197748465, 16.493266613434212], [80.49743500828346, 16.49326232974306], [80.49740859781085, 16.493255539184254], [80.49738299578499, 16.493246305964437], [80.49735844427988, 16.49323471738622], [80.49733517543643, 16.49322088302279], [80.49731340926755, 16.49320493368177], [80.49729335157771, 16.493187020168467], [80.49689250351754, 16.49279241618922], [80.49649216625667, 16.493158999006862], [80.49649194318934, 16.493158752847503], [80.49641210056616, 16.49307891032504], [80.49680771787959, 16.4927089509727], [80.4963944516649, 16.492302119322737], [80.4963935045331, 16.492301182423297], [80.49631040454281, 16.492218582344787], [80.49629334472597, 16.49219999327387], [80.49627811856811, 16.492179976767584], [80.49626485369791, 16.492158700608993], [80.49619955380716, 16.49204220053613], [80.49618702222601, 16.492016769987085], [80.49617729136236, 16.491990222831667], [80.49617046612546, 16.491962845280145], [80.4961666200983, 16.4919349324953], [80.49616579474433, 16.491906785410265], [80.49616799896053, 16.49187870748407], [80.49617320898159, 16.491851001430007], [80.49618136863604, 16.491823965952012], [80.49619742401376, 16.49177951128042], [80.49608225908898, 16.491664069662075], [80.49607194631962, 16.49165472304865], [80.49606071173594, 16.491646424245392], [80.4960486692096, 16.491639257367382], [80.49603594080138, 16.49163329505669], [80.49602265552403, 16.49162859774613], [80.49600894803451, 16.491625213046717], [80.49599495726929, 16.491623175265076], [80.49598082503599, 16.491622505055766], [80.49596669457613, 16.49162320921189], [80.49595270911325, 16.491625280596235], [80.49593901040126, 16.491628698213667], [80.49592573728759, 16.491633427423878], [80.49591302430598, 16.491639420292515], [80.49590100031274, 16.49164661607702], [80.4958897871808, 16.49165494184232], [80.4958794985644, 16.49166431320007], [80.49564077002812, 16.491904810686236], [80.49545881373157, 16.491731583115783], [80.49544886684279, 16.491722974411825], [80.49543811751079, 16.491715316033748], [80.4954266629085, 16.4917086772125], [80.4954146065844, 16.49170311796235], [80.49540205752652, 16.49169868853833], [80.495389129177, 16.49169542898198], [80.49537593840682, 16.491693368759336], [80.49536260445916, 16.49169252649458], [80.49497880472603, 16.49168592650648], [80.49496483895253, 16.49168635659306], [80.49495098646733, 16.491688122524497], [80.49493738419714, 16.49169120684519], [80.49492416659547, 16.49169557906776], [80.49491146431346, 16.491701195974382], [80.49489940290862, 16.491708002043964], [80.49488810160358, 16.49171593000098], [80.49487767210775, 16.49172490148046], [80.49486821751302, 16.491734827802567], [80.49485983127482, 16.491745610849172], [80.49485259628827, 16.491757144033738], [80.49484658406884, 16.491769313354844], [80.49484185404542, 16.49178199852308], [80.49483845297284, 16.491795074150044], [80.49483641446982, 16.491808410987762], [80.49483575868648, 16.491821877206263], [80.49483945776016, 16.493104977183034], [80.49484013409096, 16.493117891881763], [80.49484208246056, 16.4931306856952], [80.49484528514938, 16.493143242267422], [80.49484971303012, 16.493155447400124], [80.49485532583279, 16.493167190091196], [80.49486207251074, 16.493178363544295], [80.49486989170512, 16.493188866140102], [80.49487871230278, 16.493198602360547], [80.49488845408307, 16.4932074836575], [80.49489902844739, 16.493215429258104], [80.49490223079594, 16.49321739346847], [80.49487217355436, 16.49325177094201], [80.49486342381498, 16.49326289332491]], [[80.49767591461179, 16.494390267989424], [80.49767021679959, 16.494392847343327], [80.49767676582577, 16.49437855914564], [80.49768813775762, 16.49438373477689], [80.49769171187171, 16.49438515640894], [80.4976889139387, 16.494385823816657], [80.49767591461179, 16.494390267989424]]]], "type": "MultiPolygon"}, "properties": {"description": "Around OSM features: Basketball Court 1, Basketball Court 2, Basketball Court 3, Basketball Court 4, Cricket Ground, Cricket Nets 1, Indoor Badminton Courts, Sports Pitch, Sports Triangle 1, Sports Triangle 2, Tennis Court 1, Volleyball Court 1, Volleyball Court 2, Volleyball Court 3, Volleyball Court 4", "land_cost_tier": "very_low", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "sports", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "sports", "zone_name": "Sports Grounds"}, "type": "Feature"}, {"geometry": {"coordinates": [[[[80.49521857444088, 16.49427925489293], [80.49520011849565, 16.494229094957447], [80.49517665546647, 16.494180921856632], [80.49516348446453, 16.494159600312052], [80.49494343699372, 16.49408032837679], [80.49493061156842, 16.494074993315554], [80.49491839832446, 16.494068456445035], [80.4949069178765, 16.49406078232164], [80.4948962836023, 16.494052046732957], [80.49488660052295, 16.494042335949313], [80.49487796426578, 16.494031745871798], [80.49487046011997, 16.49402038108514], [80.49486416219416, 16.494008353824864], [80.49485913268472, 16.493995782868886], [80.49485542126146, 16.493982792364477], [80.49485306457706, 16.493969510602252], [80.49485208590522, 16.49395606874915], [80.49485130237764, 16.493919054882515], [80.4948447369377, 16.49391677053947], [80.4947912549234, 16.493903708307403], [80.4947367033988, 16.493895766543694], [80.49468535227469, 16.493893208281573], [80.4946802, 16.4944354], [80.4946750466214, 16.494977591638214], [80.49467879222644, 16.494977778240674], [80.49473390176738, 16.494975299663366], [80.4947884941273, 16.49496762154284], [80.49484204354765, 16.4949548178241], [80.49489403431426, 16.49493701181481], [80.49494396572413, 16.494914374997794], [80.49499135690755, 16.494887125379517], [80.49503575145933, 16.49485552539048], [80.49507672183421, 16.494819879357816], [80.49511387346453, 16.494780530574374], [80.49514684856004, 16.494737857992547], [80.4951753295537, 16.49469227257466], [80.49519904215992, 16.494644213335125], [80.49521775801604, 16.494594143112383], [80.49523129688144, 16.494542544111486], [80.49523952837328, 16.49448991326012], [80.49524237322197, 16.494436757422886], [80.49523980403447, 16.49438358851991], [80.49523184555784, 16.4943309185967], [80.49521857444088, 16.49427925489293]]], [[[80.4994830995261, 16.49694726888046], [80.49946464223828, 16.496897109296782], [80.49944117783761, 16.49684893664866], [80.49941293230201, 16.496803214863508], [80.49938017765366, 16.49676038426531], [80.49934322933913, 16.496720857334186], [80.49930244319148, 16.49668501473402], [80.49925821200334, 16.496653201646552], [80.49921096174405, 16.496625724447153], [80.49916114745753, 16.496602847754378], [80.49910924887986, 16.49658479188157], [80.49905576581939, 16.49657173071524], [80.49900121334343, 16.49656379004045], [80.49894611681796, 16.4965610463295], [80.4988910068482, 16.4965635260055], [80.49883641416892, 16.496571205187877], [80.49878286453318, 16.496584009922394], [80.49873087364928, 16.49660181689334], [80.49868094221432, 16.496624454611048], [80.49863355109241, 16.49665170506348], [80.49858915668375, 16.49668330581566], [80.49854818652935, 16.49671895253703], [80.49851103519359, 16.496758301932243], [80.49847806046442, 16.496800975047226], [80.49844957990769, 16.496846560918577], [80.49842586780865, 16.496894620531343], [80.49840715253046, 16.4969446910469], [80.49839361431484, 16.496996290260224], [80.49838538354601, 16.497048921243795], [80.49838273226445, 16.497098474233805], [80.49950670928551, 16.49710837389026], [80.49950690203423, 16.49710477098927], [80.49950433166676, 16.49705160211909], [80.49949637194379, 16.49699893233672], [80.4994830995261, 16.49694726888046]]]], "type": "MultiPolygon"}, "properties": {"description": "2 points where drivable OSM roads cross the campus boundary", "land_cost_tier": "high", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "access", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "gate", "zone_name": "Campus Entry Points"}, "type": "Feature"}, {"geometry": {"coordinates": [[[[80.50178782125394, 16.492994102861303], [80.50177487170288, 16.494352135588013], [80.50177287134598, 16.494358816354957], [80.5017625948045, 16.494383649537657], [80.50174983339427, 16.49440738561037], [80.50173471117967, 16.494429793813165], [80.50171737517677, 16.494450656295516], [80.50169799392405, 16.49446977023412], [80.50167675584393, 16.494486949804884], [80.50165386741087, 16.494502027989384], [80.50163789399654, 16.494510456185385], [80.50164783457902, 16.49531698779283], [80.5016478279771, 16.495317165520387], [80.50164880779295, 16.495318967239278], [80.50165398651302, 16.49533129543977], [80.50165788825305, 16.495344053879226], [80.50166047546232, 16.495357119769956], [80.50166172324111, 16.49537036736526], [80.50167632348567, 16.495709167362318], [80.50167621930956, 16.4957224779434], [80.50167476291061, 16.495735714534465], [80.50167196832354, 16.495748749577704], [80.50166786247881, 16.495761457457554], [80.50166248494324, 16.495773715711234], [80.50165588753863, 16.495785406208867], [80.5016481338424, 16.4957964162919], [80.50163929857487, 16.495806639858746], [80.50162946687936, 16.49581597838727], [80.50161873350149, 16.495824341884255], [80.50160720187621, 16.495831649752613], [80.50159498313111, 16.49583783156809], [80.50158219501539, 16.495842827757958], [80.50156896076514, 16.495846590175073], [80.50155540791584, 16.495849082561893], [80.50154166707321, 16.495850280899848], [80.50137256695545, 16.495856980901213], [80.50135878192135, 16.495856874259122], [80.50134507402821, 16.495855465200723], [80.50133157515782, 16.49585276728239], [80.50131841518109, 16.495848806460437], [80.50130572070836, 16.495843620841427], [80.50129361387147, 16.495837260315522], [80.5012822111486, 16.4958297860765], [80.50127162224372, 16.495821270033016], [80.50126194903116, 16.495811794116776], [80.50125328457544, 16.49580144949427], [80.50124571223589, 16.4957903356897], [80.50123930486475, 16.495778559627418], [80.5012341241062, 16.49576623460325], [80.50123021980339, 16.4957534791945], [80.50122762951872, 16.495740416119094], [80.50122637817273, 16.495727171054977], [80.50121777033742, 16.4955287777395], [80.50103306924345, 16.49557365533447], [80.50092526823228, 16.495395739193295], [80.50113036852406, 16.495734238967316], [80.50114315235929, 16.49575794660907], [80.50115345555872, 16.49578275305871], [80.5011611780695, 16.495808417426762], [80.50116624489912, 16.49583469049263], [80.50116860684366, 16.495861317124678], [80.50116824096575, 16.495888038757773], [80.50116515081719, 16.49591459590414], [80.50115936640464, 16.495940730673208], [80.50115094389821, 16.49596618927591], [80.50101294430145, 16.496321789457724], [80.5010015338299, 16.49634716818246], [80.5009875028782, 16.496371293367392], [80.50097099744583, 16.496393913975645], [80.50095218928088, 16.496414794626265], [80.50093127409292, 16.49643371804354], [80.50090846951659, 16.496450487317905], [80.50088401284691, 16.496464927954896], [80.50085815857014, 16.4964768896909], [80.50083117571563, 16.49648624805678], [80.50080334505641, 16.496492905673033], [80.50077495618756, 16.4964967932631], [80.50074630451269, 16.49649787037424], [80.49776230035926, 16.496463070212492], [80.49773506928761, 16.496461475089234], [80.49770812674812, 16.4964573406577], [80.49768172653128, 16.496450705862983], [80.49765611731897, 16.49644163320285], [80.49763154034201, 16.496430208139], [80.4976082271077, 16.496416538292028], [80.49758639721921, 16.49640075242767], [80.49756625630684, 16.49638299924385], [80.49754799409116, 16.49636344596996], [80.49753178259584, 16.496342276791644], [80.49751777452725, 16.49631969111578], [80.49750610183608, 16.496295901692115], [80.49749687447435, 16.496271132609227], [80.49738047494348, 16.49590353247506], [80.4973734225276, 16.495876281962673], [80.49736932937071, 16.495848473856785], [80.49736823937764, 16.495820406446956], [80.49737016423913, 16.49579238080406], [80.49737508330647, 16.495764697550836], [80.49738294381307, 16.4957376536372], [80.49739366144044, 16.495711539154932], [80.49740712122288, 16.495686634225976], [80.49760682147476, 16.495359634460264], [80.49761199909582, 16.495351487996576], [80.49773475999855, 16.49516576028696], [80.49772145049525, 16.495153997905554], [80.49770329979503, 16.495134532924947], [80.49768717931873, 16.49511346993685], [80.49767323933253, 16.4950910052798], [80.49766160977713, 16.495067348357882], [80.49765239905642, 16.495042719688822], [80.49764569302704, 16.49501734884837], [80.49764155419811, 16.494991472330316], [80.4976400211486, 16.494965331342037], [80.49764110816776, 16.494939169556055], [80.49776851013748, 16.493551669777997], [80.49764733242374, 16.494871383437918], [80.49763830395962, 16.494864788203365], [80.49762824389988, 16.49485582707577], [80.49761913538781, 16.494845964031224], [80.49761106487365, 16.494835292681543], [80.49760410895581, 16.494823914310295], [80.49759833365385, 16.49481193691147], [80.49759379378193, 16.49479947416453], [80.4975905324284, 16.494786644355408], [80.49758858054707, 16.494773569253883], [80.49758795666328, 16.494760372957813], [80.4975887568402, 16.49451527296322], [80.49758947688512, 16.494501985378175], [80.4975915433136, 16.494488829854305], [80.49759285722376, 16.494483835557922], [80.49758204129674, 16.49448854791213], [80.49756908617208, 16.494492784544313], [80.49755576551543, 16.494495786027816], [80.49754220551519, 16.494497523929173], [80.49752853462707, 16.494497981785035], [80.49696630101721, 16.494490394816395], [80.49685017659769, 16.494490369188796], [80.4968519803018, 16.494495426496854], [80.4968551682049, 16.4945083743874], [80.4968570251714, 16.494521561416796], [80.49685753331335, 16.494534860557955], [80.49685533343835, 16.494708160562855], [80.49685448820452, 16.494721440705682], [80.49685229800163, 16.494734576994393], [80.4968487839175, 16.494747442947972], [80.49684397978677, 16.494759914688295], [80.49683793186517, 16.494771872132826], [80.4968306983841, 16.494783200150845], [80.49682234899002, 16.494793789671967], [80.49681296407385, 16.49480353873631], [80.49680263399698, 16.494812353476213], [80.49679145822115, 16.494820149020047], [80.49677954435091, 16.49482685030936], [80.49676700709745, 16.494832392821586], [80.49675396717416, 16.49483672319133], [80.49674055013439, 16.494839799724144], [80.49672688516253, 16.494841592797997], [80.49671310383012, 16.494842085148495], [80.49637820359706, 16.494838185139397], [80.4963644355002, 16.49483737167314], [80.49635081636873, 16.49483525998949], [80.49633747739209, 16.494831870429742], [80.49632454706098, 16.494827235644596], [80.49631214992975, 16.494821400279715], [80.49630040541656, 16.494814420545563], [80.49628942665302, 16.49480636367603], [80.49627931939442, 16.49479730728073], [80.4962701810011, 16.494787338597437], [80.49626209950051, 16.49477655365171], [80.49625515273928, 16.49476505633194], [80.49624940763346, 16.494752957388588], [80.49624491952376, 16.494740373367364], [80.49624173164266, 16.494727425486584], [80.49623987469779, 16.49471423846948], [80.49623936657633, 16.494700939342803], [80.49624156670134, 16.49452763934771], [80.4962424119545, 16.494514359192706], [80.49624460217733, 16.49450122289393], [80.4962476032746, 16.494490235171035], [80.4956255669593, 16.494490095003485], [80.49560980137187, 16.494489235582265], [80.49554200132586, 16.494481835575954], [80.49552829095498, 16.49447967249021], [80.49551486891573, 16.494476214046273], [80.49550186635425, 16.494471494036443], [80.49548941031792, 16.494465558579734], [80.49547762251406, 16.49445846567122], [80.49546661812067, 16.494450284615382], [80.49542491811572, 16.494415984597378], [80.49541444856332, 16.494406436813946], [80.49540504710119, 16.494395905154196], [80.49539681251382, 16.494384500278247], [80.49538983132493, 16.494372342021435], [80.49538417688824, 16.494359558135127], [80.49537990861675, 16.494346282944374], [80.49537707135849, 16.494332655936514], [80.49537569492527, 16.49431882029555], [80.49537329496286, 16.494266720295002], [80.49537341093284, 16.494252542628633], [80.49537506071765, 16.49423845414931], [80.4953756171078, 16.494236020658505], [80.49516348446453, 16.494159600312052], [80.49517665546647, 16.494180921856632], [80.49520011849565, 16.494229094957447], [80.49521857444088, 16.49427925489293], [80.49523184555784, 16.4943309185967], [80.49523980403447, 16.49438358851991], [80.49524237322197, 16.494436757422886], [80.49523952837328, 16.49448991326012], [80.49523129688144, 16.494542544111486], [80.49521775801604, 16.494594143112383], [80.49519904215992, 16.494644213335125], [80.4951753295537, 16.49469227257466], [80.49514684856004, 16.494737857992547], [80.49511387346453, 16.494780530574374], [80.49507672183421, 16.494819879357816], [80.49503575145933, 16.49485552539048], [80.49499135690755, 16.494887125379517], [80.49494396572413, 16.494914374997794], [80.49489403431426, 16.49493701181481], [80.49484204354765, 16.4949548178241], [80.4947884941273, 16.49496762154284], [80.49473390176738, 16.494975299663366], [80.49467879222644, 16.494977778240674], [80.4946750466214, 16.494977591638214], [80.4946552, 16.49706559999999], [80.49838273226445, 16.497098474233805], [80.49838538354601, 16.497048921243795], [80.49839361431484, 16.496996290260224], [80.49840715253046, 16.4969446910469], [80.49842586780865, 16.496894620531343], [80.49844957990769, 16.496846560918577], [80.49847806046442, 16.496800975047226], [80.49851103519359, 16.496758301932243], [80.49854818652935, 16.49671895253703], [80.49858915668375, 16.49668330581566], [80.49863355109241, 16.49665170506348], [80.49868094221432, 16.496624454611048], [80.49873087364928, 16.49660181689334], [80.49878286453318, 16.496584009922394], [80.49883641416892, 16.496571205187877], [80.4988910068482, 16.4965635260055], [80.49894611681796, 16.4965610463295], [80.49900121334343, 16.49656379004045], [80.49905576581939, 16.49657173071524], [80.49910924887986, 16.49658479188157], [80.49916114745753, 16.496602847754378], [80.49921096174405, 16.496625724447153], [80.49925821200334, 16.496653201646552], [80.49930244319148, 16.49668501473402], [80.49934322933913, 16.496720857334186], [80.49938017765366, 16.49676038426531], [80.49941293230201, 16.496803214863508], [80.49944117783761, 16.49684893664866], [80.49946464223828, 16.496897109296782], [80.4994830995261, 16.49694726888046], [80.49949637194379, 16.49699893233672], [80.49950433166676, 16.49705160211909], [80.49950690203423, 16.49710477098927], [80.49950670928551, 16.49710837389026], [80.49890954731784, 16.49710311501676], [80.5017484, 16.4971281], [80.50178782125394, 16.492994102861303]]], [[[80.5018052, 16.4911715], [80.4947118, 16.4911099], [80.49468535227469, 16.493893208281573], [80.4947367033988, 16.493895766543694], [80.4947912549234, 16.493903708307403], [80.4948447369377, 16.49391677053947], [80.49485130237764, 16.493919054882515], [80.49485208590522, 16.49395606874915], [80.49483908634878, 16.493341968752848], [80.49483953624456, 16.493328012345888], [80.49484147141037, 16.493314174576014], [80.49484487132491, 16.49330060218227], [80.49484969993439, 16.49328743908956], [80.49485590603481, 16.493274824882427], [80.49486342381498, 16.49326289332491], [80.49487217355436, 16.49325177094201], [80.49490223079594, 16.49321739346847], [80.49489902844739, 16.493215429258104], [80.49488845408307, 16.4932074836575], [80.49487871230278, 16.493198602360547], [80.49486989170512, 16.493188866140102], [80.49486207251074, 16.493178363544295], [80.49485532583279, 16.493167190091196], [80.49484971303012, 16.493155447400124], [80.49484528514938, 16.493143242267422], [80.49484208246056, 16.4931306856952], [80.49484013409096, 16.493117891881763], [80.49483945776016, 16.493104977183034], [80.49483575868648, 16.491821877206263], [80.49483641446982, 16.491808410987762], [80.49483845297284, 16.491795074150044], [80.49484185404542, 16.49178199852308], [80.49484658406884, 16.491769313354844], [80.49485259628827, 16.491757144033738], [80.49485983127482, 16.491745610849172], [80.49486821751302, 16.491734827802567], [80.49487767210775, 16.49172490148046], [80.49488810160358, 16.49171593000098], [80.49489940290862, 16.491708002043964], [80.49491146431346, 16.491701195974382], [80.49492416659547, 16.49169557906776], [80.49493738419714, 16.49169120684519], [80.49495098646733, 16.491688122524497], [80.49496483895253, 16.49168635659306], [80.49497880472603, 16.49168592650648], [80.49536260445916, 16.49169252649458], [80.49537593840682, 16.491693368759336], [80.495389129177, 16.49169542898198], [80.49540205752652, 16.49169868853833], [80.4954146065844, 16.49170311796235], [80.4954266629085, 16.4917086772125], [80.49543811751079, 16.491715316033748], [80.49544886684279, 16.491722974411825], [80.49545881373157, 16.491731583115783], [80.49564077002812, 16.491904810686236], [80.4958794985644, 16.49166431320007], [80.4958897871808, 16.49165494184232], [80.49590100031274, 16.49164661607702], [80.49591302430598, 16.491639420292515], [80.49592573728759, 16.491633427423878], [80.49593901040126, 16.491628698213667], [80.49595270911325, 16.491625280596235], [80.49596669457613, 16.49162320921189], [80.49598082503599, 16.491622505055766], [80.49599495726929, 16.491623175265076], [80.49600894803451, 16.491625213046717], [80.49602265552403, 16.49162859774613], [80.49603594080138, 16.49163329505669], [80.4960486692096, 16.491639257367382], [80.49606071173594, 16.491646424245392], [80.49607194631962, 16.49165472304865], [80.49608225908898, 16.491664069662075], [80.49619742401376, 16.49177951128042], [80.49618136863604, 16.491823965952012], [80.49620126870052, 16.491768865978628], [80.49621118416715, 16.491745091555774], [80.49622338135768, 16.491722326286403], [80.49623775135198, 16.491700773461424], [80.49625416582724, 16.491680625544735], [80.49627247820379, 16.491662062454537], [80.4963534781923, 16.491587362528147], [80.4963765842814, 16.491568252550348], [80.49640169636277, 16.491551664755587], [80.49642852004665, 16.49153779360282], [80.49645674087843, 16.491526801703777], [80.49651614080778, 16.491507201727224], [80.49654102661303, 16.491500208833276], [80.49735702555772, 16.49130980905755], [80.4973848932131, 16.491304726792897], [80.49741314983929, 16.491302379808815], [80.49744150776495, 16.491302791999228], [80.49746967828742, 16.491305959167764], [80.4974973746119, 16.491311849070573], [80.49752431477118, 16.491320401744527], [80.49755022449627, 16.491331530117687], [80.49757484000848, 16.491345120895737], [80.49759791070497, 16.491361035715407], [80.49761920171002, 16.49137911255306], [80.49785240171094, 16.49159821233816], [80.49787105650442, 16.491617533511068], [80.49788767528128, 16.49163851347222], [80.4979021004851, 16.491660953319325], [80.49791419535568, 16.491684640309458], [80.49792384522561, 16.49170934987595], [80.49793095860747, 16.491734847757424], [80.49812815979799, 16.492609347535662], [80.49813282958937, 16.492636738896095], [80.49813457260373, 16.49266444733021], [80.49813337057678, 16.49269218251275], [80.49812923610192, 16.49271965383809], [80.49812221249844, 16.492746573465148], [80.49811237335763, 16.492772659333355], [80.49809982177175, 16.492797638118027], [80.49808468925391, 16.492821248094327], [80.49806713436011, 16.49284324187951], [80.49804734102786, 16.49286338902505], [80.49768794097437, 16.493193589351016], [80.49766725463775, 16.493210824552627], [80.49764493107774, 16.49322603988189], [80.49762230096385, 16.493238476203565], [80.49781421114437, 16.49342618411973], [80.49780200453782, 16.4934452654719], [80.49781723999992, 16.493421449415806], [80.49783493844708, 16.493399275111255], [80.49785491138508, 16.493378978720887], [80.49806801135239, 16.493183678913887], [80.49808883502119, 16.493166381847693], [80.49811130970221, 16.4931511290751], [80.49813522061798, 16.493138066357787], [80.49816033926595, 16.493127318528373], [80.49818642560207, 16.49311898829744], [80.49821323033485, 16.493113155272024], [80.49824049730753, 16.493109875194882], [80.4982679659461, 16.493109179411753], [80.4982953737493, 16.49311107457186], [80.49832245879729, 16.49311554256432], [80.49834896225452, 16.49312254069125], [80.49837463084334, 16.493132002075775], [80.49839921926426, 16.49314383630115], [80.49842249254021, 16.493157930274762], [80.49844422826209, 16.49317414930894], [80.49846421871403, 16.493192338407997], [80.4988453187659, 16.493574738046483], [80.49886364043736, 16.49359505092411], [80.49887978384918, 16.493617016664043], [80.49889358984201, 16.493640418705223], [80.49890492230114, 16.49366502632595], [80.49891366949836, 16.49369059691856], [80.49891974519362, 16.493716878381324], [80.49892308948517, 16.493743611603904], [80.49892366940034, 16.493770533021927], [80.4989221214495, 16.493789505662644], [80.49901878924331, 16.493763717749225], [80.49904948386916, 16.493757286101776], [80.49908073062312, 16.493754198662227], [80.49919293046692, 16.49374919866477], [80.49923377093013, 16.493750246235788], [80.49934507077826, 16.493760946217026], [80.49936647483119, 16.493763809243386], [80.49938758767613, 16.49376825015626], [80.49949778753965, 16.493795750116046], [80.49952305516317, 16.49380329573581], [80.49954747577681, 16.49381309938057], [80.49965387567632, 16.493861599317764], [80.499676925592, 16.493873398415122], [80.49969874213329, 16.49388720883912], [80.49979514208614, 16.49395460876309], [80.49981501365981, 16.493969869562186], [80.49983337631875, 16.49398679862543], [80.49990967633003, 16.49406379855287], [80.49992354065189, 16.494078873771965], [80.499973440676, 16.49413737372172], [80.49998335417062, 16.494149702150587], [80.50020280426153, 16.494439452417648], [80.50019113444486, 16.494416677617906], [80.49907953716243, 16.49195667634629], [80.49906967714976, 16.49193151785751], [80.4990624487342, 16.491905540764858], [80.49905792301985, 16.491879000602495], [80.49905614452462, 16.491852158443304], [80.49905713074226, 16.491825278330797], [80.49906087197027, 16.491798624681728], [80.49906733140556, 16.49177245968502], [80.49907644550629, 16.4917470407227], [80.49908812461716, 16.491722617838047], [80.49910225385129, 16.491699431275944], [80.49911869422039, 16.491677709119664], [80.49913728400195, 16.491657665047207], [80.49930928399624, 16.491489765208655], [80.49931275478603, 16.4914864356385], [80.49942105477515, 16.491384335738186], [80.49944129004645, 16.491367014804446], [80.49946315736699, 16.491351650790122], [80.4994864542023, 16.491338385996084], [80.49951096477785, 16.491327343280286], [80.49953646207771, 16.491318624919856], [80.49956270994699, 16.491312311663876], [80.49958946527917, 16.49130846198543], [80.49961648026766, 16.491307111540085], [80.49964350470103, 16.49130827283562], [80.50079810312216, 16.491411772651208], [80.50082853249616, 16.491416131451057], [80.50085828592373, 16.491423672429047], [80.50153718513357, 16.491634672132438], [80.50156374873049, 16.491644382908508], [80.50158916079998, 16.491656630829755], [80.50161316180272, 16.491671290805478], [80.50163550661077, 16.491688213110063], [80.50165596701106, 16.49170722491222], [80.50170576702035, 16.491758424864507], [80.50172503199838, 16.49178047183862], [80.50174176166044, 16.491804367775327], [80.50175576684885, 16.49182984249121], [80.50176688921042, 16.49185660795202], [80.50177500298699, 16.491884361529344], [80.5017974854137, 16.491980581023917], [80.5018052, 16.4911715]]], [[[80.50024312297602, 16.494492686994064], [80.50034902346934, 16.494632511911835], [80.50047481060564, 16.4945796883408], [80.50044666802394, 16.494579482398226], [80.50041973350434, 16.49457803637629], [80.50039306669902, 16.494574105980615], [80.50036691321998, 16.49456772741176], [80.50034151395117, 16.494558959418914], [80.50031710282988, 16.494547882758834], [80.50029390469213, 16.494534599451992], [80.50027213320166, 16.49451923184293], [80.50025198888211, 16.4945019214734], [80.50024312297602, 16.494492686994064]]], [[[80.49689250351754, 16.49279241618922], [80.4963944516649, 16.492302119322737], [80.49680771787959, 16.4927089509727], [80.49641210056616, 16.49307891032504], [80.49649194318934, 16.493158752847503], [80.49649216625667, 16.493158999006862], [80.49689250351754, 16.49279241618922]]], [[[80.49767021679959, 16.494392847343327], [80.49767591461179, 16.494390267989424], [80.4976889139387, 16.494385823816657], [80.49769171187171, 16.49438515640894], [80.49768813775762, 16.49438373477689], [80.49767676582577, 16.49437855914564], [80.49767021679959, 16.494392847343327]]]], "type": "MultiPolygon"}, "properties": {"description": "Remainder of the OSM campus boundary", "land_cost_tier": "medium", "note": "Derived from OpenStreetMap features inside the OSM campus boundary. NOT an official VIT-AP zoning plan.", "primary_use": "mixed", "provenance": "DERIVED", "source": "osm_named_features", "zone_id": "campus_general", "zone_name": "Rest of Campus"}, "type": "Feature"}], "name": "vitap_zone_polygons", "type": "FeatureCollection"});
+
+        
+    
+    geo_json_3a33744ea63acc9354be4e6773f2077e.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["zone_name"];
+    let aliases = ["Zone:"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_3a33744ea63acc9354be4e6773f2077e.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+            var feature_group_c7388fe9eaf006578e7a017a47162803 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var marker_7fe2d32e1601320aebec58d67136349f = L.marker(
+                [16.495264000000002, 80.4997511],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_774438d00b6d4c6aba77de8003c6f097 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d008320fc687106a435fd3e51371ed6d = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_f7c225a9b329ac1747eb89953722c7ff = $(`<div id="html_f7c225a9b329ac1747eb89953722c7ff" style="width: 100.0%; height: 100.0%;"><b>Roadside near AB-1</b><br>CAND_001 · academic<br>Fuzzy suitability: 0.762<br>Predicted demand: 28,874 kWh/yr<br>CAPEX: ₹46.9 L</div>`)[0];
+                popup_d008320fc687106a435fd3e51371ed6d.setContent(html_f7c225a9b329ac1747eb89953722c7ff);
+            
+        
+
+        marker_7fe2d32e1601320aebec58d67136349f.bindPopup(popup_d008320fc687106a435fd3e51371ed6d)
+        ;
+
+        
+    
+    
+            marker_7fe2d32e1601320aebec58d67136349f.bindTooltip(
+                `<div>
+                     CAND_001: Roadside near AB-1
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_7fe2d32e1601320aebec58d67136349f.setIcon(icon_774438d00b6d4c6aba77de8003c6f097);
+            
+    
+            var marker_4e1c0c79f8c1ae7085bd563dbdccf101 = L.marker(
+                [16.49671693912032, 80.49960962185892],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_b8c374d15dce7b876c15dfd2e2c5eae7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d56ced4c6b0743a9dfcbebca053da91b = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_e9f747f33766721e9c200e05471fba5b = $(`<div id="html_e9f747f33766721e9c200e05471fba5b" style="width: 100.0%; height: 100.0%;"><b>OSM Parking Lot (way/1485919490)</b><br>CAND_003 · campus_general<br>Fuzzy suitability: 0.594<br>Predicted demand: 10,817 kWh/yr<br>CAPEX: ₹126.6 L</div>`)[0];
+                popup_d56ced4c6b0743a9dfcbebca053da91b.setContent(html_e9f747f33766721e9c200e05471fba5b);
+            
+        
+
+        marker_4e1c0c79f8c1ae7085bd563dbdccf101.bindPopup(popup_d56ced4c6b0743a9dfcbebca053da91b)
+        ;
+
+        
+    
+    
+            marker_4e1c0c79f8c1ae7085bd563dbdccf101.bindTooltip(
+                `<div>
+                     CAND_003: OSM Parking Lot (way/1485919490)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_4e1c0c79f8c1ae7085bd563dbdccf101.setIcon(icon_b8c374d15dce7b876c15dfd2e2c5eae7);
+            
+    
+            var marker_0f4f32ab68aa6d0d0a2c97711c3e6c97 = L.marker(
+                [16.494963417501616, 80.49762339831183],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_437653901fb4b09478d6744ba1ec1b1f = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7eeda9504a9ad806e045258a5b179807 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_62306c401cd8f28720b070e77a57dc6e = $(`<div id="html_62306c401cd8f28720b070e77a57dc6e" style="width: 100.0%; height: 100.0%;"><b>Roadside near Rock Plaza</b><br>CAND_004 · campus_general<br>Fuzzy suitability: 0.398<br>Predicted demand: 10,851 kWh/yr<br>CAPEX: ₹58.4 L</div>`)[0];
+                popup_7eeda9504a9ad806e045258a5b179807.setContent(html_62306c401cd8f28720b070e77a57dc6e);
+            
+        
+
+        marker_0f4f32ab68aa6d0d0a2c97711c3e6c97.bindPopup(popup_7eeda9504a9ad806e045258a5b179807)
+        ;
+
+        
+    
+    
+            marker_0f4f32ab68aa6d0d0a2c97711c3e6c97.bindTooltip(
+                `<div>
+                     CAND_004: Roadside near Rock Plaza
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_0f4f32ab68aa6d0d0a2c97711c3e6c97.setIcon(icon_437653901fb4b09478d6744ba1ec1b1f);
+            
+    
+            var marker_603527c60e86c8f3b82d26dc87fd67de = L.marker(
+                [16.4946838446398, 80.49836466877969],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_f409efa7abc9665e20cca9a71e8e6c32 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_e4284f509821af395ac7726e99a3411d = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_32be13cba2d8182058803ac1b6860487 = $(`<div id="html_32be13cba2d8182058803ac1b6860487" style="width: 100.0%; height: 100.0%;"><b>Roadside near CB</b><br>CAND_005 · commercial<br>Fuzzy suitability: 0.487<br>Predicted demand: 21,599 kWh/yr<br>CAPEX: ₹83.3 L</div>`)[0];
+                popup_e4284f509821af395ac7726e99a3411d.setContent(html_32be13cba2d8182058803ac1b6860487);
+            
+        
+
+        marker_603527c60e86c8f3b82d26dc87fd67de.bindPopup(popup_e4284f509821af395ac7726e99a3411d)
+        ;
+
+        
+    
+    
+            marker_603527c60e86c8f3b82d26dc87fd67de.bindTooltip(
+                `<div>
+                     CAND_005: Roadside near CB
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_603527c60e86c8f3b82d26dc87fd67de.setIcon(icon_f409efa7abc9665e20cca9a71e8e6c32);
+            
+    
+            var marker_316365a992851f64e30b9c54c9d7f69b = L.marker(
+                [16.494049894016314, 80.49833193129656],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_f6c98199ceb3f5b5802fc970c01bd69c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8942a3c02a069258ff053f7a44d2b168 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_60a73dad4b3e5e678893fb4907bc785d = $(`<div id="html_60a73dad4b3e5e678893fb4907bc785d" style="width: 100.0%; height: 100.0%;"><b>Roadside near Food Street</b><br>CAND_006 · commercial<br>Fuzzy suitability: 0.500<br>Predicted demand: 21,608 kWh/yr<br>CAPEX: ₹83.2 L</div>`)[0];
+                popup_8942a3c02a069258ff053f7a44d2b168.setContent(html_60a73dad4b3e5e678893fb4907bc785d);
+            
+        
+
+        marker_316365a992851f64e30b9c54c9d7f69b.bindPopup(popup_8942a3c02a069258ff053f7a44d2b168)
+        ;
+
+        
+    
+    
+            marker_316365a992851f64e30b9c54c9d7f69b.bindTooltip(
+                `<div>
+                     CAND_006: Roadside near Food Street
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_316365a992851f64e30b9c54c9d7f69b.setIcon(icon_f6c98199ceb3f5b5802fc970c01bd69c);
+            
+    
+            var marker_b69a8c0b7c660382df1d07449e06dce4 = L.marker(
+                [16.494436643054808, 80.49482073783552],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_037898fd7cf110576f2a61232a5b2c56 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_fec130280299637ee2b131582318b838 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_980e3b78eeec88ccf69bf38ce773d061 = $(`<div id="html_980e3b78eeec88ccf69bf38ce773d061" style="width: 100.0%; height: 100.0%;"><b>Entry Point 2</b><br>CAND_007 · gate<br>Fuzzy suitability: 0.500<br>Predicted demand: 14,341 kWh/yr<br>CAPEX: ₹84.0 L</div>`)[0];
+                popup_fec130280299637ee2b131582318b838.setContent(html_980e3b78eeec88ccf69bf38ce773d061);
+            
+        
+
+        marker_b69a8c0b7c660382df1d07449e06dce4.bindPopup(popup_fec130280299637ee2b131582318b838)
+        ;
+
+        
+    
+    
+            marker_b69a8c0b7c660382df1d07449e06dce4.bindTooltip(
+                `<div>
+                     CAND_007: Entry Point 2
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_b69a8c0b7c660382df1d07449e06dce4.setIcon(icon_037898fd7cf110576f2a61232a5b2c56);
+            
+    
+            var marker_a8a83ade85438f848269812657604e66 = L.marker(
+                [16.496723939065642, 80.49872062802478],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_aec5dd088f19304565cdbdb036d65951 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ba5567b69295041f6e2abab0d2212bb7 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_69ba89cea25aa3373792ed83de2a18fb = $(`<div id="html_69ba89cea25aa3373792ed83de2a18fb" style="width: 100.0%; height: 100.0%;"><b>OSM Parking Lot (way/1485919489)</b><br>CAND_008 · gate<br>Fuzzy suitability: 0.495<br>Predicted demand: 14,359 kWh/yr<br>CAPEX: ₹228.0 L</div>`)[0];
+                popup_ba5567b69295041f6e2abab0d2212bb7.setContent(html_69ba89cea25aa3373792ed83de2a18fb);
+            
+        
+
+        marker_a8a83ade85438f848269812657604e66.bindPopup(popup_ba5567b69295041f6e2abab0d2212bb7)
+        ;
+
+        
+    
+    
+            marker_a8a83ade85438f848269812657604e66.bindTooltip(
+                `<div>
+                     CAND_008: OSM Parking Lot (way/1485919489)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_a8a83ade85438f848269812657604e66.setIcon(icon_aec5dd088f19304565cdbdb036d65951);
+            
+    
+            var marker_844662e1a496c0bb24e659ade7af18ac = L.marker(
+                [16.494502774568094, 80.50099087840036],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_fdc8e07e1f0b14a6f258c04ea6e3239c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8c0000f18d8892abd8723db625f0e95e = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_874b5633de9a36c5f273a274565293d3 = $(`<div id="html_874b5633de9a36c5f273a274565293d3" style="width: 100.0%; height: 100.0%;"><b>Roadside near Cricket Ground</b><br>CAND_009 · hostel_boys<br>Fuzzy suitability: 0.581<br>Predicted demand: 17,967 kWh/yr<br>CAPEX: ₹50.4 L</div>`)[0];
+                popup_8c0000f18d8892abd8723db625f0e95e.setContent(html_874b5633de9a36c5f273a274565293d3);
+            
+        
+
+        marker_844662e1a496c0bb24e659ade7af18ac.bindPopup(popup_8c0000f18d8892abd8723db625f0e95e)
+        ;
+
+        
+    
+    
+            marker_844662e1a496c0bb24e659ade7af18ac.bindTooltip(
+                `<div>
+                     CAND_009: Roadside near Cricket Ground
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_844662e1a496c0bb24e659ade7af18ac.setIcon(icon_fdc8e07e1f0b14a6f258c04ea6e3239c);
+            
+    
+            var marker_a5771076adf078554045d5cbdf4087a5 = L.marker(
+                [16.49430819925414, 80.50039582129271],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_2b405bc43775df0b5008a682136659e3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8cf285e279c2644f61c8581934569a86 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_82e957c80eae696df0470c50021fcdce = $(`<div id="html_82e957c80eae696df0470c50021fcdce" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-1</b><br>CAND_010 · hostel_boys<br>Fuzzy suitability: 0.583<br>Predicted demand: 17,981 kWh/yr<br>CAPEX: ₹50.4 L</div>`)[0];
+                popup_8cf285e279c2644f61c8581934569a86.setContent(html_82e957c80eae696df0470c50021fcdce);
+            
+        
+
+        marker_a5771076adf078554045d5cbdf4087a5.bindPopup(popup_8cf285e279c2644f61c8581934569a86)
+        ;
+
+        
+    
+    
+            marker_a5771076adf078554045d5cbdf4087a5.bindTooltip(
+                `<div>
+                     CAND_010: Roadside near MH-1
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_a5771076adf078554045d5cbdf4087a5.setIcon(icon_2b405bc43775df0b5008a682136659e3);
+            
+    
+            var marker_bee0f2e9edeef2fabf7f2c812ba7771c = L.marker(
+                [16.49185194790874, 80.50129640413054],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_b70c8bc2752a9711cea929c93c5b2886 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a7788945bec04a57becec78a1206f120 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_811c5e6adcbefe4c9a00f7c17a43dac8 = $(`<div id="html_811c5e6adcbefe4c9a00f7c17a43dac8" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-3</b><br>CAND_012 · hostel_boys<br>Fuzzy suitability: 0.587<br>Predicted demand: 18,009 kWh/yr<br>CAPEX: ₹50.3 L</div>`)[0];
+                popup_a7788945bec04a57becec78a1206f120.setContent(html_811c5e6adcbefe4c9a00f7c17a43dac8);
+            
+        
+
+        marker_bee0f2e9edeef2fabf7f2c812ba7771c.bindPopup(popup_a7788945bec04a57becec78a1206f120)
+        ;
+
+        
+    
+    
+            marker_bee0f2e9edeef2fabf7f2c812ba7771c.bindTooltip(
+                `<div>
+                     CAND_012: Roadside near MH-3
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_bee0f2e9edeef2fabf7f2c812ba7771c.setIcon(icon_b70c8bc2752a9711cea929c93c5b2886);
+            
+    
+            var marker_d45d7477ade33c1bcc15e830b5fcda6c = L.marker(
+                [16.493926005803484, 80.50100914443415],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_6b4a65760a558f282c22dc5ffe0fe553 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_0417e7a5aa25588d319280dc51ae15a0 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_935664d9651da74944d543c0ccd02caf = $(`<div id="html_935664d9651da74944d543c0ccd02caf" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-5</b><br>CAND_013 · hostel_boys<br>Fuzzy suitability: 0.579<br>Predicted demand: 17,958 kWh/yr<br>CAPEX: ₹50.2 L</div>`)[0];
+                popup_0417e7a5aa25588d319280dc51ae15a0.setContent(html_935664d9651da74944d543c0ccd02caf);
+            
+        
+
+        marker_d45d7477ade33c1bcc15e830b5fcda6c.bindPopup(popup_0417e7a5aa25588d319280dc51ae15a0)
+        ;
+
+        
+    
+    
+            marker_d45d7477ade33c1bcc15e830b5fcda6c.bindTooltip(
+                `<div>
+                     CAND_013: Roadside near MH-5
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_d45d7477ade33c1bcc15e830b5fcda6c.setIcon(icon_6b4a65760a558f282c22dc5ffe0fe553);
+            
+    
+            var marker_16ac37aab890d4536319df48b29d646f = L.marker(
+                [16.491665799999996, 80.4999411],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_6e4901f53d8ca4de8a253ca6d80dfacf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b3d893d8c94cca25d27192315bd3bbfa = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_37e5ec723663d374230725ce3d41325b = $(`<div id="html_37e5ec723663d374230725ce3d41325b" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-6</b><br>CAND_014 · hostel_boys<br>Fuzzy suitability: 0.579<br>Predicted demand: 17,956 kWh/yr<br>CAPEX: ₹50.4 L</div>`)[0];
+                popup_b3d893d8c94cca25d27192315bd3bbfa.setContent(html_37e5ec723663d374230725ce3d41325b);
+            
+        
+
+        marker_16ac37aab890d4536319df48b29d646f.bindPopup(popup_b3d893d8c94cca25d27192315bd3bbfa)
+        ;
+
+        
+    
+    
+            marker_16ac37aab890d4536319df48b29d646f.bindTooltip(
+                `<div>
+                     CAND_014: Roadside near MH-6
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_16ac37aab890d4536319df48b29d646f.setIcon(icon_6e4901f53d8ca4de8a253ca6d80dfacf);
+            
+    
+            var marker_ee85e879433b940d70f9abb14f55a762 = L.marker(
+                [16.49213904916785, 80.5004384972997],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_d077b54abc2b53a5d444a8130a0700bb = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ee6f480b8d70211034ddf556d8f05389 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_ffa1827657f5f2e0091d0e88655b7a72 = $(`<div id="html_ffa1827657f5f2e0091d0e88655b7a72" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-7</b><br>CAND_015 · hostel_boys<br>Fuzzy suitability: 0.582<br>Predicted demand: 17,976 kWh/yr<br>CAPEX: ₹50.3 L</div>`)[0];
+                popup_ee6f480b8d70211034ddf556d8f05389.setContent(html_ffa1827657f5f2e0091d0e88655b7a72);
+            
+        
+
+        marker_ee85e879433b940d70f9abb14f55a762.bindPopup(popup_ee6f480b8d70211034ddf556d8f05389)
+        ;
+
+        
+    
+    
+            marker_ee85e879433b940d70f9abb14f55a762.bindTooltip(
+                `<div>
+                     CAND_015: Roadside near MH-7
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_ee85e879433b940d70f9abb14f55a762.setIcon(icon_d077b54abc2b53a5d444a8130a0700bb);
+            
+    
+            var marker_fe0c302bbca134b8a4b87a579ab43599 = L.marker(
+                [16.49225256866103, 80.49728589938562],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_5cca6316127f9d3710de54a32bcc1484 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_f85833e5d5cfa63d193631d844e8aedc = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_e2af7bf7ef677cfa7f47c241acde0ef8 = $(`<div id="html_e2af7bf7ef677cfa7f47c241acde0ef8" style="width: 100.0%; height: 100.0%;"><b>Roadside near Basketball Court 3</b><br>CAND_016 · hostel_girls<br>Fuzzy suitability: 0.500<br>Predicted demand: 14,381 kWh/yr<br>CAPEX: ₹50.9 L</div>`)[0];
+                popup_f85833e5d5cfa63d193631d844e8aedc.setContent(html_e2af7bf7ef677cfa7f47c241acde0ef8);
+            
+        
+
+        marker_fe0c302bbca134b8a4b87a579ab43599.bindPopup(popup_f85833e5d5cfa63d193631d844e8aedc)
+        ;
+
+        
+    
+    
+            marker_fe0c302bbca134b8a4b87a579ab43599.bindTooltip(
+                `<div>
+                     CAND_016: Roadside near Basketball Court 3
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_fe0c302bbca134b8a4b87a579ab43599.setIcon(icon_5cca6316127f9d3710de54a32bcc1484);
+            
+    
+            var marker_165ce005b816b9c9ee0207251a36128d = L.marker(
+                [16.49175767711426, 80.4967690175555],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_0ed752e97d4b95930ef9f89cd13a90f2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_f08931babc79fff7dd0b3a885ee638f4 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_99d6d8e0488afb2c55c177769f159c69 = $(`<div id="html_99d6d8e0488afb2c55c177769f159c69" style="width: 100.0%; height: 100.0%;"><b>Roadside near LH-1</b><br>CAND_017 · hostel_girls<br>Fuzzy suitability: 0.500<br>Predicted demand: 14,361 kWh/yr<br>CAPEX: ₹51.0 L</div>`)[0];
+                popup_f08931babc79fff7dd0b3a885ee638f4.setContent(html_99d6d8e0488afb2c55c177769f159c69);
+            
+        
+
+        marker_165ce005b816b9c9ee0207251a36128d.bindPopup(popup_f08931babc79fff7dd0b3a885ee638f4)
+        ;
+
+        
+    
+    
+            marker_165ce005b816b9c9ee0207251a36128d.bindTooltip(
+                `<div>
+                     CAND_017: Roadside near LH-1
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_165ce005b816b9c9ee0207251a36128d.setIcon(icon_0ed752e97d4b95930ef9f89cd13a90f2);
+            
+    
+            var marker_ce12ac6e73f79167ca7e79c40eb3fad9 = L.marker(
+                [16.493106328779024, 80.49737812046716],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_490fc9c02a682f66e879fdc434019ac3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5377b89cb9d54d0849f39bb234691179 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_28156adc07f71084acb03a33b001884b = $(`<div id="html_28156adc07f71084acb03a33b001884b" style="width: 100.0%; height: 100.0%;"><b>Roadside near LH-3</b><br>CAND_018 · hostel_girls<br>Fuzzy suitability: 0.500<br>Predicted demand: 14,376 kWh/yr<br>CAPEX: ₹50.9 L</div>`)[0];
+                popup_5377b89cb9d54d0849f39bb234691179.setContent(html_28156adc07f71084acb03a33b001884b);
+            
+        
+
+        marker_ce12ac6e73f79167ca7e79c40eb3fad9.bindPopup(popup_5377b89cb9d54d0849f39bb234691179)
+        ;
+
+        
+    
+    
+            marker_ce12ac6e73f79167ca7e79c40eb3fad9.bindTooltip(
+                `<div>
+                     CAND_018: Roadside near LH-3
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_ce12ac6e73f79167ca7e79c40eb3fad9.setIcon(icon_490fc9c02a682f66e879fdc434019ac3);
+            
+    
+            var marker_c232153933f2739e46130e0ad9c01025 = L.marker(
+                [16.49444243873573, 80.4963825625265],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_9439e2953bcad1dc517e604fb691c085 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ed03dbe9a5cb636f52800f4906073b6b = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_1f3b2ac2c51950558a155fadeb980d00 = $(`<div id="html_1f3b2ac2c51950558a155fadeb980d00" style="width: 100.0%; height: 100.0%;"><b>Roadside near Basketball Court 1</b><br>CAND_020 · sports<br>Fuzzy suitability: 0.484<br>Predicted demand: 5,394 kWh/yr<br>CAPEX: ₹47.4 L</div>`)[0];
+                popup_ed03dbe9a5cb636f52800f4906073b6b.setContent(html_1f3b2ac2c51950558a155fadeb980d00);
+            
+        
+
+        marker_c232153933f2739e46130e0ad9c01025.bindPopup(popup_ed03dbe9a5cb636f52800f4906073b6b)
+        ;
+
+        
+    
+    
+            marker_c232153933f2739e46130e0ad9c01025.bindTooltip(
+                `<div>
+                     CAND_020: Roadside near Basketball Court 1
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_c232153933f2739e46130e0ad9c01025.setIcon(icon_9439e2953bcad1dc517e604fb691c085);
+            
+    
+            var marker_1d569414e40b6dd2f6c364badafda775 = L.marker(
+                [16.494172625163372, 80.4955096587954],
+                {
+}
+            ).addTo(feature_group_c7388fe9eaf006578e7a017a47162803);
+        
+    
+            var icon_7f77d40bf7fb939013d667d3d0f52b60 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "circle",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b7074c895ae1a91312e2346c3ab5351f = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_e9d3458f943bdbb6b5ab9e88eb74428e = $(`<div id="html_e9d3458f943bdbb6b5ab9e88eb74428e" style="width: 100.0%; height: 100.0%;"><b>Roadside near Sports Triangle 1</b><br>CAND_021 · sports<br>Fuzzy suitability: 0.500<br>Predicted demand: 5,406 kWh/yr<br>CAPEX: ₹47.6 L</div>`)[0];
+                popup_b7074c895ae1a91312e2346c3ab5351f.setContent(html_e9d3458f943bdbb6b5ab9e88eb74428e);
+            
+        
+
+        marker_1d569414e40b6dd2f6c364badafda775.bindPopup(popup_b7074c895ae1a91312e2346c3ab5351f)
+        ;
+
+        
+    
+    
+            marker_1d569414e40b6dd2f6c364badafda775.bindTooltip(
+                `<div>
+                     CAND_021: Roadside near Sports Triangle 1
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_1d569414e40b6dd2f6c364badafda775.setIcon(icon_7f77d40bf7fb939013d667d3d0f52b60);
+            
+    
+            feature_group_c7388fe9eaf006578e7a017a47162803.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+            var feature_group_4fe5b0a42be06224d7d618583d14c0b7 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var marker_2bd6a881bf31d90604586c22ded1a6ba = L.marker(
+                [16.495452162080724, 80.4978672049945],
+                {
+}
+            ).addTo(feature_group_4fe5b0a42be06224d7d618583d14c0b7);
+        
+    
+            var icon_56e11f883e1335652731d56052f100d3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "bolt",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_c418765dbc9d27403c398aedc9afe6dd = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_73a25ad06d583a8f7af914e873c78539 = $(`<div id="html_73a25ad06d583a8f7af914e873c78539" style="width: 100.0%; height: 100.0%;"><b>Roadside near AB-2</b><br>CAND_002 · academic<br>Fuzzy suitability: 0.775<br>Predicted demand: 28,964 kWh/yr<br>CAPEX: ₹47.2 L</div>`)[0];
+                popup_c418765dbc9d27403c398aedc9afe6dd.setContent(html_73a25ad06d583a8f7af914e873c78539);
+            
+        
+
+        marker_2bd6a881bf31d90604586c22ded1a6ba.bindPopup(popup_c418765dbc9d27403c398aedc9afe6dd)
+        ;
+
+        
+    
+    
+            marker_2bd6a881bf31d90604586c22ded1a6ba.bindTooltip(
+                `<div>
+                     CAND_002: Roadside near AB-2 (GA selected)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_2bd6a881bf31d90604586c22ded1a6ba.setIcon(icon_56e11f883e1335652731d56052f100d3);
+            
+    
+            var marker_70b681c706445a3a4e1e8cd4969a0df6 = L.marker(
+                [16.49323408120438, 80.50118844896417],
+                {
+}
+            ).addTo(feature_group_4fe5b0a42be06224d7d618583d14c0b7);
+        
+    
+            var icon_de0f220ac695284361a35a74a31914a2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "bolt",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b51fa0fd9b594e125211fb3563a112e8 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_dd2070686eb78d557dfe60042cbeb78d = $(`<div id="html_dd2070686eb78d557dfe60042cbeb78d" style="width: 100.0%; height: 100.0%;"><b>Roadside near MH-2</b><br>CAND_011 · hostel_boys<br>Fuzzy suitability: 0.579<br>Predicted demand: 17,957 kWh/yr<br>CAPEX: ₹50.1 L</div>`)[0];
+                popup_b51fa0fd9b594e125211fb3563a112e8.setContent(html_dd2070686eb78d557dfe60042cbeb78d);
+            
+        
+
+        marker_70b681c706445a3a4e1e8cd4969a0df6.bindPopup(popup_b51fa0fd9b594e125211fb3563a112e8)
+        ;
+
+        
+    
+    
+            marker_70b681c706445a3a4e1e8cd4969a0df6.bindTooltip(
+                `<div>
+                     CAND_011: Roadside near MH-2 (GA selected)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_70b681c706445a3a4e1e8cd4969a0df6.setIcon(icon_de0f220ac695284361a35a74a31914a2);
+            
+    
+            var marker_b1f60197d3fa40823d80ab44303eb8c7 = L.marker(
+                [16.492536767566065, 80.496790240021],
+                {
+}
+            ).addTo(feature_group_4fe5b0a42be06224d7d618583d14c0b7);
+        
+    
+            var icon_702b31865be25f47d1b9420585d7a055 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "bolt",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b53fe265926c1e1d4855551dcdd708b3 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_725d9cdf2dc515bcca311fa95a4688ee = $(`<div id="html_725d9cdf2dc515bcca311fa95a4688ee" style="width: 100.0%; height: 100.0%;"><b>Roadside near Sports Triangle 2</b><br>CAND_019 · hostel_girls<br>Fuzzy suitability: 0.500<br>Predicted demand: 14,378 kWh/yr<br>CAPEX: ₹51.0 L</div>`)[0];
+                popup_b53fe265926c1e1d4855551dcdd708b3.setContent(html_725d9cdf2dc515bcca311fa95a4688ee);
+            
+        
+
+        marker_b1f60197d3fa40823d80ab44303eb8c7.bindPopup(popup_b53fe265926c1e1d4855551dcdd708b3)
+        ;
+
+        
+    
+    
+            marker_b1f60197d3fa40823d80ab44303eb8c7.bindTooltip(
+                `<div>
+                     CAND_019: Roadside near Sports Triangle 2 (GA selected)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_b1f60197d3fa40823d80ab44303eb8c7.setIcon(icon_702b31865be25f47d1b9420585d7a055);
+            
+    
+            feature_group_4fe5b0a42be06224d7d618583d14c0b7.addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+        
+    
+            var layer_control_ed7f2f0440c33c7da9bcffcab5f96f36_layers = {
+                base_layers : {
+                    "Satellite (Esri)" : tile_layer_8f1c5b7831e8682ffbb60d4ca8d4a4da,
+                    "Street Map (Esri)" : tile_layer_965951d63f24a5601b1df80d60304793,
+                },
+                overlays :  {
+                    "Campus Boundary (OSM)" : geo_json_6d120ecbcb1dd9e59b878c1f3a36875f,
+                    "Buildings (OSM)" : geo_json_5cd27d3641a3f94e02704e3264861dea,
+                    "Zones (from OSM buildings)" : geo_json_3a33744ea63acc9354be4e6773f2077e,
+                    "Candidate Sites (21)" : feature_group_c7388fe9eaf006578e7a017a47162803,
+                    "GA-Selected Stations (3)" : feature_group_4fe5b0a42be06224d7d618583d14c0b7,
+                },
+            };
+            let layer_control_ed7f2f0440c33c7da9bcffcab5f96f36 = L.control.layers(
+                layer_control_ed7f2f0440c33c7da9bcffcab5f96f36_layers.base_layers,
+                layer_control_ed7f2f0440c33c7da9bcffcab5f96f36_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": false,
+  "autoZIndex": true,
+}
+            ).addTo(map_f77b08d54a368c1b2a6d0212ace8e6fa);
+
+        
+</script>
+</html>

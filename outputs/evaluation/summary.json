@@ -1,0 +1,9 @@
+{
+  "n_sites": 21,
+  "n_stations": 3,
+  "random_valid_share": 0.137,
+  "n_combinations": 1330,
+  "n_valid_plans": 188,
+  "ga_matches_optimum": true,
+  "ga_beats_share_of_valid_plans": 1.0
+}

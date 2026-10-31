@@ -1,0 +1,27 @@
+{
+  "training_data": "SYNTHETIC demand history (21 sites x 2024 hourly), Open-Meteo weather",
+  "split": "temporal: first 80% train, last 20% test",
+  "baseline_rmse": 0.48903751330528183,
+  "default_rf": {
+    "train_rmse": 0.4469693379535974,
+    "test_rmse": 0.48495907855469284,
+    "train_mae": 0.2619310820859236,
+    "test_mae": 0.29033299140257834,
+    "train_r2": 0.9318563927868342,
+    "test_r2": 0.9245666866763738
+  },
+  "ga_tuned_rf": {
+    "train_rmse": 0.34447399985627675,
+    "test_rmse": 0.4127609614910238,
+    "train_mae": 0.2024656544815244,
+    "test_mae": 0.24408939785554853,
+    "train_r2": 0.9595254012528766,
+    "test_r2": 0.9453550255531148
+  },
+  "ga_tuned_params": {
+    "n_estimators": 300,
+    "max_depth": 16,
+    "min_samples_leaf": 1,
+    "max_features": 1.0
+  }
+}

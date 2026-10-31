@@ -1,0 +1,7 @@
+generation,best_val_rmse,best_params
+0,0.3736219574794139,"{'n_estimators': 200, 'max_depth': 16, 'min_samples_leaf': 4, 'max_features': 1.0}"
+1,0.3736219574794139,"{'n_estimators': 200, 'max_depth': 16, 'min_samples_leaf': 4, 'max_features': 1.0}"
+2,0.3736219574794139,"{'n_estimators': 200, 'max_depth': 16, 'min_samples_leaf': 4, 'max_features': 1.0}"
+3,0.36641635710140646,"{'n_estimators': 300, 'max_depth': 16, 'min_samples_leaf': 1, 'max_features': 1.0}"
+4,0.36641635710140646,"{'n_estimators': 300, 'max_depth': 16, 'min_samples_leaf': 1, 'max_features': 1.0}"
+5,0.36641635710140646,"{'n_estimators': 300, 'max_depth': 16, 'min_samples_leaf': 1, 'max_features': 1.0}"
