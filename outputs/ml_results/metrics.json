@@ -3,7 +3,7 @@
   "split": "temporal: first 80% train, last 20% test",
   "baseline_rmse": 0.48903751330528183,
   "default_rf": {
-    "train_rmse": 0.4469693379535974,
+    "train_rmse": 0.44696933795359745,
     "test_rmse": 0.48495907855469284,
     "train_mae": 0.2619310820859236,
     "test_mae": 0.29033299140257834,

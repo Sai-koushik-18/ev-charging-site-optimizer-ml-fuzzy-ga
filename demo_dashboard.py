@@ -84,6 +84,7 @@ zone_geojson = load_zone_polygons()
 boundary_geojson = load_osm_layer("campus_boundary")
 buildings_geojson = load_osm_layer("buildings")
 parking_geojson = load_osm_layer("parking")
+chargers_geojson = load_geojson("data/raw/openchargemap/stations.geojson")
 
 
 def fuzzy_text(score):
@@ -106,6 +107,12 @@ remaining = budget - total_capex
 col1.metric("Total Candidates", f"{n_total}")
 col2.metric("Stations Selected", f"{n_selected}")
 col3.metric("Total CAPEX (Selected)", f"₹{total_capex:.1f} L")
+existing = (chargers_geojson or {}).get("features", [])
+if existing:
+    nearest = min(existing, key=lambda f: f["properties"]["distance_to_campus_km"])["properties"]
+    st.caption(f"Existing public chargers (OpenChargeMap, live data): {len(existing)} within 50 km of campus; "
+               f"the nearest is {nearest['distance_to_campus_km']:.1f} km away ({nearest['name']}, {nearest['town']}). "
+               "None are within 3 km of any candidate site.")
 col4.metric("Remaining Budget", f"₹{remaining:.1f} L", delta=f"{remaining:.1f} L", delta_color="normal" if remaining >= 0 else "inverse")
 
 # ─── MAP ───
@@ -301,6 +308,19 @@ if parking_geojson and parking_geojson.get("features"):
     ).add_to(parking_fg)
 parking_fg.add_to(m)
 
+chargers_fg = folium.FeatureGroup(name=f"Existing Public Chargers (OpenChargeMap, {len(existing)})", show=True, overlay=True, control=True)
+for f in existing:
+    p = f["properties"]
+    lon, lat = f["geometry"]["coordinates"]
+    folium.Marker(
+        location=[lat, lon],
+        popup=folium.Popup(f"<b>{p['name']}</b><br>{p['town']}<br>{p['distance_to_campus_km']:.1f} km from campus<br>"
+                           f"Points: {p['num_connectors']} | Status: {p['status'] or 'unknown'}<br>Source: OpenChargeMap", max_width=260),
+        tooltip=f"🔌 {p['name']} ({p['distance_to_campus_km']:.1f} km)",
+        icon=folium.Icon(color="purple", icon="plug", prefix="fa"),
+    ).add_to(chargers_fg)
+chargers_fg.add_to(m)
+
 # 2. Zone Polygons Layer
 zones_fg = folium.FeatureGroup(name="Campus Zones (from OSM buildings)", show=True, overlay=True, control=True)
 if zone_geojson and zone_geojson.get("features"):
@@ -465,6 +485,7 @@ legend_html = """
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#ffffff; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Campus boundary (OSM, dashed)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#f2a541; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Buildings (OSM)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#4fd1b5; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Parking lots (OSM)</div>
+    <div style="margin-bottom: 2px; color: #111111;"><span style="color:#8e44ad; font-size:14px; margin-right:6px; vertical-align:middle;">●</span> Existing public chargers (OpenChargeMap, 19–32 km away)</div>
     <div style="border-bottom: 1px solid #ddd; margin: 8px 0;"></div>
     <div style="font-weight: 600; color: #111111; margin-bottom: 4px;">Zones (from OSM buildings)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#1f77b4; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Academic</div>

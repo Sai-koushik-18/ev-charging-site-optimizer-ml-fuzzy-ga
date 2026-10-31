@@ -1,7 +1,7 @@
 # Smart EV Charging Station Planning for VIT-AP University (ML · Fuzzy Logic · Genetic Algorithm)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
-[![Tests](https://img.shields.io/badge/tests-36%20passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-40%20passing-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > University project — VIT-AP University, Amaravati, Andhra Pradesh, India
@@ -86,6 +86,7 @@ flowchart LR
 - **GA-tuned demand model:** a genetic algorithm searches Random Forest settings on a time-based validation window.
 - **Complete fuzzy rule base:** 35 detailed rules plus 25 covering rules guarantee every site gets a score.
 - **Hard constraints:** plans that break the budget or minimum spacing are never returned.
+- **Real existing chargers:** public chargers near campus come from the OpenChargeMap API and feed the fuzzy system's competition input.
 - **Verified optimum:** with 21 sites there are only 1,330 possible 3-station plans, so the evaluation checks all of them.
 - **Data provenance:** every dataset carries a `data_provenance` column labelling each field `REAL`, `DERIVED`, `SYNTHETIC` or `META`.
 - **Interactive dashboard:** satellite map with OSM buildings, zones, candidate sites and chosen stations, plus rankings, cost breakdown, evaluation and model accuracy.
@@ -107,7 +108,16 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt   # optional: tests and linting
 ```
 
-No API keys are needed. The OpenChargeMap loader in the legacy pipeline reads an optional `OCM_API_KEY` environment variable; never commit a key to the repository.
+No API key is needed to run the project: the OpenChargeMap results are cached in `data/raw/openchargemap/stations.geojson`. To refresh them, get a free key at [openchargemap.org](https://openchargemap.org) and set it as an environment variable (never in a file):
+
+```bash
+# Windows (then open a new terminal)
+setx OCM_API_KEY "your-key"
+# macOS / Linux
+export OCM_API_KEY="your-key"
+```
+
+The key is sent in a request header, so it never appears in URLs, logs or saved files.
 
 ## Running the Project
 
@@ -145,7 +155,7 @@ The OSM extract (`data/raw/osm/campus_osm.json`) and 2024 weather are included, 
 - `fetch_osm()` downloads every OSM feature around the campus once and caches it.
 - `build_zones()` draws seven zones around named OSM buildings: academic (AB-1, AB-2, CB), men's hostels (MH-1 to MH-7), ladies' hostels (LH-1 to LH-3), commercial (Food Street, Rock Plaza), sports (all mapped pitches), entry points (where roads cross the campus boundary) and the rest of the campus.
 - `build_sites()` creates candidate sites in three ways: the 2 mapped parking lots, the point on the nearest drivable road to each named building's edge, and the campus entry points. Sites closer than 60 m are merged.
-- `build_candidates()` adds features using `src/data/candidate_generator.py`: zone, land-cost tier, distance to the grid connection point, POI attractiveness, distance to entry points, and costs.
+- `build_candidates()` adds features using `src/data/candidate_generator.py`: zone, land-cost tier, distance to the grid connection point, POI attractiveness, distance to entry points, existing public chargers within 500 m / 1 km / 3 km (from `src/data/ocm_loader.py`), and costs.
 
 ### 2. ML demand model — `src/ml/demand_predictor.py`, `src/ml/ga_tuner.py`
 
@@ -226,7 +236,7 @@ The model is trained on synthetic demand, so these figures show the method works
 | Charging demand history | Statistical model | SYNTHETIC |
 | Land, construction and grid costs | Rates in `config/settings.yaml` | SYNTHETIC |
 | Grid connection point | OSM campus power building (no transformer is mapped) | SYNTHETIC assumption |
-| Existing chargers nearby | Set to 0 (OpenChargeMap unavailable) | SYNTHETIC assumption |
+| Existing public chargers | OpenChargeMap API: 3 within 50 km, the nearest 18.9 km away in Vijayawada, none within 3 km of any site | REAL |
 
 ## Project Structure
 
@@ -265,7 +275,7 @@ The model is trained on synthetic demand, so these figures show the method works
 python -m pytest            # or: make test (adds coverage)
 ```
 
-36 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; and candidate provenance.
+40 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; candidate provenance; and the OpenChargeMap loader (key handling, parsing, search radius).
 
 ## Limitations and Future Work
 
@@ -275,7 +285,6 @@ python -m pytest            # or: make test (adds coverage)
 | Costs and the grid connection point are assumptions | Use transformer locations and cost records from the campus estates office |
 | Fuzzy rules are written by hand | Collect suitability ratings for example sites and tune the rules with a GA (genetic-fuzzy system) |
 | Zones come from OSM building positions, not an official plan | Align with the VIT-AP master plan |
-| Existing chargers are unknown | Add an OpenChargeMap key or a campus survey |
 
 The original data pipeline (`python run_pipeline.py data-prep` / `validate`) is kept for reference; the campus pipeline above supersedes it.
 
@@ -283,6 +292,7 @@ The original data pipeline (`python run_pipeline.py data-prep` / `validate`) is 
 
 - © OpenStreetMap contributors (ODbL) — campus buildings, roads and boundary
 - Open-Meteo — historical weather
+- Open Charge Map contributors — existing public charger locations
 - Esri World Imagery and World Street Map — dashboard base maps
 - NITI Aayog / SIAM — EV adoption reference figures
 

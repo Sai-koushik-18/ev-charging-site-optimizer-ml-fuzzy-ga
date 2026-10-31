@@ -63,6 +63,15 @@ def build_campus_map(scored_csv: str, solution_csv: str, out_html: str = "output
                                                  "weight": 2, "fillOpacity": 0.15},
                        tooltip=folium.GeoJsonTooltip(fields=["zone_name"], aliases=["Zone:"])).add_to(m)
 
+    chargers = _geojson("data/raw/openchargemap/stations.geojson")
+    existing = folium.FeatureGroup(name=f"Existing Public Chargers (OpenChargeMap, {len((chargers or {}).get('features', []))})")
+    for f in (chargers or {}).get("features", []):
+        p = f["properties"]
+        lon, lat = f["geometry"]["coordinates"]
+        folium.Marker([lat, lon], tooltip=f"{p['name']} ({p['distance_to_campus_km']:.1f} km from campus)",
+                      icon=folium.Icon(color="purple", icon="plug", prefix="fa")).add_to(existing)
+    existing.add_to(m)
+
     candidates = folium.FeatureGroup(name=f"Candidate Sites ({len(sites)})")
     stations = folium.FeatureGroup(name=f"GA-Selected Stations ({len(selected)})")
     for _, r in sites.iterrows():
