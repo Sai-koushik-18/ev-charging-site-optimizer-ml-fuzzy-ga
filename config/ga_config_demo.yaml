@@ -10,7 +10,7 @@ ga:
 
   # Problem dimensions
   n_candidates: 25  # Will be updated from actual candidates.csv
-  n_stations_target: 2  # DEMO OVERRIDE: Max feasible with budget=300L + min_distance=1000m
+  n_stations_target: 3  # DEMO OVERRIDE: real campus is ~720 m across; see min_station_distance_m
 
   # Population
   population_size: 100
@@ -40,7 +40,7 @@ ga:
   # Mutation
   mutation:
     method: "bit_flip"
-    probability: 0.1  # Per-individual mutation probability
+    probability: 0.3  # Per-individual mutation probability (0.1 converged early; 0.3 reaches the exhaustive optimum on 5/5 seeds)
     indpb: 0.05  # Per-gene flip probability
     repair_after_mutation: true  # Enforce cardinality constraint
 
@@ -54,9 +54,9 @@ ga:
   # Fitness Component Parameters
   fitness_params:
     # Spatial coverage: population within this radius (meters)
-    coverage_radius_m: 500
+    coverage_radius_m: 250  # scaled to the ~720 m campus; 500 m covers almost every site from anywhere
     # Redundancy: minimum distance between stations (meters)
-    min_station_distance_m: 1000
+    min_station_distance_m: 300  # real campus is ~720 m across, so 1000 m cannot be met
     # Budget constraint (INR Lakhs) - HARD CONSTRAINT
     budget_lakhs: 300.0
     # Penalty for exceeding budget (set very high for hard constraint)
@@ -84,4 +84,4 @@ ga:
   provenance:
     method: "SYNTHETIC"
     source: "DEAP framework standard parameters for facility location problems"
-    notes: "DEMO OVERRIDE: n_stations_target=2 (was 10) to enable feasible solutions. Weights reflect priority: demand & coverage (60%) > cost (25%) > redundancy (15%). Budget is hard constraint. Adjustable via config."
+    notes: "DEMO OVERRIDE: n_stations_target=3, min_station_distance_m=300 (campus is ~720 m across). Weights reflect priority: demand & coverage (60%) > cost (25%) > redundancy (15%). Budget is hard constraint. Adjustable via config."
