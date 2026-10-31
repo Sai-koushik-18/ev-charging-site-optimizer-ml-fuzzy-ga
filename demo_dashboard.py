@@ -124,25 +124,28 @@ st.subheader("🗺️ Campus Map — VIT-AP")
 # Create base map centered on candidates
 center_lat = df_all["latitude"].mean()
 center_lon = df_all["longitude"].mean()
-m = folium.Map(location=[center_lat, center_lon], zoom_start=15, tiles=None)
+m = folium.Map(location=[center_lat, center_lon], zoom_start=15, tiles=None,
+    minZoom=4, max_bounds=True, min_lat=5.5, max_lat=37.5, min_lon=67.5, max_lon=98.0,
+    max_bounds_viscosity=1.0,  # stop at India: no repeated world maps when zooming out
+)
 
 # Base maps (free, no API key) — switch between them in the layer control
 folium.TileLayer(
     tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attr="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
     name="Satellite (Esri)",
-    max_zoom=19,
+    max_zoom=19, no_wrap=True,
 ).add_to(m)
 # Esri only: CARTO now requires an API key, and OSM's tile servers block pages opened from disk
 folium.TileLayer(
     tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
     attr="Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS User Community",
-    name="Street Map (Esri)", max_zoom=19,
+    name="Street Map (Esri)", max_zoom=19, no_wrap=True,
 ).add_to(m)
 folium.TileLayer(
     tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     attr="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, OpenStreetMap contributors",
-    name="Light Map (Esri)", max_zoom=16,
+    name="Light Map (Esri)", max_zoom=16, no_wrap=True,
 ).add_to(m)
 folium.TileLayer(
     tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
@@ -150,7 +153,7 @@ folium.TileLayer(
     name="Place Labels",
     overlay=True,
     control=True,
-    max_zoom=19,
+    max_zoom=19, no_wrap=True,
 ).add_to(m)
 
 # ─── COMPUTE CAMPUS BOUNDS FROM VERIFIED DATA ONLY ───

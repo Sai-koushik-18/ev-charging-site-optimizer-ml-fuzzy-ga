@@ -34,17 +34,20 @@ def build_campus_map(scored_csv: str, solution_csv: str, out_html: str = "output
     solution = pd.read_csv(solution_csv)
     selected = set(solution["candidate_id"]) if len(solution) else set()
 
-    m = folium.Map(location=[sites["latitude"].mean(), sites["longitude"].mean()], zoom_start=16, tiles=None)
+    m = folium.Map(location=[sites["latitude"].mean(), sites["longitude"].mean()], zoom_start=16, tiles=None,
+        minZoom=4, max_bounds=True, min_lat=5.5, max_lat=37.5, min_lon=67.5, max_lon=98.0,
+        max_bounds_viscosity=1.0,  # stop at India: no repeated world maps when zooming out
+    )
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         attr="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-        name="Satellite (Esri)", max_zoom=19,
+        name="Satellite (Esri)", max_zoom=19, no_wrap=True,
     ).add_to(m)
     # Esri only: CARTO now requires an API key, and OSM's tile servers block pages opened from disk
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
         attr="Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS User Community",
-        name="Street Map (Esri)", max_zoom=19,
+        name="Street Map (Esri)", max_zoom=19, no_wrap=True,
     ).add_to(m)
 
     boundary = _geojson("data/raw/osm/campus_boundary.geojson")
