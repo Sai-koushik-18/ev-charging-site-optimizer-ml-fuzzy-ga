@@ -197,6 +197,7 @@ class FuzzyEVChargingScorer:
             # Initialize suitability scores list
             suitability_scores = []
             demand_sources = []  # Track where demand predictions came from
+            predicted_demands = []
 
             # Process each candidate
             for idx, row in df_scored.iterrows():
@@ -237,13 +238,18 @@ class FuzzyEVChargingScorer:
                     # Compute fuzzy inference
                     simulator.compute()
 
-                    # Get output suitability score
+                    # Get output suitability score (absent when no rule fires)
+                    if 'suitability' not in simulator.output:
+                        raise ValueError("No fuzzy rule fired for these inputs")
                     suitability = simulator.output['suitability']
 
                 except ValueError as e:
                     # Expected: missing grid cost or other explicit unscorable condition
                     if "Missing grid cost" in str(e):
                         pass  # Already logged above
+                    elif "No fuzzy rule fired" in str(e):
+                        logger.warning(f"No fuzzy rule fired for candidate {row.get('candidate_id', idx)} - marking unscored")
+                        demand_source = "NO_RULE_FIRED"
                     else:
                         logger.warning(f"Failed to compute fuzzy score for candidate {row.get('candidate_id', idx)}: {e}")
                         demand_source = "FAILED"
@@ -252,10 +258,12 @@ class FuzzyEVChargingScorer:
                 # Append results for this candidate
                 suitability_scores.append(suitability)
                 demand_sources.append(demand_source)
+                predicted_demands.append(predicted_demand)
 
             # Add suitability scores to dataframe
             df_scored['fuzzy_suitability_score'] = suitability_scores
             df_scored['demand_prediction_source'] = demand_sources
+            df_scored['predicted_demand'] = predicted_demands
 
             # Add provenance information
             df_scored['fuzzy_provenance'] = df_scored.apply(
@@ -287,6 +295,11 @@ class FuzzyEVChargingScorer:
         Returns:
             Tuple of (predicted_demand_kwh, source_description)
         """
+        # Precomputed ML demand index (0-100, relative to the busiest site) takes priority
+        demand_index = row.get('demand_index', None)
+        if demand_index is not None and not pd.isna(demand_index):
+            return float(np.clip(demand_index, 0, 100)), "ML_DEMAND_INDEX"
+
         # Try to use ML model if available
         if self.ml_predictor is not None and self.ml_predictor.is_trained:
             try:
@@ -357,12 +370,13 @@ class FuzzyEVChargingScorer:
         Convert land cost tier string to numeric value.
 
         Args:
-            tier_str: Land cost tier (low, medium, high)
+            tier_str: Land cost tier (very_low, low, medium, high)
 
         Returns:
             Numeric tier value (0-3 scale)
         """
         tier_mapping = {
+            'very_low': 0.0,
             'low': 0.5,
             'medium': 1.5,
             'high': 2.5
@@ -391,9 +405,17 @@ class FuzzyEVChargingScorer:
                 "source": "POI score proxy (ML not available/failed)",
                 "provenance": "DERIVED"
             },
+            "ML_DEMAND_INDEX": {
+                "source": "ML annual demand prediction, scaled 0-100 relative to the busiest site",
+                "provenance": "DERIVED"
+            },
             "FAILED": {
                 "source": "Prediction failed, using default",
                 "provenance": "DERIVED"
+            },
+            "NO_RULE_FIRED": {
+                "source": "No fuzzy rule covers this input combination; left unscored",
+                "provenance": "META"
             },
             "UNSCORABLE (missing grid cost)": {
                 "source": "Candidate unscorable due to missing grid connection cost",
@@ -523,8 +545,9 @@ def main():
         print("\nTop 5 candidates by fuzzy suitability:")
         scorable_df = scored_df.dropna(subset=['fuzzy_suitability_score'])
         if len(scorable_df) > 0:
+            zone_col = 'zone_id' if 'zone_id' in scorable_df.columns else 'zone'
             top_5 = scorable_df.nlargest(5, 'fuzzy_suitability_score')[
-                ['candidate_id', 'name', 'fuzzy_suitability_score', 'zone_id', 'demand_prediction_source']
+                ['candidate_id', 'name', 'fuzzy_suitability_score', zone_col, 'demand_prediction_source']
             ]
             print(top_5.to_string(index=False))
         else:

@@ -109,35 +109,24 @@ class EVChargingDemandPredictor:
 
         # Candidate-specific features
         if candidates_gdf is not None and 'candidate_id' in features_df.columns:
-            logger.info(f"Processing candidate-specific features")
-            logger.info(f"features_df columns before merge: {list(features_df.columns)}")
-            logger.info(f"candidates_gdf columns: {list(candidates_gdf.columns)}")
             # Merge with candidate data to get zone and other features
             # Rename zone column in features_df to avoid conflict with candidate_features
             features_df_renamed = features_df.rename(columns={'zone': 'demand_zone'})
             candidate_features = candidates_gdf[['candidate_id', 'zone']].copy()
 
-            # Add POI score if available
+            # Add POI score if available (candidate_generator writes 'poi_score')
             if 'pois_score' in candidates_gdf.columns:
                 candidate_features['pois_score'] = candidates_gdf['pois_score']
+            elif 'poi_score' in candidates_gdf.columns:
+                candidate_features['pois_score'] = candidates_gdf['poi_score']
 
             # Merge
             features_df = features_df_renamed.merge(candidate_features, on='candidate_id', how='left')
-            logger.info(f"features_df columns after merge: {list(features_df.columns)}")
-            if 'zone' in features_df.columns:
-                logger.info(f"Zone column values after merge: {features_df['zone'].unique()}")
-            if 'demand_zone' in features_df.columns:
-                logger.info(f"Demand zone column values after merge: {features_df['demand_zone'].unique()}")
 
             # One-hot encode zone
             if 'zone' in features_df.columns:
-                logger.info(f"About to one-hot encode zone column")
                 zone_dummies = pd.get_dummies(features_df['zone'], prefix='zone')
-                # DEBUG: Print zone info
-                logger.info(f"Zone column values: {features_df['zone'].unique()}")
-                logger.info(f"Zone dummies columns: {list(zone_dummies.columns)}")
                 features_df = pd.concat([features_df, zone_dummies], axis=1)
-                logger.info(f"features_df columns after zone encoding: {list(features_df.columns)}")
 
         # Define base features for modeling (always the same)
         base_features = [
@@ -151,23 +140,13 @@ class EVChargingDemandPredictor:
 
         if self.zone_columns is not None:
             # During prediction, ensure all expected zone columns are present
-            logger.info(f"Checking zone consistency. Expected zone columns: {self.zone_columns}")
-            logger.info(f"Current features_df columns: {list(features_df.columns)}")
             for zone_col in self.zone_columns:
                 if zone_col not in features_df.columns:
-                    logger.info(f"Adding missing zone column: {zone_col} with value 0")
                     features_df[zone_col] = 0
-                else:
-                    logger.info(f"Zone column {zone_col} already present")
             # Also remove any unexpected zone columns (shouldn't happen but be safe)
             current_zone_cols = [col for col in features_df.columns if col.startswith('zone_')]
             unexpected_zone_cols = [col for col in current_zone_cols if col not in self.zone_columns]
-            logger.info(f"Current zone columns: {current_zone_cols}")
-            logger.info(f"Unexpected zone columns: {unexpected_zone_cols}")
-            for col in unexpected_zone_cols:
-                if col in features_df.columns:
-                    logger.info(f"Removing unexpected zone column from features_df: {col}")
-                    features_df = features_df.drop(columns=[col])
+            features_df = features_df.drop(columns=unexpected_zone_cols)
         elif zone_cols and not self.is_trained:
             # During training, store the zone columns we saw
             self.zone_columns = sorted(zone_cols)
@@ -191,14 +170,12 @@ class EVChargingDemandPredictor:
             # Ensure features_df has all expected features (add missing ones with default values)
             missing_features = [f for f in self.feature_names if f not in features_df.columns]
             for feature in missing_features:
-                logger.info(f"Adding missing feature {feature} with default value 0")
                 features_df[feature] = 0
 
             # Remove any unexpected features that weren't in training
             unexpected_features = [f for f in features_df.columns if f not in self.feature_names and f not in base_features]
             if unexpected_features:
-                logger.info(f"Removing unexpected features: {unexpected_features}")
-                features_df = features_df.drop(columns=[col for col in unexpected_features if col in features_df.columns])
+                features_df = features_df.drop(columns=unexpected_features)
 
         # Final verification - ensure no duplicate feature names
         if len(self.feature_names) != len(set(self.feature_names)):
@@ -229,28 +206,15 @@ class EVChargingDemandPredictor:
         # Ensure we only get numeric values by selecting columns and converting
         feature_data = df[self.feature_names].copy()
 
-        # DEBUG: Log info about feature data
-        logger.info(f"Feature data columns: {list(feature_data.columns)}")
-        logger.info(f"Feature data dtypes:\n{feature_data.dtypes}")
-        logger.info(f"Feature data head:\n{feature_data.head()}")
-
         # Convert all feature columns to numeric, coercing errors to NaN
         for col in feature_data.columns:
-            original_dtype = feature_data[col].dtype
             feature_data[col] = pd.to_numeric(feature_data[col], errors='coerce')
-            new_dtype = feature_data[col].dtype
-            if original_dtype != new_dtype:
-                logger.info(f"Column '{col}' converted from {original_dtype} to {new_dtype}")
 
         # Convert to float to ensure we have a proper numeric array for isnan checks
         feature_data = feature_data.astype(float)
 
         X = feature_data.values
-        logger.info(f"X shape: {X.shape}, X dtype: {X.dtype}")
-        logger.info(f"X sample: {X[:2] if len(X) > 0 else X}")
-
         y = pd.to_numeric(df['demand_kwh'], errors='coerce').values
-        logger.info(f"y shape: {y.shape}, y dtype: {y.dtype}")
 
         # Handle any missing values
         if np.any(np.isnan(X)):
@@ -371,7 +335,7 @@ class EVChargingDemandPredictor:
         for col in feature_data.columns:
             feature_data[col] = pd.to_numeric(feature_data[col], errors='coerce')
 
-        X = feature_data.values
+        X = feature_data.astype(float).values
 
         # Handle missing values
         try:
@@ -404,7 +368,7 @@ class EVChargingDemandPredictor:
         # Predict
         predictions = self.model.predict(X_scaled)
 
- # Ensure non-negative predictions
+        # Ensure non-negative predictions
         predictions = np.maximum(predictions, 0)
 
         logger.info(f"Generated {len(predictions)} demand predictions")

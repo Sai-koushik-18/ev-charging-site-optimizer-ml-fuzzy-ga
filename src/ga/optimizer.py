@@ -221,6 +221,20 @@ class GeneticAlgorithmOptimizer:
                 "total_cost_lakhs": total_cost
             }
 
+        # HARD MIN-SEPARATION CONSTRAINT CHECK
+        if self._violates_min_separation(selected_indices):
+            logger.debug("Individual has stations closer than min_station_distance_m - infeasible")
+            return 0.0, {
+                "demand_coverage": 0.0,
+                "spatial_coverage": 0.0,
+                "cost_efficiency": 0.0,
+                "redundancy_penalty": 1.0,
+                "budget_violation": 0.0,
+                "separation_violation": 1.0,
+                "total_cost_lakhs": total_cost,
+                "unknown_cost": False
+            }
+
         # 1. Demand Coverage: Sum of fuzzy suitability scores of selected stations
         demand_coverage = selected_df['fuzzy_suitability_score'].sum() if 'fuzzy_suitability_score' in selected_df.columns else len(selected_indices)
         # Normalize by max possible (if all candidates selected)
@@ -287,6 +301,24 @@ class GeneticAlgorithmOptimizer:
                     covered_count += 1
 
         return covered_count / n_candidates
+
+    def _violates_min_separation(self, selected_indices: np.ndarray) -> bool:
+        """
+        Check whether any pair of selected stations is closer than min_station_distance_m.
+
+        Args:
+            selected_indices: Indices of selected candidates
+
+        Returns:
+            True if the hard separation constraint is violated
+        """
+        if len(selected_indices) < 2 or self.distance_matrix is None:
+            return False
+
+        min_distance = self.config['fitness_params']['min_station_distance_m']
+        pairwise = self.distance_matrix[np.ix_(selected_indices, selected_indices)]
+        upper = pairwise[np.triu_indices(len(selected_indices), k=1)]
+        return bool(np.any(upper < min_distance))
 
     def _calculate_redundancy_penalty(self, selected_indices: np.ndarray) -> float:
         """
@@ -452,12 +484,12 @@ class GeneticAlgorithmOptimizer:
         best_feasible: Optional[Individual] = None
         for ind in population:
             if ind.is_feasible():
-                best_feasible = Individual(
-                    chromosome=ind.chromosome.copy(),
-                    fitness=ind.fitness,
-                    fitness_components=ind.fitness_components.copy() if ind.fitness_components else None
-                )
-                break
+                if best_feasible is None or ind.fitness > best_feasible.fitness:
+                    best_feasible = Individual(
+                        chromosome=ind.chromosome.copy(),
+                        fitness=ind.fitness,
+                        fitness_components=ind.fitness_components.copy() if ind.fitness_components else None
+                    )
 
         fitness_history = [best_overall.fitness]
         feasible_found = best_feasible is not None
@@ -602,6 +634,13 @@ class GeneticAlgorithmOptimizer:
             empty_df.attrs['feasibility_status'] = 'NO FEASIBLE SOLUTION'
             return empty_df, False
 
+        # 4. Check minimum separation between selected stations
+        if self._violates_min_separation(selected_indices):
+            logger.warning("Independent validation failed: stations closer than min_station_distance_m")
+            empty_df = pd.DataFrame()
+            empty_df.attrs['feasibility_status'] = 'NO FEASIBLE SOLUTION'
+            return empty_df, False
+
         # All independent validations passed
         selected_df['selected_in_ga'] = True
         selected_df['ga_fitness_component'] = individual.fitness
@@ -660,9 +699,11 @@ def main():
             if best_individual.fitness_components:
                 print(f"Total CAPEX (best individual): {best_individual.fitness_components.get('total_cost_lakhs', 'N/A')}")
                 if best_individual.fitness_components.get('budget_violation', 0) == 1:
-                    print("  → Budget violation")
+                    print("  -> Budget violation")
                 if best_individual.fitness_components.get('unknown_cost', False):
-                    print("  → Unknown grid connection costs")
+                    print("  -> Unknown grid connection costs")
+                if best_individual.fitness_components.get('separation_violation', 0) == 1:
+                    print("  -> Minimum station separation violated")
             logger.warning("NO FEASIBLE SOLUTION found within budget and cost constraints")
             return 1
 
