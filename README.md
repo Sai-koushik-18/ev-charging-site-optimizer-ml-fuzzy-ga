@@ -1,265 +1,291 @@
-# Smart EV Charging Infrastructure Planning for VIT-AP University Using ML–Fuzzy–GA
-[![Status](https://img.shields.io/badge/Status-Full%20Pipeline%20Implemented-brightgreen.svg)]()
+# Smart EV Charging Station Planning for VIT-AP University (ML · Fuzzy Logic · Genetic Algorithm)
+
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()
+[![Tests](https://img.shields.io/badge/tests-36%20passing-brightgreen.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **University Project** — VIT-AP University, Amaravati, Andhra Pradesh, India
+> University project — VIT-AP University, Amaravati, Andhra Pradesh, India
 
-## Overview
+A hybrid **Machine Learning → Fuzzy Logic → Genetic Algorithm** pipeline that decides **where to build EV charging stations on the VIT-AP campus**. It works on the real campus layout from OpenStreetMap, predicts charging demand, scores every candidate site, and picks the best set of stations under a budget, then checks that answer against an exhaustive search.
 
-This project implements a **hybrid ML–Fuzzy–GA pipeline** for optimal EV charging station placement at VIT-AP University campus and surrounding area (provisional 2km buffer).
+---
 
-### Pipeline Architecture
+## Table of Contents
 
+1. [Problem Statement](#problem-statement)
+2. [Objectives](#objectives)
+3. [Architecture](#architecture)
+4. [Tech Stack](#tech-stack)
+5. [Features](#features)
+6. [Installation](#installation)
+7. [Running the Project](#running-the-project)
+8. [Implementation Details](#implementation-details)
+9. [Results](#results)
+10. [Data and Provenance](#data-and-provenance)
+11. [Project Structure](#project-structure)
+12. [Testing](#testing)
+13. [Limitations and Future Work](#limitations-and-future-work)
+14. [Acknowledgments](#acknowledgments)
+15. [License](#license)
+
+---
+
+## Problem Statement
+
+More students and staff at VIT-AP are moving to electric vehicles, and they need somewhere to charge them on campus. Choosing where to put the first chargers is not obvious:
+
+- **Budget is limited.** Each site costs ₹47–228 lakh (land, construction, grid connection) against a ₹300 lakh budget.
+- **Many factors conflict.** A site with high demand may be expensive; a cheap site may be far from where people park.
+- **Spacing matters.** Stations placed too close together serve the same people; too far apart leaves areas uncovered.
+
+Choosing by hand cannot weigh all of these at once. This project combines three techniques, each suited to one part of the problem.
+
+## Objectives
+
+1. **Predict demand** — estimate hourly charging demand at each candidate site with a machine learning model.
+2. **Score suitability** — rate each site from 0 to 1 using fuzzy logic over six factors.
+3. **Optimise placement** — choose the best set of sites within budget and spacing rules using a genetic algorithm.
+4. **Prove the result** — compare the GA's plan with simpler methods and with an exhaustive search.
+5. **Stay transparent** — label every value as real, derived or synthetic.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[OpenStreetMap campus<br/>buildings, roads, parking] --> C[Candidate sites<br/>21 sites, 7 zones]
+    W[Open-Meteo<br/>2024 hourly weather] --> M
+    C --> M[ML demand model<br/>Random Forest, GA-tuned]
+    M --> F[Fuzzy suitability<br/>6 inputs, 60 rules]
+    F --> G[Placement GA<br/>budget + spacing rules]
+    G --> E[Evaluation<br/>baselines + exhaustive search]
+    E --> D[Streamlit dashboard<br/>+ shareable HTML map]
 ```
-Input Data (Real + Derived + Synthetic)
-    │
-    ▼
-Data Preprocessing & Feature Engineering
-    │
-    ▼
-ML Demand Prediction (XGBoost) ──► Hourly demand per candidate location
-    │
-    ▼
-Fuzzy Location Suitability (scikit-fuzzy) ──► Suitability score [0,1] per candidate
-    │
-    ▼
-Genetic Algorithm Optimization (DEAP) ──► Optimal subset of K locations
-    │
-    ▼
-Evaluation & Visualization ──► Metrics, comparisons, interactive Folium map
-```
 
-### Key Features
+| Stage | Trained? | What it does |
+|-------|----------|--------------|
+| **ML** | Yes | A Random Forest learns hourly demand from time, weather, zone and nearby points of interest. A small GA searches its settings. |
+| **Fuzzy** | No | Expert-written IF–THEN rules turn six factors into one suitability score. |
+| **GA** | No (optimiser) | Searches combinations of sites and returns the best plan that satisfies every hard rule. |
 
-- **Provenance Tracking**: Every feature labeled as `REAL`, `DERIVED`, `SYNTHETIC`, or `META`
-- **Hybrid Data Strategy**: Real OSM/OpenChargeMap/Weather + Synthetic demand/traffic
-- **Configurable**: All parameters in YAML config files
-- **Reproducible**: Fixed seeds, versioned config, complete provenance
-- **Modular**: Clean separation of data, ML, fuzzy, GA, evaluation modules
-- **Interactive Dashboard**: Streamlit + Folium for result exploration
+## Tech Stack
 
-## Quick Start
+| Area | Tools |
+|------|-------|
+| Language | Python 3.10+ |
+| Data | pandas, NumPy, PyYAML |
+| Geospatial | GeoPandas, Shapely, pyproj, OpenStreetMap (Overpass API) |
+| Machine learning | scikit-learn (Random Forest), joblib |
+| Fuzzy logic | scikit-fuzzy (Mamdani inference) |
+| Optimisation | Genetic algorithm implemented from scratch with NumPy |
+| Visualisation | Streamlit, Folium, streamlit-folium, Plotly, Esri satellite tiles |
+| Testing | pytest |
 
-### Prerequisites
+## Features
 
-- Python 3.10+
-- Git
-- OpenChargeMap API key (free tier) — set as `OCM_API_KEY` environment variable
+- **Real campus layout:** candidate sites and zones are built from OpenStreetMap features inside the official VIT-AP campus boundary (OSM way 750542244).
+- **GA-tuned demand model:** a genetic algorithm searches Random Forest settings on a time-based validation window.
+- **Complete fuzzy rule base:** 35 detailed rules plus 25 covering rules guarantee every site gets a score.
+- **Hard constraints:** plans that break the budget or minimum spacing are never returned.
+- **Verified optimum:** with 21 sites there are only 1,330 possible 3-station plans, so the evaluation checks all of them.
+- **Data provenance:** every dataset carries a `data_provenance` column labelling each field `REAL`, `DERIVED`, `SYNTHETIC` or `META`.
+- **Interactive dashboard:** satellite map with OSM buildings, zones, candidate sites and chosen stations, plus rankings, cost breakdown, evaluation and model accuracy.
+- **One-command pipeline:** `python run_pipeline.py all`.
 
-### Installation
+## Installation
 
 ```bash
-git clone https://github.com/Gharsha-2006/vitap-ev-charging-ml-fuzzy-ga-.git
-cd vitap-ev-charging-ml-fuzzy-ga-
-# Install dependencies
-make install
+git clone https://github.com/Sai-koushik-18/ev-charging-site-optimizer-ml-fuzzy-ga.git
+cd ev-charging-site-optimizer-ml-fuzzy-ga
 
-# Or manually:
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
 pip install -r requirements.txt
+pip install -r requirements-dev.txt   # optional: tests and linting
 ```
 
-### Configuration
+No API keys are needed. The OpenChargeMap loader in the legacy pipeline reads an optional `OCM_API_KEY` environment variable; never commit a key to the repository.
 
-1. **Set API key** (required for OpenChargeMap):
-   ```bash
-   export OCM_API_KEY="your_api_key_here"
-   ```
+## Running the Project
 
-2. **Review configuration** in `config/`:
-   - `settings.yaml` — Main parameters (study area, costs, simulation)
-   - `fuzzy_config.yaml` — Membership functions and rules
-   - `ga_config.yaml` — GA hyperparameters
-   - `data_sources.yaml` — Data source definitions
-
-### Run Data Pipeline
+**See the results straight away** — the repository includes the pipeline outputs:
 
 ```bash
-# Fetch real data, generate synthetic data, create candidates
-make data-prep
-
-# Or with force refresh
-make data-prep-force
-
-# Validate all generated datasets
-make validate
+streamlit run demo_dashboard.py      # or: make dashboard
 ```
 
-### Expected Outputs (After `make data-prep`)
+Then open http://localhost:8501. You can also open `outputs/maps/campus_map.html` directly in a browser.
 
-```
-data/
-├── processed/
-│   ├── candidates.csv              # 25 candidate locations with all features
-│   ├── ga_fitness_inputs.csv       # GA fitness calculation inputs
-│   └── fuzzy_inputs.csv            # Fuzzy logic inputs (static per candidate)
-├── synthetic/
-│   ├── demand_history.csv          # Hourly demand (25 × 8760 = 219,000 rows)
-│   └── traffic_hourly.csv          # Hourly traffic per road segment
-└── raw/
-    ├── osm/                        # OSM roads, buildings, POIs, power, parking
-    ├── openchargemap/              # Existing EV stations
-    └── weather/                    # Open-Meteo historical weather
+**Rebuild everything:**
+
+```bash
+python run_pipeline.py all           # or: make all  (about 3–5 minutes)
 ```
 
-## Data Provenance
+**Run one stage at a time** (each stage reads the previous stage's output):
 
-Every dataset includes a `data_provenance` column (JSON) tracking the origin of each column:
+| Command | What it does | Main output |
+|---------|--------------|-------------|
+| `python run_pipeline.py candidates` | Build zones and candidate sites from the OSM extract | `data/processed/candidates_campus.csv` |
+| `python run_pipeline.py ml` | Generate demand history, GA-tune and train the model | `data/processed/candidates_campus_demand.csv`, `outputs/ml_results/metrics.json` |
+| `python run_pipeline.py fuzzy` | Score every site | `data/processed/candidates_demo_fuzzy_scored.csv` |
+| `python run_pipeline.py ga` | Select the stations | `data/processed/ga_solution_demo.csv`, `outputs/ga_results/` |
+| `python run_pipeline.py evaluate` | Compare with baselines and exhaustive search | `outputs/evaluation/` |
+| `python run_pipeline.py visualize` | Write the shareable map | `outputs/maps/campus_map.html` |
 
-| Label | Meaning |
-|-------|---------|
-| **REAL** | Directly from authoritative source (OSM, OpenChargeMap, Open-Meteo) |
-| **DERIVED** | Computed from REAL data (distances, scores, accessibility) |
-| **SYNTHETIC** | Generated from statistical models (demand, traffic, costs) |
-| **META** | Provenance tracking metadata |
+The OSM extract (`data/raw/osm/campus_osm.json`) and 2024 weather are included, so the pipeline runs offline. Add `--force-refresh` to the `candidates` stage to download the latest OSM data.
 
-### Example Provenance (candidates.csv)
+## Implementation Details
 
-```json
-{
-  "candidate_id": "REAL",
-  "latitude": "REAL",
-  "longitude": "REAL",
-  "zone": "REAL",
-  "area_sqm": "DERIVED",
-  "max_chargers": "DERIVED",
-  "land_cost_tier": "DERIVED",
-  "land_cost_inr_lakhs": "SYNTHETIC",
-  "grid_dist_m": "DERIVED",
-  "grid_connection_cost_inr_lakhs": "DERIVED",
-  "poi_score": "DERIVED",
-  "catchment_population": "DERIVED",
-  "existing_chargers_1km": "REAL",
-  "traffic_accessibility_score": "DERIVED",
-  "construction_cost_inr_lakhs": "SYNTHETIC",
-  "total_capex_inr_lakhs": "DERIVED"
-}
-```
+### 1. Candidate sites — `src/pipeline/campus_pipeline.py`
+
+- `fetch_osm()` downloads every OSM feature around the campus once and caches it.
+- `build_zones()` draws seven zones around named OSM buildings: academic (AB-1, AB-2, CB), men's hostels (MH-1 to MH-7), ladies' hostels (LH-1 to LH-3), commercial (Food Street, Rock Plaza), sports (all mapped pitches), entry points (where roads cross the campus boundary) and the rest of the campus.
+- `build_sites()` creates candidate sites in three ways: the 2 mapped parking lots, the point on the nearest drivable road to each named building's edge, and the campus entry points. Sites closer than 60 m are merged.
+- `build_candidates()` adds features using `src/data/candidate_generator.py`: zone, land-cost tier, distance to the grid connection point, POI attractiveness, distance to entry points, and costs.
+
+### 2. ML demand model — `src/ml/demand_predictor.py`, `src/ml/ga_tuner.py`
+
+- `src/data/synthetic_generator.py` generates hourly demand for each site for 2024 from zone base rates, time-of-day and weekday patterns, exams and holidays, and real Open-Meteo temperatures.
+- `EVChargingDemandPredictor` engineers features (hour, day, month, weekend, holiday, exam period, temperature, humidity, rain, one-hot zone, POI score) and trains a Random Forest.
+- The split is **temporal**: train on the first 80% of the year, test on the last 20%, so the model is always tested on future hours.
+- `tune_random_forest_ga()` evolves Random Forest settings (trees, depth, leaf size, features per split) with a GA, scoring each on a validation window taken from the training period only.
+- Each site's predicted annual demand becomes a 0–100 **demand index** relative to the busiest site.
+
+### 3. Fuzzy suitability — `src/fuzzy/scorer.py`, `config/fuzzy_config.yaml`
+
+- Six inputs: demand index, traffic accessibility, grid connection cost, land-cost tier, POI attractiveness, existing chargers nearby.
+- Each input has overlapping triangular/trapezoidal membership functions (for example *low*, *medium*, *high*).
+- **Mamdani inference** fires all matching rules; **centroid defuzzification** gives one score from 0 to 1.
+- 35 detailed rules capture expert judgement; 25 covering rules on demand × traffic ensure at least one rule always fires.
+
+### 4. Placement GA — `src/ga/optimizer.py`
+
+- **Chromosome:** one bit per site (1 = build here), always exactly K ones (a repair step enforces this).
+- **Operators:** tournament selection (size 3), uniform crossover (0.8), bit-flip mutation (0.3), elitism (best 2 kept).
+- **Fitness:** 35% demand coverage + 25% spatial coverage (sites within 250 m of a station) + 25% cost efficiency − 15% clustering penalty.
+- **Hard rules:** total cost ≤ ₹300 lakh, stations ≥ 300 m apart, all costs known. Any violation gives fitness 0.
+- The pipeline runs **10 independent GA runs** and keeps the best, which avoids a single run stalling on a local optimum.
+
+### 5. Evaluation — `src/evaluation/evaluate.py`
+
+Every method picks the same number of stations under the same rules and is scored with the GA's own fitness function: greedy by fuzzy score, greedy by ML demand, greedy by lowest cost, the average of 1,000 random plans, and an exhaustive search of every possible plan.
+
+### 6. Pipeline and dashboard
+
+- `run_pipeline.py` is the command-line entry point; each stage is a function in `src/pipeline/campus_pipeline.py`.
+- `demo_dashboard.py` is the Streamlit app. It reloads data whenever the pipeline rewrites a file.
+- `src/visualization/campus_map.py` writes a standalone HTML map.
+
+## Results
+
+Current demo configuration (`config/ga_config_demo.yaml`): 3 stations, ₹300 lakh budget, 300 m minimum spacing.
+
+**Selected stations**
+
+| Rank | Site | Zone | Cost |
+|------|------|------|------|
+| 1 | Roadside near AB-2 | Academic | ₹47.2 L |
+| 2 | Roadside near MH-2 | Men's hostels | ₹50.1 L |
+| 3 | Roadside near Sports Triangle 2 | Ladies' hostels | ₹51.0 L |
+
+Total ₹148.3 lakh, leaving ₹151.7 lakh. The closest pair of stations is 344 m apart; 95% of candidate sites lie within 250 m of a station. Up to 4 stations fit the same budget and spacing.
+
+**GA vs other methods** (fitness, higher is better)
+
+| Method | Fitness |
+|--------|---------|
+| GA, best of 10 runs | **0.518** |
+| Exhaustive search over all 1,330 plans (true optimum) | 0.518 |
+| Cheapest sites first | 0.506 |
+| Top fuzzy score / highest ML demand first | 0.482 |
+| Random valid placement (mean) | 0.458 |
+
+Only 188 of the 1,330 plans meet the budget and spacing rules; the GA returns the best of them.
+
+**Demand model** (tested on the last 20% of 2024)
+
+| Model | RMSE (kWh/h) | R² |
+|-------|--------------|----|
+| Average by site, hour and weekend | 0.489 | — |
+| Random Forest, default settings | 0.485 | 0.925 |
+| Random Forest, GA-tuned | **0.413** | **0.945** |
+
+The model is trained on synthetic demand, so these figures show the method works; they are not a measure of real-world accuracy.
+
+## Data and Provenance
+
+| Data | Source | Label |
+|------|--------|-------|
+| Campus boundary, buildings, roads, parking | OpenStreetMap | REAL |
+| Hourly weather, 2024 | Open-Meteo | REAL |
+| Zones and candidate sites | Built from OSM geometry | DERIVED |
+| Charging demand history | Statistical model | SYNTHETIC |
+| Land, construction and grid costs | Rates in `config/settings.yaml` | SYNTHETIC |
+| Grid connection point | OSM campus power building (no transformer is mapped) | SYNTHETIC assumption |
+| Existing chargers nearby | Set to 0 (OpenChargeMap unavailable) | SYNTHETIC assumption |
 
 ## Project Structure
 
 ```
-vitap-ev-charging-ml-fuzzy-ga/
-├── config/                 # YAML configuration files
+├── config/
+│   ├── settings.yaml            # study area, costs, demand model, zone tiers
+│   ├── fuzzy_config.yaml        # membership functions and 60 rules
+│   ├── ga_config_demo.yaml      # GA used by the pipeline
+│   ├── ga_config.yaml           # original GA settings, kept for reference
+│   └── data_sources.yaml        # data source definitions
 ├── data/
-│   ├── raw/               # Downloaded real data (gitignored)
-│   ├── processed/         # Pipeline outputs (candidates, GA inputs, fuzzy inputs)
-│   ├── synthetic/         # Generated synthetic data (demand, traffic) (gitignored)
-│   ├── external/          # Static reference data (zone polygons, EV adoption curves)
-│   └── samples/           # Small samples for CI (gitignored)
+│   ├── raw/osm/                 # OSM campus extract and exported layers
+│   ├── raw/weather/             # Open-Meteo 2024 weather
+│   ├── external/                # zones, grid point, EV adoption curve
+│   └── processed/               # candidate sites, scores, GA solution
+├── outputs/                     # evaluation, ML metrics, GA history, HTML map
 ├── src/
-│   ├── data/              # Data acquisition & generation
-│   ├── ml/                # ML demand prediction (XGBoost)
-│   ├── fuzzy/             # Fuzzy suitability scoring (scikit-fuzzy)
-│   ├── ga/                # Genetic algorithm optimization (DEAP)
-│   ├── evaluation/        # Metrics & baselines
-│   ├── visualization/     # Folium maps & charts
-│   └── pipeline/          # Pipeline entry points
-├── notebooks/             # Jupyter notebooks for exploration
-├── tests/                 # Unit tests
-├── outputs/               # Final results (models, maps, reports) (gitignored)
-├── logs/                  # Pipeline logs (gitignored)
-├── docs/                  # Documentation
-├── requirements.txt
+│   ├── data/                    # loaders, candidate features, synthetic demand, provenance
+│   ├── ml/                      # demand predictor and GA hyperparameter tuner
+│   ├── fuzzy/                   # fuzzy suitability scorer
+│   ├── ga/                      # placement genetic algorithm
+│   ├── evaluation/              # GA vs baselines and exhaustive search
+│   ├── visualization/           # standalone campus map
+│   └── pipeline/                # campus pipeline stages + legacy data prep
+├── tests/                       # pytest suite
+├── run_pipeline.py              # command-line entry point
+├── demo_dashboard.py            # Streamlit dashboard
 ├── Makefile
-├── run_pipeline.py        # Main CLI entry point
-├── demo_dashboard.py      # Streamlit dashboard
-└── README.md
+├── requirements.txt
+└── requirements-dev.txt
 ```
 
-## Configuration Highlights
-
-### Study Area (PROVISIONAL)
-- **Center**: VIT-AP University (16.4940°N, 80.4993°E) — *provisional, aligned to landmarks*
-- **Bounds**: ~1.2km × 1.3km buffer around campus landmarks
-- **Zones**: 10 manually digitized zones (academic, hostels, staff, admin, commercial, sports, gates)
-- **Provenance**: `provisional: true` in config — NOT from official VIT-AP master plan
-
-### Cost Assumptions (SYNTHETIC — Clearly Documented)
-| Component | Assumption |
-|-----------|------------|
-| Land cost (academic/very_low) | ₹500/sqm |
-| Land cost (commercial/high) | ₹15,000/sqm |
-| Grid connection | ₹2 lakh/km |
-| Construction base | ₹15 lakh |
-| Per charger (60kW DC) | ₹3 lakh |
-| Target budget | ₹300 lakh |
-| Min station separation | 1000m |
-
-### Demand Simulation (SYNTHETIC)
-- Base demand per zone calibrated to Indian campus studies
-- Temporal patterns: weekday/weekend/holiday/exam periods
-- Weather sensitivity: HVAC load at temp <20°C or >38°C
-- 20% annual EV growth rate
-
-### GA Configuration
-- **Target stations**: 5 (changed from 10)
-- **Budget constraint**: ₹300 lakh (HARD)
-- **Min separation**: 1000m (HARD)
-- **Feasibility note**: Current demo shows max ~2-3 stations feasible under hard constraints; GA will report infeasibility explicitly if 5 stations cannot be placed
-
-## Development Status
-
-| Stage | Status | Description |
-|-------|--------|-------------|
-| **Data Layer** | ✅ Complete | OSM, OCM, Weather fetchers; synthetic generators; candidate generation; validation |
-| **ML Pipeline** | ✅ Complete | XGBoost demand prediction with time-series CV, SHAP explainability |
-| **Fuzzy Logic** | ✅ Complete | scikit-fuzzy Mamdani inference with 6 inputs, 20+ rules |
-| **GA Optimization** | ✅ Complete | DEAP binary encoding, fixed cardinality, multi-objective fitness |
-| **Evaluation** | ⏳ In Progress | Baselines (random, greedy, k-means), statistical comparison |
-| **Visualization** | ✅ Complete | Interactive Folium map with all layers + Streamlit dashboard |
-
-## Known Limitations
-
-1. **Provisional Zone Boundaries**: Campus zones manually digitized from satellite imagery — NOT from official VIT-AP master plan
-2. **Demo Transformers**: Electrical transformer locations are hypothetical (`vitap_demo_transformers.geojson`, provenance=SYNTHETIC) — real VIT-AP transformer data not available
-3. **Missing Reference Data**: `indian_charging_patterns.csv` referenced in config but not present — `indian_ev_adoption_curve.csv` available as proxy
-4. **GA Feasibility**: 5-station target may be infeasible under ₹300L budget + 1000m separation; pipeline reports constraint violations explicitly
-5. **No Real Demand Data**: Campus-specific EV charging demand not available; synthetic model calibrated to Indian national averages
-
-## Validation
-
-Run validation to check all datasets:
+## Testing
 
 ```bash
-make validate
+python -m pytest            # or: make test (adds coverage)
 ```
 
-Outputs:
-- Console summary with provenance, row counts, missing values
-- `logs/validation_report.txt` — Human-readable report
-- `logs/validation_report.json` — Machine-readable results
+36 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; and candidate provenance.
 
-## Dashboard
+## Limitations and Future Work
 
-Launch interactive dashboard:
+| Limitation | Next step |
+|------------|-----------|
+| The ML model is trained on synthetic demand | Validate on real charging sessions (e.g. Caltech's public ACN-Data) |
+| Costs and the grid connection point are assumptions | Use transformer locations and cost records from the campus estates office |
+| Fuzzy rules are written by hand | Collect suitability ratings for example sites and tune the rules with a GA (genetic-fuzzy system) |
+| Zones come from OSM building positions, not an official plan | Align with the VIT-AP master plan |
+| Existing chargers are unknown | Add an OpenChargeMap key or a campus survey |
 
-```bash
-streamlit run demo_dashboard.py
-```
-
-Features:
-- Campus zone polygons (DERIVED)
-- Candidate locations with fuzzy scores
-- GA-selected optimal stations
-- Demand heatmaps
-- Cost breakdowns
-- Provenance-aware layer toggles
+The original data pipeline (`python run_pipeline.py data-prep` / `validate`) is kept for reference; the campus pipeline above supersedes it.
 
 ## Acknowledgments
 
-- OpenStreetMap contributors
-- OpenChargeMap for charging station data
-- Open-Meteo for weather data
-- VIT-AP University for campus context
-- NITI Aayog / SIAM for EV adoption reference data
-
----
+- © OpenStreetMap contributors (ODbL) — campus buildings, roads and boundary
+- Open-Meteo — historical weather
+- Esri World Imagery and World Street Map — dashboard base maps
+- NITI Aayog / SIAM — EV adoption reference figures
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-**Note**: This is a university project. Synthetic data is clearly labeled and documented. Real campus-specific EV demand and traffic data were not available at time of development. All assumptions are configurable via `config/settings.yaml`. Provisional campus boundaries and demo transformer locations are clearly marked — do not use for official planning without verification.
+MIT License — see [LICENSE](LICENSE).
