@@ -108,15 +108,19 @@
       },
     });
     const campus = L.geoJSON(D.geo.campus, { style: { color: "#ffffff", weight: 3, dashArray: "8 6", fill: false }, interactive: false });
+    const dot = (color) => (f, ll) => L.circleMarker(ll, { radius: 4, color, weight: 1.5, fillColor: color, fillOpacity: 0.7 });
     const buildings = L.geoJSON(D.geo.buildings, {
+      pointToLayer: dot(COLORS.amber),
       style: { color: COLORS.amber, weight: 1.2, fillColor: COLORS.amber, fillOpacity: 0.32 },
       onEachFeature: (f, l) => l.bindTooltip(`${escape(f.properties.name || "Building")} · ${escape(f.properties.building || "")}`, { sticky: true }),
     });
     const parking = L.geoJSON(D.geo.parking, {
+      pointToLayer: dot("#4fd1b5"),
       style: { color: "#4fd1b5", weight: 2, fillColor: "#4fd1b5", fillOpacity: 0.55 },
       onEachFeature: (f, l) => l.bindTooltip(`Parking lot · ${escape(f.properties.osm_id)}`, { sticky: true }),
     });
     const zones = L.geoJSON(D.geo.zones, {
+      pointToLayer: dot(COLORS.blue),
       style: (f) => { const c = zone(f.properties.zone_id).color; return { color: c, weight: 2, dashArray: "6 5", fillColor: c, fillOpacity: 0.16 }; },
       onEachFeature: (f, l) => {
         l.bindTooltip(escape(f.properties.zone_name), { sticky: true });
@@ -124,7 +128,7 @@
         l.on("mouseout", () => zones.resetStyle(l));
       },
     });
-    const state = L.geoJSON(D.geo.state, { style: { color: COLORS.blueLight, weight: 2, dashArray: "10 7", fill: false }, interactive: false });
+    const state = D.geo.state ? L.geoJSON(D.geo.state, { style: { color: COLORS.blueLight, weight: 2, dashArray: "10 7", fill: false }, interactive: false }) : null;
 
     const chargerFeatures = (D.geo.chargers && D.geo.chargers.features) || [];
     const chargers = L.markerClusterGroup({
@@ -186,10 +190,10 @@
         { layer: campus, on: true, name: "Campus boundary", sw: swatch.line("#6b6e80", true) },
       ] },
       { title: "Context", rows: [
-        { layer: chargers, on: true, name: "Public chargers, Andhra Pradesh", count: chargerFeatures.length, sw: swatch.dot(COLORS.orange) },
-        { layer: state, on: true, name: "Andhra Pradesh boundary", sw: swatch.line(COLORS.blue, true) },
+        { layer: chargers, on: true, name: `Public chargers, ${EV.place.chargers_scope.replace(/^in /, "")}`, count: chargerFeatures.length, sw: swatch.dot(COLORS.orange) },
+        state && { layer: state, on: true, name: `${EV.place.region || "State"} boundary`, sw: swatch.line(COLORS.blue, true) },
         { layer: labels, on: true, name: "Place labels", sw: swatch.line(COLORS.ink) },
-      ] },
+      ].filter(Boolean) },
     ];
     const groupsEl = document.getElementById("layer-groups");
     GROUPS.forEach((g) => {
@@ -245,7 +249,16 @@
     document.getElementById("zoom-in").addEventListener("click", () => map.zoomIn());
     document.getElementById("zoom-out").addEventListener("click", () => map.zoomOut());
     document.getElementById("reset-view").addEventListener("click", () => map.flyToBounds(campusBounds, { padding: [30, 30], duration: EV.reduceMotion ? 0 : 1.2 }));
-    document.getElementById("state-view").addEventListener("click", () => map.flyToBounds(state.getBounds(), { padding: [20, 20], duration: EV.reduceMotion ? 0 : 1.4 }));
+    const stateBtn = document.getElementById("state-view");
+    if (state) {
+      stateBtn.textContent = EV.place.region || "State";
+      stateBtn.addEventListener("click", () => map.flyToBounds(state.getBounds(), { padding: [20, 20], duration: EV.reduceMotion ? 0 : 1.4 }));
+    } else if (chargerFeatures.length) {
+      stateBtn.textContent = "Nearby chargers";
+      stateBtn.addEventListener("click", () => map.flyToBounds(chargers.getBounds().extend(campusBounds), { padding: [30, 30], duration: EV.reduceMotion ? 0 : 1.2 }));
+    } else {
+      stateBtn.remove();
+    }
 
     new ResizeObserver(EV.debounce(() => map.invalidateSize(), 120)).observe(document.getElementById("leaflet"));
 

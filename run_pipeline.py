@@ -11,6 +11,8 @@ Stages (real VIT-AP campus):
   evaluate     - Compare the GA plan with baselines and the exhaustive optimum
   visualize    - Write a shareable campus map (outputs/maps/campus_map.html)
   web          - Export data for the web dashboard (web/index.html)
+  place        - Plan any campus or area with your own budget, e.g.
+                   python run_pipeline.py place --place "IIT Madras" --budget 300
   all          - Run candidates -> ml -> fuzzy -> ga -> evaluate -> visualize -> web
 
 Legacy stages (original study area, superseded by 'candidates'):
@@ -118,8 +120,25 @@ def run_visualize(args):
 
 def run_web(args):
     """Export pipeline outputs for the web dashboard."""
-    from src.visualization.web_export import build_web_data
+    from src.visualization.web_export import build_web_data, export_all_places
     build_web_data()
+    export_all_places()
+    return 0
+
+
+def run_place(args):
+    """Plan stations for any place with the given budget."""
+    from src.pipeline.place_pipeline import PlaceSettings, run_place as plan
+    if not args.place and not args.boundary:
+        logger.error("place needs --place \"Name\" or --boundary area.geojson")
+        return 2
+    try:
+        plan(place=args.place, boundary=args.boundary, name=args.name, refresh=args.force_refresh,
+             settings=PlaceSettings(budget_lakhs=args.budget, n_stations=args.stations, spacing_m=args.spacing,
+                                    coverage_m=args.coverage, max_sites=args.max_sites, max_area_km2=args.max_area))
+    except RuntimeError as exc:
+        print(f"Cannot plan this place: {exc}")
+        return 1
     return 0
 
 
@@ -131,7 +150,7 @@ def main():
     )
     parser.add_argument(
         "stage",
-        choices=["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "web", "all", "data-prep", "validate"],
+        choices=["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "web", "place", "all", "data-prep", "validate"],
         help="Pipeline stage to run",
     )
     parser.add_argument(
@@ -145,6 +164,16 @@ def main():
         help="Force re-download of real data (OSM extract for 'candidates')",
     )
 
+    place = parser.add_argument_group("place options")
+    place.add_argument("--place", help="Place to search for, e.g. \"IIT Madras\"")
+    place.add_argument("--boundary", help="GeoJSON file with the area outline (instead of --place)")
+    place.add_argument("--name", help="Display name (defaults to the search text or file name)")
+    place.add_argument("--budget", type=float, default=300.0, help="Budget in INR lakhs (default 300)")
+    place.add_argument("--stations", type=int, help="Fixed number of stations (default: best count the budget allows)")
+    place.add_argument("--spacing", type=float, default=300.0, help="Minimum metres between stations (default 300)")
+    place.add_argument("--coverage", type=float, default=250.0, help="Coverage radius in metres (default 250)")
+    place.add_argument("--max-sites", type=int, default=40, help="Maximum candidate sites (default 40)")
+    place.add_argument("--max-area", type=float, default=25.0, help="Largest area in km2 (default 25)")
     args = parser.parse_args()
     setup_logging(args.verbose)
 
@@ -160,6 +189,7 @@ def main():
         "evaluate": run_evaluate,
         "visualize": run_visualize,
         "web": run_web,
+        "place": run_place,
     }
 
     if args.stage == "all":

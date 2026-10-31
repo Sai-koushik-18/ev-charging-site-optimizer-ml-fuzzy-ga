@@ -147,6 +147,47 @@ python run_pipeline.py all           # or: make all  (about 3–5 minutes)
 
 The OSM extract (`data/raw/osm/campus_osm.json`) and 2024 weather are included, so the pipeline runs offline. Add `--force-refresh` to the `candidates` stage to download the latest OSM data.
 
+## Plan Any Place
+
+The method is not tied to VIT-AP. Give a place name (or an outline you drew) and a budget:
+
+```bash
+python run_pipeline.py place --place "IIT Madras" --budget 300
+python run_pipeline.py place --boundary my_area.geojson --name "My campus" --budget 150
+make place PLACE="NIT Warangal" BUDGET=300
+```
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `--place` / `--boundary` | — | Place to search for (free Nominatim search), or a GeoJSON outline |
+| `--budget` | 300 | Budget in ₹ lakhs |
+| `--stations` | best for the budget | Fix the number of stations instead |
+| `--spacing` / `--coverage` | 300 m / 250 m | Minimum gap between stations; coverage radius |
+| `--max-sites` / `--max-area` | 40 / 25 km² | Limits that keep a run to a few minutes |
+
+What happens (`src/pipeline/place_pipeline.py`):
+
+1. Nominatim returns the place's outline; Overpass returns its OSM features; Open-Meteo its 2024 weather; OpenChargeMap nearby chargers (optional key).
+2. Zones come from OSM **tags**: shops and food → commercial, dormitories → residences, university/college buildings → academic, offices → administration, pitches → sports, plus entry points and the rest of the area.
+3. Sites: OSM parking lots, the road point nearest each tagged building, and entry points, thinned to at most `--max-sites`.
+4. The demand model is retrained on the place's own synthetic history, reusing the settings the GA tuned on VIT-AP.
+5. **Minimum budget**: the exact cheapest plan for 1, 2, 3… stations that respects the spacing rule (branch and bound, checked against brute force in `tests/test_place_planning.py`). A budget below the one-station minimum is rejected.
+6. The GA plans every station count the budget allows (10 runs each) and keeps the highest-fitness plan, so it does not simply spend the whole budget.
+7. The plan is checked against greedy, random and exhaustive search, and exported to the web dashboard, where a switcher in the top bar moves between places.
+
+**Example runs**
+
+| Place | Area | Sites | Minimum (1 station) | Budget | Plan | GA = optimum |
+|-------|------|-------|---------------------|--------|------|--------------|
+| VIT-AP University | 0.5 km² | 21 | ₹46.88 L | ₹300 L | 3 stations (demo config) | ✓ |
+| IIT Madras | 2.46 km² | 34 | ₹48.12 L | ₹300 L | 6 stations, ₹299.64 L | ✓ |
+| NIT Warangal | 0.80 km² | 40 | ₹46.48 L | ₹300 L | 5 stations, ₹274.86 L | ✓ |
+| College of Engineering Guindy | 0.69 km² | 40 | ₹47.63 L | ₹150 L | 3 stations, ₹146.70 L | ✓ |
+
+At NIT Warangal six stations would fit the budget, but the GA chose five: a sixth would sit too close to the others and lower the plan's score.
+
+**Limits.** Results depend on how well OpenStreetMap maps the place; cost rates are the Indian defaults in `config/settings.yaml`; demand is synthetic; each run takes about 4–6 minutes, mostly retraining the demand model.
+
 ## Implementation Details
 
 ### 1. Candidate sites — `src/pipeline/campus_pipeline.py`

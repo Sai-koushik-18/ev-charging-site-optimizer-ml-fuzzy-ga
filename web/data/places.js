@@ -1,0 +1,2 @@
+// Generated list of places the dashboard can show. Do not edit by hand.
+window.EV_PLACES = [{"slug": "vit-ap", "name": "VIT-AP", "file": "data/dashboard-data.js", "budget": 300.0}, {"slug": "college-of-engineering-guindy", "name": "College of Engineering Guindy", "file": "data/places/college-of-engineering-guindy.js", "budget": 150.0}, {"slug": "iit-madras", "name": "IIT Madras", "file": "data/places/iit-madras.js", "budget": 300.0}, {"slug": "nit-warangal", "name": "NIT Warangal", "file": "data/places/nit-warangal.js", "budget": 300.0}];

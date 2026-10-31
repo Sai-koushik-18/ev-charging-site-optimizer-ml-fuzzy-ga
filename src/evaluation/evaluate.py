@@ -6,7 +6,6 @@ minimum spacing, known costs) and is scored with the GA's own fitness
 function, so the numbers are directly comparable.
 """
 
-import itertools
 import json
 import math
 import random
@@ -18,8 +17,94 @@ import pandas as pd
 
 from src.ga.optimizer import GeneticAlgorithmOptimizer, Individual
 
-MAX_EXHAUSTIVE = 200_000  # combinations; beyond this the exhaustive check is skipped
+MAX_VALID_PLANS = 200_000  # beyond this many valid plans the exhaustive check is skipped
 N_RANDOM = 1000
+
+
+def _rules(ga: GeneticAlgorithmOptimizer):
+    p = ga.config["fitness_params"]
+    return (ga.candidates_df["total_capex_inr_lakhs"].to_numpy(dtype=float), ga.distance_matrix,
+            p["budget_lakhs"], p["min_station_distance_m"])
+
+
+def valid_plans(ga: GeneticAlgorithmOptimizer, k: int, cap: int = MAX_VALID_PLANS):
+    """
+    Every k-site plan that meets the budget and spacing rules, built by depth-first
+    search that abandons a partial plan as soon as it breaks a rule. This visits the
+    same valid plans as checking all combinations, without building the invalid ones.
+
+    Returns (plans, complete); complete is False when more than `cap` plans exist.
+    """
+    cost, dist, budget, min_d = _rules(ga)
+    n = len(cost)
+    plans: List[tuple] = []
+    chosen: List[int] = []
+
+    def extend(start: int, total: float) -> bool:
+        if len(chosen) == k:
+            plans.append(tuple(chosen))
+            return len(plans) <= cap
+        for i in range(start, n - (k - len(chosen)) + 1):
+            c = cost[i]
+            if np.isnan(c) or total + c > budget or any(dist[i, j] < min_d for j in chosen):
+                continue
+            chosen.append(i)
+            ok = extend(i + 1, total + c)
+            chosen.pop()
+            if not ok:
+                return False
+        return True
+
+    complete = extend(0, 0.0)
+    return plans[:cap], complete
+
+
+def cheapest_plan(ga: GeneticAlgorithmOptimizer, k: int):
+    """
+    Cheapest k-site plan that meets the spacing rule, ignoring the budget (exact).
+    Branch and bound over sites sorted by cost: a partial plan is dropped once even
+    the cheapest possible completion cannot beat the best plan found so far.
+    Returns (cost, site_indices) or None if no k sites can be spaced far enough apart.
+    """
+    cost, dist, _, min_d = _rules(ga)
+    order = [i for i in np.argsort(cost) if not np.isnan(cost[i])]
+    best = [np.inf, None]
+    chosen: List[int] = []
+
+    def extend(pos: int, total: float):
+        if len(chosen) == k:
+            if total < best[0]:
+                best[0], best[1] = total, tuple(chosen)
+            return
+        need = k - len(chosen)
+        for p in range(pos, len(order) - need + 1):
+            i = order[p]
+            if total + cost[i] * need >= best[0]:
+                break  # remaining sites cost at least cost[i] each
+            if any(dist[i, j] < min_d for j in chosen):
+                continue
+            chosen.append(i)
+            extend(p + 1, total + cost[i])
+            chosen.pop()
+
+    extend(0, 0.0)
+    return None if best[1] is None else (float(best[0]), best[1])
+
+
+def min_budget_table(ga: GeneticAlgorithmOptimizer, k_max: int = 10) -> pd.DataFrame:
+    """Minimum budget for 1..k stations; stops at the first count no spacing-valid plan allows."""
+    names = ga.candidates_df["name"].tolist()
+    ids = ga.candidates_df["candidate_id"].tolist()
+    rows = []
+    for k in range(1, min(k_max, len(names)) + 1):
+        found = cheapest_plan(ga, k)
+        if found is None:
+            rows.append({"n_stations": k, "possible": False, "min_cost_lakhs": None, "site_ids": "", "sites": ""})
+            break
+        c, idx = found
+        rows.append({"n_stations": k, "possible": True, "min_cost_lakhs": c,
+                     "site_ids": ", ".join(ids[i] for i in idx), "sites": ", ".join(names[i] for i in idx)})
+    return pd.DataFrame(rows)
 
 
 def score_plan(ga: GeneticAlgorithmOptimizer, idx: Sequence[int]) -> Dict:
@@ -102,9 +187,11 @@ def evaluate(ga: GeneticAlgorithmOptimizer, ga_site_ids: Sequence[str], seed: in
     summary = {"n_sites": n, "n_stations": k, "random_valid_share": len(feasible_random) / N_RANDOM}
     n_combos = math.comb(n, k)
     summary["n_combinations"] = n_combos
-    if n_combos <= MAX_EXHAUSTIVE:
-        all_scores = [(idx, score_plan(ga, idx)) for idx in itertools.combinations(range(n), k)]
-        valid = [(idx, s) for idx, s in all_scores if s["feasible"]]
+    plans, complete = valid_plans(ga, k)
+    if not complete:
+        summary["exhaustive_skipped"] = f"more than {MAX_VALID_PLANS:,} valid plans"
+    else:
+        valid = [(idx, s) for idx, s in ((idx, score_plan(ga, idx)) for idx in plans) if s["feasible"]]
         summary["n_valid_plans"] = len(valid)
         if valid:
             best_idx, _ = max(valid, key=lambda t: t[1]["fitness"])
@@ -128,9 +215,13 @@ def run_evaluation(scored_csv: str, solution_csv: str, ga_config: str,
     out.mkdir(parents=True, exist_ok=True)
     result["table"].to_csv(out / "comparison.csv", index=False)
     (out / "summary.json").write_text(json.dumps(result["summary"], indent=2), encoding="utf-8")
+    min_budget = min_budget_table(ga)
+    min_budget.to_csv(out / "min_budget.csv", index=False)
 
     cols = ["method", "feasible", "fitness", "demand_coverage", "spatial_coverage", "total_cost_lakhs", "min_spacing_m"]
     print("\n=== GA vs baselines (same budget, spacing and station count) ===")
     print(result["table"][[c for c in cols if c in result["table"]]].round(3).to_string(index=False))
     print(json.dumps(result["summary"], indent=2))
+    print("\n=== Minimum budget (cheapest plan that meets the spacing rule) ===")
+    print(min_budget[["n_stations", "possible", "min_cost_lakhs", "sites"]].round(2).to_string(index=False))
     return result

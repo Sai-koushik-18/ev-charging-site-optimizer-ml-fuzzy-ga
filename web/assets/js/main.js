@@ -11,10 +11,14 @@
   const nZones = new Set(D.candidates.map((c) => c.zone)).size;
   const exported = new Date(D.meta.generated_at);
   const dateText = exported.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const place = EV.place;
 
   function hero() {
+    document.title = `EV Charging Location Optimizer — ${place.short}`;
+    document.getElementById("hero-eyebrow").textContent = `${place.name} · EV charging infrastructure study`;
+    document.getElementById("brand-place").textContent = ` · ${place.short}`;
     document.getElementById("hero-lede").innerHTML =
-      `Where should VIT-AP build its first EV chargers? We turn real OpenStreetMap data into <strong>${D.candidates.length} candidate sites</strong>, predict demand with a GA-tuned Random Forest, score suitability with <strong>${D.fuzzy.n_rules} fuzzy rules</strong>, and let a genetic algorithm choose <strong>${D.ga.n_stations} stations</strong> within a <strong>${fmt.lakh(budget, 0)}</strong> budget.`;
+      `Where should ${escape(place.short)} build its first EV chargers? We turn real OpenStreetMap data into <strong>${D.candidates.length} candidate sites</strong>, predict demand with a GA-tuned Random Forest, score suitability with <strong>${D.fuzzy.n_rules} fuzzy rules</strong>, and let a genetic algorithm choose <strong>${D.ga.n_stations} stations</strong> within a <strong>${fmt.lakh(budget, 0)}</strong> budget.`;
 
     document.getElementById("hero-status").innerHTML =
       `<span class="dot"></span><span>Pipeline complete</span><span class="status__sep">/</span>
@@ -117,13 +121,13 @@
     const g = D.geo;
     const n = (x) => fmt.num((x && x.features && x.features.length) || 0);
     const ITEMS = [
-      ["REAL", "Campus boundary & buildings", `OpenStreetMap: the official campus outline and ${n(g.buildings)} mapped buildings.`],
+      ["REAL", "Boundary & buildings", `OpenStreetMap: the ${escape(place.short)} outline and ${n(g.buildings)} mapped buildings.`],
       ["REAL", "Campus roads & parking", `OpenStreetMap: ${n(g.roads)} road segments and ${n(g.parking)} parking lots on campus.`],
       ["REAL", "Hourly weather, 2024", "Open-Meteo archive: temperature, humidity and rain feed the demand model."],
-      ["REAL", "Existing public chargers", `OpenChargeMap: ${n(g.chargers)} chargers inside the Andhra Pradesh boundary.`],
+      ["REAL", "Existing public chargers", `OpenChargeMap: ${n(g.chargers)} chargers ${escape(place.chargers_scope)}.`],
       ["DERIVED", "Zones & candidate sites", `${nZones} zones and ${D.candidates.length} sites built from OSM geometry (parking lots, roadside spots, entry points).`],
-      ["SYNTHETIC", "Charging demand history", "Statistical model of hourly demand; VIT-AP has no charging records yet."],
-      ["SYNTHETIC", "Land, construction & grid costs", "Rates from config/settings.yaml; grid point is the OSM-mapped campus power building."],
+      ["SYNTHETIC", "Charging demand history", `Statistical model of hourly demand; ${place.short} has no public charging records.`],
+      ["SYNTHETIC", "Land, construction & grid costs", `Rates from config/settings.yaml. Grid: ${place.grid_note || "the OSM-mapped campus power building"}.`],
     ];
     const el = document.getElementById("provenance");
     el.innerHTML = ITEMS.map(([tag, title, text], i) =>
@@ -136,8 +140,9 @@
     const d = feats.map((f) => f.properties.distance_to_campus_km);
     const nearest = feats.reduce((a, b) => (a.properties.distance_to_campus_km <= b.properties.distance_to_campus_km ? a : b)).properties;
     const near3 = D.candidates.filter((c) => (c.existing_chargers_3km || 0) > 0).length;
+    const bands = place.region ? [50, 100, 300] : [1, 3, 5];
     document.getElementById("charger-caption").innerHTML =
-      `<strong>${feats.length}</strong> public chargers in Andhra Pradesh (OpenChargeMap): ${d.filter((x) => x <= 50).length} within 50 km of campus, ${d.filter((x) => x <= 100).length} within 100 km, ${d.filter((x) => x <= 300).length} within 300 km. The nearest is <strong>${fmt.num(nearest.distance_to_campus_km, 1)} km</strong> away (${escape(nearest.name)}, ${escape(nearest.town)}). ${near3 ? `${near3} candidate sites have a charger within 3 km.` : "None are within 3 km of any candidate site."}`;
+      `<strong>${feats.length}</strong> public chargers ${escape(place.chargers_scope)} (OpenChargeMap): ${bands.map((km) => `${d.filter((x) => x <= km).length} within ${km} km`).join(", ")} of the area. The nearest is <strong>${fmt.num(nearest.distance_to_campus_km, 1)} km</strong> away (${escape(nearest.name)}, ${escape(nearest.town)}). ${near3 ? `${near3} candidate sites have a charger within 3 km.` : "None are within 3 km of any candidate site."}`;
   }
 
   function underlines() {
@@ -169,6 +174,23 @@
     document.querySelectorAll("main section[id]").forEach((s) => io.observe(s));
   }
 
+  function placeSwitch() {
+    const list = window.EV_PLACES || [];
+    const dd = document.getElementById("place-switch");
+    document.getElementById("place-current").textContent = place.short;
+    if (list.length < 2) { dd.classList.add("is-single"); }
+    const btn = dd.querySelector(".dropdown__btn");
+    const menu = dd.querySelector(".dropdown__menu");
+    menu.innerHTML = list.map((p) => {
+      const href = p.slug === "vit-ap" ? "index.html" : `index.html?place=${encodeURIComponent(p.slug)}`;
+      return `<li role="option" aria-selected="${p.slug === place.slug}"><a href="${href}">${escape(p.name)}${p.budget ? `<small>₹${fmt.num(p.budget)} L budget</small>` : ""}</a></li>`;
+    }).join("");
+    const setOpen = (o) => { dd.classList.toggle("is-open", o); btn.setAttribute("aria-expanded", o); };
+    btn.addEventListener("click", () => setOpen(!dd.classList.contains("is-open")));
+    document.addEventListener("click", (e) => { if (!dd.contains(e.target)) setOpen(false); });
+    dd.addEventListener("keydown", (e) => { if (e.key === "Escape") { setOpen(false); btn.focus(); } });
+  }
+
   function footer() {
     document.getElementById("footer-meta").textContent =
       `Built from the pipeline outputs exported ${dateText} · ${D.candidates.length} candidates · ${D.evaluation.methods.length} methods compared · numbers are read from data/ and outputs/, never typed in.`;
@@ -180,6 +202,7 @@
       return;
     }
     hero();
+    placeSwitch();
     steps();
     verdict();
     provenance();

@@ -4,6 +4,8 @@
 
   const D = window.DASHBOARD_DATA;
   const EV = (window.EV = { D });
+  EV.place = Object.assign({ slug: "vit-ap", name: "VIT-AP University", short: "VIT-AP", chargers_scope: "in Andhra Pradesh" },
+    (D && D.meta && D.meta.place) || {});
 
   EV.reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -15,6 +17,8 @@
 
   EV.ZONES = {
     academic: { label: "Academic", color: "#3d73ff" },
+    residential: { label: "Residences", color: "#e25c9c" },
+    admin: { label: "Administration", color: "#8b5cf6" },
     hostel_boys: { label: "Men’s hostels", color: "#ff7a2f" },
     hostel_girls: { label: "Ladies’ hostels", color: "#e25c9c" },
     commercial: { label: "Commercial", color: "#f2b33d" },

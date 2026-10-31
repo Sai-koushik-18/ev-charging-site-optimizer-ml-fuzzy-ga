@@ -45,11 +45,19 @@ def _records(df: pd.DataFrame, columns=None) -> list:
     return rows
 
 
+def _round_coords(c, nd=6):
+    """Round coordinates to 6 decimals (~10 cm) to keep the dashboard data small."""
+    return [_round_coords(x, nd) for x in c] if isinstance(c, list) else round(c, nd)
+
+
 def _geojson(path: str, keep=None):
     p = Path(path)
     if not p.exists():
         return None
     data = json.loads(p.read_text(encoding="utf-8"))
+    for f in data.get("features", []):
+        if f.get("geometry"):
+            f["geometry"]["coordinates"] = _round_coords(f["geometry"]["coordinates"])
     if keep is not None:
         for f in data.get("features", []):
             f["properties"] = {k: f["properties"].get(k) for k in keep}
@@ -61,15 +69,65 @@ def _roads_near_campus(roads, campus):
     """Same rule as the Streamlit dashboard: keep roads with a vertex inside the campus bounds."""
     if not roads or not campus:
         return roads
-    lons = [c[0] for f in campus["features"] for c in f["geometry"]["coordinates"][0]]
-    lats = [c[1] for f in campus["features"] for c in f["geometry"]["coordinates"][0]]
-    w, e, s, n = min(lons), max(lons), min(lats), max(lats)
+    from shapely.geometry import shape
+    w, s, e, n = shape(campus["features"][0]["geometry"]).bounds
     roads["features"] = [
         f for f in roads["features"]
         if f["geometry"]["type"] == "LineString"
         and any(w <= lon <= e and s <= lat <= n for lon, lat in f["geometry"]["coordinates"])
     ]
     return roads
+
+
+VITAP_META = {"slug": "vit-ap", "name": "VIT-AP University", "short": "VIT-AP",
+              "chargers_scope": "in Andhra Pradesh", "region": "Andhra Pradesh"}
+REGISTRY = Path("web/data/places/index.json")
+
+
+def _ga_block(ga_cfg: dict, history: pd.DataFrame, capacity: pd.DataFrame, overrides: dict = None) -> dict:
+    fp = dict(ga_cfg["fitness_params"], **(overrides or {}).get("fitness_params", {}))
+    return {
+        "n_stations": (overrides or {}).get("n_stations", ga_cfg["n_stations_target"]),
+        "population_size": ga_cfg["population_size"],
+        "max_generations": ga_cfg["max_generations"],
+        "mutation_probability": ga_cfg["mutation"]["probability"],
+        "crossover_probability": ga_cfg["crossover"]["probability"],
+        "elitism": ga_cfg["elitism_count"],
+        "weights": ga_cfg["fitness_weights"],
+        "budget_lakhs": fp["budget_lakhs"],
+        "min_spacing_m": fp["min_station_distance_m"],
+        "coverage_radius_m": fp["coverage_radius_m"],
+        "fitness_history": history["best_fitness"].tolist(),
+        "capacity": _records(capacity),
+    }
+
+
+def _write(data: dict, out_js: str, meta: dict) -> str:
+    data["meta"] = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "sources": ["OpenStreetMap", "Open-Meteo", "OpenChargeMap", "Esri World Imagery"],
+                    "place": meta}
+    out = Path(out_js)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(_clean(data), separators=(",", ":"), ensure_ascii=False)
+    out.write_text(
+        "// Generated from the pipeline outputs. Do not edit by hand.\n"
+        f"window.DASHBOARD_DATA = {payload};\n",
+        encoding="utf-8",
+    )
+    print(f"Saved web dashboard data to {out} ({out.stat().st_size / 1024:.0f} KB)")
+    return str(out)
+
+
+def update_registry(slug: str, name: str, file: str, budget=None) -> None:
+    """Keep web/data/places.js listing every exported place, VIT-AP first."""
+    entries = json.loads(REGISTRY.read_text(encoding="utf-8")) if REGISTRY.exists() else []
+    entries = [e for e in entries if e["slug"] != slug] + [{"slug": slug, "name": name, "file": file, "budget": budget}]
+    entries.sort(key=lambda e: (e["slug"] != "vit-ap", e["name"].lower()))
+    REGISTRY.parent.mkdir(parents=True, exist_ok=True)
+    REGISTRY.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+    Path("web/data/places.js").write_text(
+        "// Generated list of places the dashboard can show. Do not edit by hand.\n"
+        f"window.EV_PLACES = {json.dumps(entries, ensure_ascii=False)};\n", encoding="utf-8")
 
 
 def build_web_data(
@@ -79,42 +137,21 @@ def build_web_data(
     fuzzy_config: str = "config/fuzzy_config.yaml",
     out_js: str = "web/data/dashboard-data.js",
 ) -> str:
-    """Write web/data/dashboard-data.js from the pipeline outputs and return its path."""
-    candidates = pd.read_csv(scored_csv)
-    solution = pd.read_csv(solution_csv)
+    """Write the VIT-AP dashboard data (web/data/dashboard-data.js) from the pipeline outputs."""
     ga_cfg = yaml.safe_load(Path(ga_config).read_text(encoding="utf-8"))["ga"]
     fuzzy_cfg = yaml.safe_load(Path(fuzzy_config).read_text(encoding="utf-8"))["fuzzy"]
-
     campus = _geojson("data/raw/osm/campus_boundary.geojson", keep=["name"])
-    comparison = pd.read_csv("outputs/evaluation/comparison.csv")
-    history = pd.read_csv("outputs/ga_results/fitness_history.csv")
-    capacity = pd.read_csv("outputs/ga_results/capacity.csv")
-
+    min_budget = Path("outputs/evaluation/min_budget.csv")
     data = {
-        "meta": {
-            "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "sources": ["OpenStreetMap", "Open-Meteo", "OpenChargeMap", "Esri World Imagery"],
-        },
-        "candidates": _records(candidates, CANDIDATE_COLUMNS),
-        "selected": _records(solution, ["candidate_id", "ga_rank"]),
-        "ga": {
-            "n_stations": ga_cfg["n_stations_target"],
-            "population_size": ga_cfg["population_size"],
-            "max_generations": ga_cfg["max_generations"],
-            "mutation_probability": ga_cfg["mutation"]["probability"],
-            "crossover_probability": ga_cfg["crossover"]["probability"],
-            "elitism": ga_cfg["elitism_count"],
-            "weights": ga_cfg["fitness_weights"],
-            "budget_lakhs": ga_cfg["fitness_params"]["budget_lakhs"],
-            "min_spacing_m": ga_cfg["fitness_params"]["min_station_distance_m"],
-            "coverage_radius_m": ga_cfg["fitness_params"]["coverage_radius_m"],
-            "fitness_history": history["best_fitness"].tolist(),
-            "capacity": _records(capacity),
-        },
+        "candidates": _records(pd.read_csv(scored_csv), CANDIDATE_COLUMNS),
+        "selected": _records(pd.read_csv(solution_csv), ["candidate_id", "ga_rank"]),
+        "ga": _ga_block(ga_cfg, pd.read_csv("outputs/ga_results/fitness_history.csv"),
+                        pd.read_csv("outputs/ga_results/capacity.csv")),
+        "min_budget": _records(pd.read_csv(min_budget)) if min_budget.exists() else [],
         "fuzzy": {"n_rules": len(fuzzy_cfg["rules"]), "inputs": list(fuzzy_cfg["inputs"])},
         "evaluation": {
             "summary": json.loads(Path("outputs/evaluation/summary.json").read_text(encoding="utf-8")),
-            "methods": _records(comparison),
+            "methods": _records(pd.read_csv("outputs/evaluation/comparison.csv")),
         },
         "ml": json.loads(Path("outputs/ml_results/metrics.json").read_text(encoding="utf-8")),
         "geo": {
@@ -128,14 +165,50 @@ def build_web_data(
             "state": _geojson("data/external/andhra_pradesh_boundary.geojson", keep=["name"]),
         },
     }
+    path = _write(data, out_js, VITAP_META)
+    update_registry(VITAP_META["slug"], VITAP_META["short"], "data/dashboard-data.js", data["ga"]["budget_lakhs"])
+    return path
 
-    out = Path(out_js)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(_clean(data), separators=(",", ":"), ensure_ascii=False)
-    out.write_text(
-        "// Generated by `python run_pipeline.py web` from the pipeline outputs. Do not edit by hand.\n"
-        f"window.DASHBOARD_DATA = {payload};\n",
-        encoding="utf-8",
-    )
-    print(f"Saved web dashboard data to {out} ({out.stat().st_size / 1024:.0f} KB)")
-    return str(out)
+
+def build_place_web_data(out_dir: Path, meta: dict, ga_config: str = "config/ga_config_demo.yaml",
+                         fuzzy_config: str = "config/fuzzy_config.yaml") -> str:
+    """Write web/data/places/<slug>.js from a place run's outputs (outputs/places/<slug>/)."""
+    out_dir = Path(out_dir)
+    ga_cfg = yaml.safe_load(Path(ga_config).read_text(encoding="utf-8"))["ga"]
+    fuzzy_cfg = yaml.safe_load(Path(fuzzy_config).read_text(encoding="utf-8"))["fuzzy"]
+    solution = pd.read_csv(out_dir / "solution.csv")
+    st = meta["settings"]
+    campus = _geojson(str(out_dir / "boundary.geojson"), keep=["name"])
+    data = {
+        "candidates": _records(pd.read_csv(out_dir / "candidates_scored.csv"), CANDIDATE_COLUMNS),
+        "selected": _records(solution, ["candidate_id", "ga_rank"]),
+        "ga": _ga_block(ga_cfg, pd.read_csv(out_dir / "fitness_history.csv"), pd.read_csv(out_dir / "plans_by_k.csv"), {
+            "n_stations": len(solution),
+            "fitness_params": {"budget_lakhs": st["budget_lakhs"], "min_station_distance_m": st["spacing_m"],
+                               "coverage_radius_m": st["coverage_m"]}}),
+        "min_budget": _records(pd.read_csv(out_dir / "min_budget.csv")),
+        "fuzzy": {"n_rules": len(fuzzy_cfg["rules"]), "inputs": list(fuzzy_cfg["inputs"])},
+        "evaluation": {"summary": json.loads((out_dir / "summary.json").read_text(encoding="utf-8")),
+                       "methods": _records(pd.read_csv(out_dir / "comparison.csv"))},
+        "ml": json.loads((out_dir / "ml_metrics.json").read_text(encoding="utf-8")),
+        "geo": {
+            "campus": campus,
+            "zones": _geojson(str(out_dir / "zones.geojson"), keep=["zone_id", "zone_name"]),
+            "buildings": _geojson(str(out_dir / "buildings.geojson"), keep=["name", "building"]),
+            "roads": _roads_near_campus(
+                _geojson(str(out_dir / "roads.geojson"), keep=["highway", "name", "ref", "surface", "length_m"]), campus),
+            "parking": _geojson(str(out_dir / "parking.geojson"), keep=["osm_id"]),
+            "chargers": _geojson(str(out_dir / "chargers.geojson"), keep=CHARGER_FIELDS),
+            "state": None,
+        },
+    }
+    rel = f"data/places/{meta['slug']}.js"
+    path = _write(data, f"web/{rel}", meta)
+    update_registry(meta["slug"], meta.get("short") or meta["name"], rel, st["budget_lakhs"])
+    return path
+
+
+def export_all_places(root: str = "outputs/places") -> None:
+    """Re-export every place run found under outputs/places/<slug>/place.json."""
+    for meta_path in sorted(Path(root).glob("*/place.json")):
+        build_place_web_data(meta_path.parent, json.loads(meta_path.read_text(encoding="utf-8")))

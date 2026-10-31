@@ -102,6 +102,7 @@ demand_simulation:
     gate_south: 4.0
     gate_main: 4.0
     campus_general: 3.0
+    residential: 4.5  # generic places: hostels/residences (between hostel_boys and hostel_girls)
   avg_session_kwh: 15.0
   session_duration_min: 45
   temporal_patterns:
@@ -224,6 +225,9 @@ zones:
     campus_general:
       description: Rest of the campus inside the OSM boundary
       land_cost_tier: medium
+    residential:
+      description: Hostels, dormitories and residences (generic places, from OSM tags)
+      land_cost_tier: low
 paths:
   raw: data/raw
   processed: data/processed

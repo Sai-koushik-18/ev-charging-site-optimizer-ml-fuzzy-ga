@@ -283,22 +283,43 @@
     cards.querySelectorAll(".cost-card").forEach((card, i) => { EV.sketchBorder(card, { seed: 30 + i, stroke: "rgba(21,23,43,.55)" }); EV.observe(card); });
   }
 
+  /* ───────── minimum budget ───────── */
+  function minBudget() {
+    const el = document.getElementById("min-budget");
+    const rows = D.min_budget || [];
+    if (!rows.length) { el.remove(); return; }
+    const budget = D.ga.budget_lakhs, k = D.ga.n_stations;
+    const possible = rows.filter((r) => r.possible);
+    const impossible = rows.find((r) => !r.possible);
+    const label = (r) => (r.n_stations === k ? "chosen" : r.min_cost_lakhs <= budget ? "fits budget" : "over budget");
+    el.innerHTML = `<div class="minbudget__head"><h3>Minimum budget</h3>
+      <p>The cheapest plan that keeps stations at least ${D.ga.min_spacing_m} m apart, for each number of stations. Nothing can be built below <b>${fmt.lakh(possible[0].min_cost_lakhs)}</b>.</p></div>
+      <ol class="minbudget__list">${possible.map((r) => `<li class="${r.min_cost_lakhs <= budget ? "fits" : "over"} ${r.n_stations === k ? "chosen" : ""}" tabindex="0">
+        <b>${r.n_stations}</b><span>${fmt.lakh(r.min_cost_lakhs)}</span><em>${label(r)}</em></li>`).join("")}
+        ${impossible ? `<li class="impossible"><b>${impossible.n_stations}+</b><span>not possible</span><em>sites too close</em></li>` : ""}</ol>`;
+    el.querySelectorAll("li[tabindex]").forEach((li, i) => {
+      const r = possible[i];
+      EV.bindTooltip(li, `<b>${r.n_stations} station${r.n_stations > 1 ? "s" : ""}: ${fmt.lakh(r.min_cost_lakhs)}</b><br>${escape(r.sites)}`);
+    });
+  }
+
   /* ───────── ML accuracy ───────── */
   function ml() {
     const m = D.ml;
-    const base = m.baseline_rmse, def = m.default_rf.test_rmse, tuned = m.ga_tuned_rf.test_rmse;
+    const base = m.baseline_rmse, tuned = m.ga_tuned_rf.test_rmse;
+    const def = m.default_rf ? m.default_rf.test_rmse : null;
     const items = [
       { key: "base", value: base, label: "Simple average", sub: "site × hour × weekend" },
-      { key: "def", value: def, label: "Default Random Forest", sub: `R² ${fmt.score(m.default_rf.test_r2)}` },
+      def != null && { key: "def", value: def, label: "Default Random Forest", sub: `R² ${fmt.score(m.default_rf.test_r2)}` },
       { key: "ga", value: tuned, label: "GA-tuned Random Forest", sub: `R² ${fmt.score(m.ga_tuned_rf.test_r2)}`, ga: true },
-    ].map((it) => ({
+    ].filter(Boolean).map((it) => ({
       ...it, valueText: fmt.score(it.value),
       labelHtml: `<span>${it.label}<br><small class="muted">${it.sub}</small></span>`,
       tip: `<b>${it.label}</b><br>Test RMSE <b>${fmt.score(it.value)}</b> kWh/h`,
     }));
     const mlEl = document.getElementById("ml-chart");
     const mlChart = barChart(mlEl, items, {
-      max: Math.max(base, def, tuned) * 1.08,
+      max: Math.max(base, def ?? 0, tuned) * 1.08,
       style: (it) => it.key === "ga" ? { fill: COLORS.purple, fillStyle: "solid", stroke: COLORS.ink, strokeWidth: 1.6 }
         : it.key === "def" ? { fill: COLORS.blue, fillStyle: "hachure", stroke: COLORS.blue, strokeWidth: 1.2 }
         : { fill: COLORS.grey, fillStyle: "hachure", stroke: COLORS.grey, strokeWidth: 1.2 },
@@ -306,11 +327,11 @@
     chartTools(mlChart, mlEl);
 
     const vsBase = ((base - tuned) / base) * 100;
-    const vsDef = ((def - tuned) / def) * 100;
+    const vsDef = def != null ? ((def - tuned) / def) * 100 : null;
     const big = document.getElementById("ml-improve");
     big.innerHTML = `<div class="improve__big"><span id="ml-pct">0.0%</span></div>
       <p>lower test error than a simple average for the GA-tuned forest.</p>
-      <div class="improve__row"><span class="improve__chip">vs default forest <b>−${fmt.pct(vsDef)}</b></span>
+      <div class="improve__row">${vsDef != null ? `<span class="improve__chip">vs default forest <b>−${fmt.pct(vsDef)}</b></span>` : ""}
       <span class="improve__chip">test R² <b>${fmt.score(m.ga_tuned_rf.test_r2)}</b></span></div>`;
     EV.onReveal(big, () => EV.countUp(document.getElementById("ml-pct"), vsBase, (v) => fmt.pct(v)));
     EV.observe(big);
@@ -319,6 +340,7 @@
     document.getElementById("ml-info").innerHTML = `<h3>How it was tested</h3><dl>
       <dt>Training data</dt><dd>${escape(m.training_data)}</dd>
       <dt>Split</dt><dd>${escape(m.split)}</dd>
+      ${m.settings ? `<dt>Settings</dt><dd>${escape(m.settings)}</dd>` : ""}
       <dt>Train / test RMSE</dt><dd>${fmt.score(m.ga_tuned_rf.train_rmse)} / ${fmt.score(m.ga_tuned_rf.test_rmse)} kWh/h</dd>
       <dt>GA-chosen settings</dt><dd><span class="params">${Object.entries(p).map(([k, v]) => `<span>${escape(k.replaceAll("_", " "))}: ${escape(v ?? "none")}</span>`).join("")}</span></dd></dl>`;
 
@@ -327,7 +349,7 @@
 
     const cav = document.getElementById("ml-caveat");
     cav.innerHTML = `<p><strong>Synthetic demand, real method.</strong> These errors come from the project’s synthetic demand history (${escape(m.training_data)}).
-      They show the modelling method works on that data; they are <strong>not</strong> real-world validated accuracy, because VIT-AP has no charging records yet.</p>`;
+      They show the modelling method works on that data; they are <strong>not</strong> real-world validated accuracy, because ${escape(EV.place.short)} has no public charging records.</p>`;
     cav.prepend(EV.icon("check", COLORS.orangeInk, 40));
     cav.firstChild.classList.add("caveat__icon");
   }
@@ -338,6 +360,7 @@
     convergence();
     capacity();
     costs();
+    minBudget();
     ml();
   };
 })();

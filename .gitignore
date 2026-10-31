@@ -47,6 +47,7 @@ logs/
 *.log
 
 # Large regenerable data (rebuilt by `python run_pipeline.py all`)
+data/places/
 data/synthetic/
 data/samples/
 models/

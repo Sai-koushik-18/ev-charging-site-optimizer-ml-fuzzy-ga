@@ -1,0 +1,7 @@
+n_stations,possible,min_cost_lakhs,site_ids,sites
+1,True,46.875243055614376,CAND_001,Roadside near AB-1
+2,True,94.26119961130041,"CAND_001, CAND_020","Roadside near AB-1, Roadside near Basketball Court 1"
+3,True,144.51556801404138,"CAND_001, CAND_020, CAND_012","Roadside near AB-1, Roadside near Basketball Court 1, Roadside near MH-3"
+4,True,195.55853320638798,"CAND_001, CAND_020, CAND_012, CAND_017","Roadside near AB-1, Roadside near Basketball Court 1, Roadside near MH-3, Roadside near LH-1"
+5,True,282.98929697584725,"CAND_002, CAND_009, CAND_014, CAND_017, CAND_007","Roadside near AB-2, Roadside near Cricket Ground, Roadside near MH-6, Roadside near LH-1, Entry Point 2"
+6,False,,,
