@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,79 +9,74 @@ venv/
 env/
 ENV/
 
-# Distribution / packaging
+# Packaging
 dist/
 build/
 *.egg-info/
 *.egg
 
-# IDE / Editor
+# Editors and OS
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Environment files
+# Secrets and local configuration (OCM_API_KEY is read from the environment)
 .env
-.env.local
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.yaml
 
-# OSM cache (if using osmnx cache)
-.cache/
-
-# Test coverage
+# Test, lint and cache output
 .coverage
 htmlcov/
 .pytest_cache/
-
-# Type checking
 .mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Ruff
 .ruff_cache/
-
-# Project-specific generated data (large files)
-data/raw/
-data/processed/*
-!data/processed/candidates_demo_fuzzy_scored.csv
-!data/processed/ga_solution_demo.csv
-data/synthetic/
-data/samples/
-outputs/
-logs/
-
-# Jupyter notebook checkpoints
+.cache/
 .ipynb_checkpoints/
 
-# Temporary/debug files
+# Logs
+logs/
+*.log
+
+# Large regenerable data (rebuilt by `python run_pipeline.py all`)
+data/synthetic/
+data/samples/
+models/
+
+# Raw data: keep only the small campus extracts the dashboard and pipeline need
+data/raw/*
+!data/raw/osm/
+data/raw/osm/*
+!data/raw/osm/campus_osm.json
+!data/raw/osm/campus_boundary.geojson
+!data/raw/osm/buildings.geojson
+!data/raw/osm/roads.geojson
+!data/raw/osm/parking.geojson
+!data/raw/weather/
+data/raw/weather/*
+!data/raw/weather/weather_hourly_2024.csv
+
+# Outputs: keep the small result files shown in the dashboard and README
+outputs/*
+!outputs/evaluation/
+!outputs/ml_results/
+!outputs/ga_results/
+!outputs/maps/
+outputs/ga_results/checkpoints/
+outputs/ga_results/plots/
+
+# Temporary and backup files
 *.tmp
 *.temp
-debug_*.py
-temp_test.py
-cleanup_helpers.sh
-
-# Backup files
 *.bak
-*.bak.*
 *.backup
-*.backup_*
-*.corrupted_backup*
 *.old
 backups/
-
-# Model files
-models/*.pkl
-
-# Python environment (redundant but safe)
-.venv/
-venv/
-
-# Secrets (redundant but safe)
-.env
-.env.*
-!.env.example
