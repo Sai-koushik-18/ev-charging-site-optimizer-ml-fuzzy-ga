@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 import folium
+from folium.plugins import MarkerCluster
 import pandas as pd
 
 ZONE_COLORS = {
@@ -64,7 +65,7 @@ def build_campus_map(scored_csv: str, solution_csv: str, out_html: str = "output
                        tooltip=folium.GeoJsonTooltip(fields=["zone_name"], aliases=["Zone:"])).add_to(m)
 
     chargers = _geojson("data/raw/openchargemap/stations.geojson")
-    existing = folium.FeatureGroup(name=f"Existing Public Chargers (OpenChargeMap, {len((chargers or {}).get('features', []))})")
+    existing = MarkerCluster(name=f"Existing Public Chargers, India (OpenChargeMap, {len((chargers or {}).get('features', [])):,})")
     for f in (chargers or {}).get("features", []):
         p = f["properties"]
         lon, lat = f["geometry"]["coordinates"]

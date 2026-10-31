@@ -39,19 +39,31 @@ class OCMDataLoader:
         return getattr(self.ocm_config, "api_key", "") or ""
 
     def _build_params(self) -> Dict[str, Any]:
-        """Build API request parameters."""
+        """Build API request parameters (no distance = every station in the country)."""
         params = {
             "output": self.ocm_config.params.output,
             "countrycode": self.ocm_config.params.countrycode,
-            "latitude": self.ocm_config.params.latitude,
-            "longitude": self.ocm_config.params.longitude,
-            "distance": self.ocm_config.params.distance,
-            "distanceunit": self.ocm_config.params.distanceunit,
             "maxresults": self.ocm_config.params.maxresults,
             "compact": str(self.ocm_config.params.compact).lower(),
             "verbose": str(self.ocm_config.params.verbose).lower(),
         }
+        if self.search_radius_km is not None:
+            params.update({
+                "latitude": self.ocm_config.params.latitude,
+                "longitude": self.ocm_config.params.longitude,
+                "distance": self.search_radius_km,
+                "distanceunit": "KM",
+            })
         return params
+
+    @property
+    def search_radius_km(self) -> Optional[float]:
+        distance = getattr(self.ocm_config.params, "distance", None)
+        return None if distance is None else float(distance)
+
+    def _scope(self) -> str:
+        radius = self.search_radius_km
+        return f"within {radius:g} km" if radius is not None else f"across country {self.ocm_config.params.countrycode}"
 
     def _build_headers(self) -> Dict[str, str]:
         """Send the key as a header so it never appears in URLs, errors or logs."""
@@ -109,8 +121,7 @@ class OCMDataLoader:
             # Return empty GeoDataFrame with expected CRS
             return gpd.GeoDataFrame(columns=[], geometry=[], crs="EPSG:4326")
 
-        logger.info(f"Received {len(data)} stations from OpenChargeMap within "
-                    f"{self.ocm_config.params.distance} {self.ocm_config.params.distanceunit}")
+        logger.info(f"Received {len(data)} stations from OpenChargeMap {self._scope()}")
         return self._parse_stations(data)
 
     def _parse_stations(self, data: List[Dict]) -> pd.DataFrame:
@@ -179,9 +190,9 @@ class OCMDataLoader:
             axis=1
         )
 
-        # Keep stations within the configured search radius
-        radius_km = float(self.ocm_config.params.distance)
-        df = df[df["distance_to_campus_km"] <= radius_km].copy()
+        # Keep stations within the configured search radius, if one is set
+        if self.search_radius_km is not None:
+            df = df[df["distance_to_campus_km"] <= self.search_radius_km].copy()
 
         # Create geometry
         geometry = [Point(lon, lat) for lon, lat in zip(df["longitude"], df["latitude"])]
@@ -200,7 +211,7 @@ class OCMDataLoader:
         output_csv = self.output_dir / "stations.csv"
         df.to_csv(output_csv, index=False)
 
-        logger.info(f"Saved {len(gdf)} stations within {radius_km:g} km to {output_geojson}")
+        logger.info(f"Saved {len(gdf)} stations {self._scope()} to {output_geojson}")
 
         # Add provenance
         tracker = ProvenanceTracker("existing_stations", "ocm_loader.fetch_stations")

@@ -6,6 +6,7 @@ Phase 2: OSM roads + manually digitized zone polygons as toggleable map layers.
 import streamlit as st
 import pandas as pd
 import folium
+from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import plotly.express as px
 import json
@@ -109,10 +110,12 @@ col2.metric("Stations Selected", f"{n_selected}")
 col3.metric("Total CAPEX (Selected)", f"₹{total_capex:.1f} L")
 existing = (chargers_geojson or {}).get("features", [])
 if existing:
+    dists = [f["properties"]["distance_to_campus_km"] for f in existing]
     nearest = min(existing, key=lambda f: f["properties"]["distance_to_campus_km"])["properties"]
-    st.caption(f"Existing public chargers (OpenChargeMap, live data): {len(existing)} within 50 km of campus; "
-               f"the nearest is {nearest['distance_to_campus_km']:.1f} km away ({nearest['name']}, {nearest['town']}). "
-               "None are within 3 km of any candidate site.")
+    bands = ", ".join(f"{sum(d <= km for d in dists)} within {km} km" for km in (50, 100, 300))
+    st.caption(f"Existing public chargers (OpenChargeMap): {len(existing):,} across India ({bands}). "
+               f"The nearest is {nearest['distance_to_campus_km']:.1f} km away ({nearest['name']}, {nearest['town']}). "
+               "Zoom out on the map to see them all.")
 col4.metric("Remaining Budget", f"₹{remaining:.1f} L", delta=f"{remaining:.1f} L", delta_color="normal" if remaining >= 0 else "inverse")
 
 # ─── MAP ───
@@ -308,13 +311,14 @@ if parking_geojson and parking_geojson.get("features"):
     ).add_to(parking_fg)
 parking_fg.add_to(m)
 
-chargers_fg = folium.FeatureGroup(name=f"Existing Public Chargers (OpenChargeMap, {len(existing)})", show=True, overlay=True, control=True)
+chargers_fg = MarkerCluster(name=f"Existing Public Chargers, India (OpenChargeMap, {len(existing):,})",
+                            show=True, overlay=True, control=True)
 for f in existing:
     p = f["properties"]
     lon, lat = f["geometry"]["coordinates"]
     folium.Marker(
         location=[lat, lon],
-        popup=folium.Popup(f"<b>{p['name']}</b><br>{p['town']}<br>{p['distance_to_campus_km']:.1f} km from campus<br>"
+        popup=folium.Popup(f"<b>{p['name']}</b><br>{p['town'] or ''}{', ' + p['state'] if p.get('state') else ''}<br>{p['distance_to_campus_km']:.1f} km from campus<br>"
                            f"Points: {p['num_connectors']} | Status: {p['status'] or 'unknown'}<br>Source: OpenChargeMap", max_width=260),
         tooltip=f"🔌 {p['name']} ({p['distance_to_campus_km']:.1f} km)",
         icon=folium.Icon(color="purple", icon="plug", prefix="fa"),
@@ -485,7 +489,7 @@ legend_html = """
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#ffffff; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Campus boundary (OSM, dashed)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#f2a541; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Buildings (OSM)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#4fd1b5; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Parking lots (OSM)</div>
-    <div style="margin-bottom: 2px; color: #111111;"><span style="color:#8e44ad; font-size:14px; margin-right:6px; vertical-align:middle;">●</span> Existing public chargers (OpenChargeMap, 19–32 km away)</div>
+    <div style="margin-bottom: 2px; color: #111111;"><span style="color:#8e44ad; font-size:14px; margin-right:6px; vertical-align:middle;">●</span> Existing public chargers, India (OpenChargeMap; clustered, zoom out)</div>
     <div style="border-bottom: 1px solid #ddd; margin: 8px 0;"></div>
     <div style="font-weight: 600; color: #111111; margin-bottom: 4px;">Zones (from OSM buildings)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#1f77b4; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Academic</div>

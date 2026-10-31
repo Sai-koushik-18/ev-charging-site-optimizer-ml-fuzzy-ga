@@ -300,20 +300,17 @@ def build_sites(features_utm: gpd.GeoDataFrame, campus, gates):
 
 def load_existing_chargers(config) -> gpd.GeoDataFrame:
     """Real public chargers from OpenChargeMap (key from OCM_API_KEY), or the cached copy."""
-    stations = OCMDataLoader(config).fetch_stations()
+    loader = OCMDataLoader(config)
+    stations = loader.fetch_stations()
     if stations.empty:
-        print("Existing chargers (OpenChargeMap): none within the search radius")
+        print(f"Existing chargers (OpenChargeMap): none {loader._scope()}")
     else:
-        nearest = stations.sort_values("distance_to_campus_km").iloc[0]
-        print(f"Existing chargers (OpenChargeMap): {len(stations)} within "
-              f"{config_radius_km()} km; nearest {nearest['distance_to_campus_km']:.1f} km "
-              f"({nearest['name']}, {nearest['town']})")
+        d = stations["distance_to_campus_km"]
+        nearest = stations.loc[d.idxmin()]
+        bands = ", ".join(f"{int((d <= km).sum())} within {km} km" for km in (50, 100, 300))
+        print(f"Existing chargers (OpenChargeMap): {len(stations)} {loader._scope()} ({bands}); "
+              f"nearest {nearest['distance_to_campus_km']:.1f} km ({nearest['name']}, {nearest['town']})")
     return stations
-
-
-def config_radius_km() -> float:
-    from src.data.config_loader import get_data_sources_config
-    return float(get_data_sources_config().data_sources.openchargemap.params.distance)
 
 
 def build_candidates(features: gpd.GeoDataFrame, config):

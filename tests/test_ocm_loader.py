@@ -41,9 +41,14 @@ def test_parse_keeps_unknown_status_and_drops_non_operational(loader):
     assert (gdf["distance_to_campus_km"] >= 0).all()
 
 
-def test_parse_applies_search_radius(loader):
+def test_parse_applies_search_radius_only_when_set(loader, monkeypatch):
     far = _station(4, 20.0, 80.5, True)  # roughly 390 km north of campus
+    monkeypatch.setattr(OCMDataLoader, "search_radius_km", property(lambda self: None))
+    assert len(loader._parse_stations([far])) == 1
+    assert "distance" not in loader._build_params()
+    monkeypatch.setattr(OCMDataLoader, "search_radius_km", property(lambda self: 50.0))
     assert loader._parse_stations([far]).empty
+    assert loader._build_params()["distance"] == 50.0
 
 
 def test_parse_empty_response_returns_empty_frame(loader):

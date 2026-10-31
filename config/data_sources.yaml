@@ -80,9 +80,9 @@ data_sources:
       countrycode: "IN"
       latitude: 16.4940
       longitude: 80.4993
-      distance: 50  # wide enough to find the nearest public chargers (Vijayawada, Guntur)
+      distance: null  # null = every station in the country; a number (km) limits the search
       distanceunit: "KM"
-      maxresults: 500
+      maxresults: 20000
       compact: false  # compact mode drops StatusType/OperatorInfo, which the parser reads
       verbose: false
     rate_limit_per_hour: 1000
