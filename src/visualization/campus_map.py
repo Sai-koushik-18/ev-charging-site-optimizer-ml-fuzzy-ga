@@ -68,7 +68,11 @@ def build_campus_map(scored_csv: str, solution_csv: str, out_html: str = "output
                        tooltip=folium.GeoJsonTooltip(fields=["zone_name"], aliases=["Zone:"])).add_to(m)
 
     chargers = _geojson("data/raw/openchargemap/stations.geojson")
-    existing = MarkerCluster(name=f"Existing Public Chargers, India (OpenChargeMap, {len((chargers or {}).get('features', [])):,})")
+    state = _geojson("data/external/andhra_pradesh_boundary.geojson")
+    if state:
+        folium.GeoJson(state, name="Andhra Pradesh Boundary (OSM)",
+                       style_function=lambda f: {"color": "#8e44ad", "weight": 2, "fillOpacity": 0, "dashArray": "8 6"}).add_to(m)
+    existing = MarkerCluster(name=f"Existing Public Chargers, Andhra Pradesh (OpenChargeMap, {len((chargers or {}).get('features', []))})")
     for f in (chargers or {}).get("features", []):
         p = f["properties"]
         lon, lat = f["geometry"]["coordinates"]

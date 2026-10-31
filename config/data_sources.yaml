@@ -80,7 +80,10 @@ data_sources:
       countrycode: "IN"
       latitude: 16.4940
       longitude: 80.4993
-      distance: null  # null = every station in the country; a number (km) limits the search
+      distance: null  # used only when region_boundary is empty; null = every station in the country
+      # Only stations inside this boundary are kept (OSM relation 2022095, simplified to 200 m).
+      # Leave empty to use the distance setting instead.
+      region_boundary: "data/external/andhra_pradesh_boundary.geojson"
       distanceunit: "KM"
       maxresults: 20000
       compact: false  # compact mode drops StatusType/OperatorInfo, which the parser reads

@@ -86,6 +86,7 @@ boundary_geojson = load_osm_layer("campus_boundary")
 buildings_geojson = load_osm_layer("buildings")
 parking_geojson = load_osm_layer("parking")
 chargers_geojson = load_geojson("data/raw/openchargemap/stations.geojson")
+state_geojson = load_geojson("data/external/andhra_pradesh_boundary.geojson")
 
 
 def fuzzy_text(score):
@@ -113,7 +114,7 @@ if existing:
     dists = [f["properties"]["distance_to_campus_km"] for f in existing]
     nearest = min(existing, key=lambda f: f["properties"]["distance_to_campus_km"])["properties"]
     bands = ", ".join(f"{sum(d <= km for d in dists)} within {km} km" for km in (50, 100, 300))
-    st.caption(f"Existing public chargers (OpenChargeMap): {len(existing):,} across India ({bands}). "
+    st.caption(f"Existing public chargers (OpenChargeMap): {len(existing)} in Andhra Pradesh ({bands}). "
                f"The nearest is {nearest['distance_to_campus_km']:.1f} km away ({nearest['name']}, {nearest['town']}). "
                "Zoom out on the map to see them all.")
 col4.metric("Remaining Budget", f"₹{remaining:.1f} L", delta=f"{remaining:.1f} L", delta_color="normal" if remaining >= 0 else "inverse")
@@ -314,7 +315,13 @@ if parking_geojson and parking_geojson.get("features"):
     ).add_to(parking_fg)
 parking_fg.add_to(m)
 
-chargers_fg = MarkerCluster(name=f"Existing Public Chargers, India (OpenChargeMap, {len(existing):,})",
+if state_geojson and state_geojson.get("features"):
+    folium.GeoJson(
+        state_geojson, name="Andhra Pradesh Boundary (OSM)",
+        style_function=lambda f: {"color": "#8e44ad", "weight": 2, "fillOpacity": 0, "dashArray": "8 6"},
+    ).add_to(m)
+
+chargers_fg = MarkerCluster(name=f"Existing Public Chargers, Andhra Pradesh (OpenChargeMap, {len(existing)})",
                             show=True, overlay=True, control=True)
 for f in existing:
     p = f["properties"]
@@ -492,7 +499,7 @@ legend_html = """
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#ffffff; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Campus boundary (OSM, dashed)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#f2a541; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Buildings (OSM)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#4fd1b5; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Parking lots (OSM)</div>
-    <div style="margin-bottom: 2px; color: #111111;"><span style="color:#8e44ad; font-size:14px; margin-right:6px; vertical-align:middle;">●</span> Existing public chargers, India (OpenChargeMap; clustered, zoom out)</div>
+    <div style="margin-bottom: 2px; color: #111111;"><span style="color:#8e44ad; font-size:14px; margin-right:6px; vertical-align:middle;">●</span> Existing public chargers in Andhra Pradesh (OpenChargeMap; zoom out)</div>
     <div style="border-bottom: 1px solid #ddd; margin: 8px 0;"></div>
     <div style="font-weight: 600; color: #111111; margin-bottom: 4px;">Zones (from OSM buildings)</div>
     <div style="margin-bottom: 2px; color: #111111;"><span style="display:inline-block; width:14px; height:14px; background:#1f77b4; border-radius:2px; margin-right:6px; vertical-align:middle; border:1px solid #999;"></span> Academic</div>

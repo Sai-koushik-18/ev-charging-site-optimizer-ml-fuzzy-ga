@@ -47,7 +47,12 @@ class OCMDataLoader:
             "compact": str(self.ocm_config.params.compact).lower(),
             "verbose": str(self.ocm_config.params.verbose).lower(),
         }
-        if self.search_radius_km is not None:
+        region = self.region
+        if region is not None:
+            # Ask only for the region's bounding box; the exact boundary is applied after parsing
+            min_lon, min_lat, max_lon, max_lat = region.bounds
+            params["boundingbox"] = f"({max_lat},{min_lon}),({min_lat},{max_lon})"
+        elif self.search_radius_km is not None:
             params.update({
                 "latitude": self.ocm_config.params.latitude,
                 "longitude": self.ocm_config.params.longitude,
@@ -61,7 +66,21 @@ class OCMDataLoader:
         distance = getattr(self.ocm_config.params, "distance", None)
         return None if distance is None else float(distance)
 
+    @property
+    def region(self):
+        """Optional boundary polygon (e.g. one state) that stations must fall inside."""
+        path = getattr(self.ocm_config.params, "region_boundary", None)
+        if not path:
+            return None
+        if not hasattr(self, "_region"):
+            gdf = gpd.read_file(path).to_crs("EPSG:4326")
+            self._region = gdf.geometry.union_all()
+            self._region_name = gdf["name"].iloc[0] if "name" in gdf else Path(path).stem
+        return self._region
+
     def _scope(self) -> str:
+        if self.region is not None:
+            return f"in {self._region_name}"
         radius = self.search_radius_km
         return f"within {radius:g} km" if radius is not None else f"across country {self.ocm_config.params.countrycode}"
 
@@ -190,8 +209,12 @@ class OCMDataLoader:
             axis=1
         )
 
-        # Keep stations within the configured search radius, if one is set
-        if self.search_radius_km is not None:
+        # Keep stations inside the region boundary, or within the search radius, if set.
+        # The boundary is used instead of the state field, which is often wrong or blank.
+        if self.region is not None:
+            inside = [self.region.contains(Point(lon, lat)) for lon, lat in zip(df["longitude"], df["latitude"])]
+            df = df[inside].copy()
+        elif self.search_radius_km is not None:
             df = df[df["distance_to_campus_km"] <= self.search_radius_km].copy()
 
         # Create geometry
