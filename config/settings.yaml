@@ -101,6 +101,7 @@ demand_simulation:
     gate_north: 4.0
     gate_south: 4.0
     gate_main: 4.0
+    campus_general: 3.0
   avg_session_kwh: 15.0
   session_duration_min: 45
   temporal_patterns:
@@ -145,8 +146,8 @@ traffic_simulation:
 weather:
   source: open-meteo
   location:
-    latitude: 16.5075
-    longitude: 80.48
+    latitude: 16.4940
+    longitude: 80.4993
     timezone: Asia/Kolkata
   years:
   - 2024
@@ -217,6 +218,12 @@ zones:
     gate_main:
       description: Main gate entry/exit area
       land_cost_tier: high
+    gate:
+      description: Campus entry points where roads cross the OSM campus boundary
+      land_cost_tier: high
+    campus_general:
+      description: Rest of the campus inside the OSM boundary
+      land_cost_tier: medium
 paths:
   raw: data/raw
   processed: data/processed

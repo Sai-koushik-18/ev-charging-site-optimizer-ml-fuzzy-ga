@@ -66,7 +66,7 @@ data_sources:
     input_file: "data/processed/parking_osm_validated.geojson"
     geometry_type: "Polygon"
     feature_count: 2
-    note: "These are OSM way features manually verified as parking polygons. They are OUTSIDE the manually digitized campus zones. Do not assume campus ownership."
+    note: "These are OSM way features manually verified as parking polygons. After the campus realignment they lie inside the campus boundary (OSM way 750542244). Do not assume campus ownership."
 
   # OpenChargeMap - REAL data
   openchargemap:
@@ -78,8 +78,8 @@ data_sources:
     params:
       output: "json"
       countrycode: "IN"
-      latitude: 16.5075
-      longitude: 80.4800
+      latitude: 16.4940
+      longitude: 80.4993
       distance: 10
       distanceunit: "KM"
       maxresults: 500
@@ -107,8 +107,8 @@ data_sources:
     access_method: "rest_api"
     base_url: "https://archive-api.open-meteo.com/v1/archive"
     params:
-      latitude: 16.5075
-      longitude: 80.4800
+      latitude: 16.4940
+      longitude: 80.4993
       start_date: "2024-01-01"
       end_date: "2024-12-31"
       hourly:

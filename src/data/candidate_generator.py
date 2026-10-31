@@ -530,14 +530,21 @@ class CandidateGenerator:
         self,
         candidates: gpd.GeoDataFrame,
         roads: gpd.GeoDataFrame,
+        gates_wgs84: Optional[List[Point]] = None,
     ) -> gpd.GeoDataFrame:
-        """Calculate traffic accessibility score (inverse of travel time from gates) using metric CRS."""
-        # Define campus gates (approximate) - in WGS84
-        gates_wgs84 = [
-            Point(80.4780, 16.5155),  # North gate
-            Point(80.4780, 16.5015),  # South gate
-            Point(80.4855, 16.5015),  # Main gate
-        ]
+        """Calculate traffic accessibility score (inverse of travel time from gates) using metric CRS.
+
+        Args:
+            gates_wgs84: Campus entry points (lon/lat). Defaults to the legacy
+                approximate gates, which predate the campus realignment.
+        """
+        if gates_wgs84 is None:
+            # Legacy approximate gates - in WGS84
+            gates_wgs84 = [
+                Point(80.4780, 16.5155),  # North gate
+                Point(80.4780, 16.5015),  # South gate
+                Point(80.4855, 16.5015),  # Main gate
+            ]
 
         # Convert gates to UTM
         gates_gdf = gpd.GeoDataFrame(geometry=gates_wgs84, crs=self.WGS84_CRS)
