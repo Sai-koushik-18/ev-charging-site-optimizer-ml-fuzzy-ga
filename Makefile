@@ -1,7 +1,7 @@
 # Makefile for VIT-AP EV Charging Infrastructure Planning
 # Usage: make <target>
 
-.PHONY: help install install-dev test lint all candidates ml fuzzy ga evaluate visualize dashboard data-prep validate clean
+.PHONY: help install install-dev test lint all candidates ml fuzzy ga evaluate visualize web dashboard data-prep validate clean
 
 help:
 	@echo "VIT-AP EV Charging Infrastructure Planning - ML-Fuzzy-GA"
@@ -20,6 +20,7 @@ help:
 	@echo "  ga            - Select stations with the genetic algorithm"
 	@echo "  evaluate      - Compare the GA plan with baselines"
 	@echo "  visualize     - Write outputs/maps/campus_map.html"
+	@echo "  web           - Export data for the web dashboard (open web/index.html)"
 	@echo "  dashboard     - Launch the Streamlit dashboard"
 	@echo ""
 	@echo "Legacy data pipeline:"
@@ -60,6 +61,9 @@ evaluate:
 
 visualize:
 	python run_pipeline.py visualize
+
+web:
+	python run_pipeline.py web
 
 dashboard:
 	streamlit run demo_dashboard.py

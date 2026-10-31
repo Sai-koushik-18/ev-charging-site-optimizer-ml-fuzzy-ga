@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EV Charging Location Optimizer — VIT-AP</title>
+  <meta name="description" content="Where should VIT-AP build its first EV chargers? A GA-tuned Random Forest, fuzzy logic and a genetic algorithm on real OpenStreetMap data.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2315172B'/%3E%3Cpath d='M36 6 16 36h14l-4 22 22-32H34z' fill='%23B6F05A'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Caveat:wght@500;700&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#map">Skip to the map</a>
+
+  <!-- ───────── NAV ───────── -->
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="#top" aria-label="Back to top">
+      <svg class="nav__logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M36 6 16 36h14l-4 22 22-32H34z"/></svg>
+      <span>EV&nbsp;Siting<span class="nav__brand-dim"> · VIT-AP</span></span>
+    </a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#method">Method</a>
+      <a href="#map">Map</a>
+      <a href="#ranking">Ranking</a>
+      <a href="#optimisation">Proof</a>
+      <a href="#demand">Model</a>
+    </nav>
+    <span class="nav__status" id="nav-status"><span class="dot"></span><span>Loading…</span></span>
+  </header>
+
+  <main>
+    <!-- ───────── HERO ───────── -->
+    <section class="hero" id="top">
+      <div class="hero__doodles" aria-hidden="true">
+        <svg class="contours" viewBox="0 0 1200 700" preserveAspectRatio="none" id="hero-contours"></svg>
+        <svg class="doodle doodle--plug" viewBox="0 0 120 120" id="doodle-plug"></svg>
+        <svg class="doodle doodle--bolt" viewBox="0 0 120 120" id="doodle-bolt"></svg>
+        <svg class="doodle doodle--pin" viewBox="0 0 120 120" id="doodle-pin"></svg>
+      </div>
+
+      <div class="hero__inner">
+        <p class="eyebrow reveal">VIT-AP University · EV charging infrastructure study</p>
+        <h1 class="hero__title reveal">
+          Powering Tomorrow, One <span class="scribble" id="hero-scribble">Optimal<svg aria-hidden="true"></svg></span> Location at a Time.
+        </h1>
+        <div class="hero__note reveal" aria-hidden="true">
+          <span class="hand">Optimizing the future ↗</span>
+          <svg id="hero-arrow" viewBox="0 0 180 90"></svg>
+        </div>
+        <p class="hero__lede reveal" id="hero-lede"></p>
+
+        <div class="status reveal" id="hero-status" role="status"></div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <div class="hero__cta reveal">
+          <a class="btn btn--lime" href="#map">Explore the map <span aria-hidden="true">↓</span></a>
+          <a class="btn btn--ghost" href="#optimisation">See the proof</a>
+        </div>
+      </div>
+      <svg class="tear" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60V22c80-14 160 10 240 4s150-26 230-14 160 26 240 18 150-30 240-20 160 24 240 16 170-20 250-12v46z"/></svg>
+    </section>
+
+    <!-- ───────── METHOD ───────── -->
+    <section class="section" id="method">
+      <header class="section__head reveal">
+        <p class="kicker">01 · How it works</p>
+        <h2>Five steps, <span class="hand-u">one decision</span>.</h2>
+        <p class="section__lede">Each stage hands its result to the next. Only the demand model learns from data; the fuzzy rules encode expert judgement, and the genetic algorithm searches for the best plan every run.</p>
+      </header>
+      <ol class="steps" id="steps"></ol>
+    </section>
+
+    <!-- ───────── MAP ───────── -->
+    <section class="section section--ink" id="map">
+      <header class="section__head reveal">
+        <p class="kicker kicker--light">02 · The campus, mapped</p>
+        <h2>Real streets. Real buildings.<br><span class="hand-u hand-u--lime">Real</span> candidates.</h2>
+        <p class="section__lede">Every layer comes from OpenStreetMap and OpenChargeMap. Click a marker for its numbers, or a table row further down to fly here.</p>
+      </header>
+      <div class="map-shell reveal">
+        <div class="map-skeleton" id="map-skeleton"><span class="hand">sketching the campus…</span></div>
+        <div id="leaflet" class="map" role="region" aria-label="Interactive campus map"></div>
+
+        <aside class="panel" id="layer-panel" aria-label="Map layers and legend">
+          <button class="panel__toggle" id="panel-toggle" aria-expanded="true" aria-controls="panel-body">
+            <span>Layers &amp; key</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="panel__body" id="panel-body">
+            <div class="seg" role="radiogroup" aria-label="Base map" id="basemaps"></div>
+            <div id="layer-groups"></div>
+          </div>
+        </aside>
+
+        <div class="map-tools">
+          <button class="tool" id="zoom-in" aria-label="Zoom in">+</button>
+          <button class="tool" id="zoom-out" aria-label="Zoom out">−</button>
+          <button class="tool tool--wide" id="reset-view" aria-label="Back to campus">Campus</button>
+          <button class="tool tool--wide" id="state-view" aria-label="Show Andhra Pradesh">Andhra&nbsp;Pradesh</button>
+        </div>
+        <div class="map-key" id="road-key" aria-hidden="true"></div>
+      </div>
+      <p class="map-caption reveal" id="charger-caption"></p>
+    </section>
+
+    <!-- ───────── RANKING ───────── -->
+    <section class="section" id="ranking">
+      <header class="section__head reveal">
+        <p class="kicker">03 · Candidate ranking</p>
+        <h2>Every site, ranked by <span class="hand-u hand-u--orange">predicted demand</span>.</h2>
+        <p class="section__lede">Rank is by the ML model’s annual demand. A tick marks the sites the genetic algorithm chose. Sort any column; click a row to see it on the map.</p>
+      </header>
+
+      <div class="toolbar reveal">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input type="search" id="table-search" placeholder="Search name, ID or zone" aria-label="Search candidates">
+        </label>
+        <div class="dropdown" id="zone-filter">
+          <button class="dropdown__btn" aria-haspopup="listbox" aria-expanded="false"><span>All zones</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <ul class="dropdown__menu" role="listbox"></ul>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="only-selected">
+          <span class="switch__track" aria-hidden="true"></span>
+          <span>GA-selected only</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="more-columns">
+          <span class="switch__track" aria-hidden="true"></span>
+          <span>More columns</span>
+        </label>
+        <span class="toolbar__count" id="table-count" aria-live="polite"></span>
+      </div>
+
+      <div class="table-wrap reveal">
+        <table class="table" id="rank-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ───────── SUITABILITY ───────── -->
+    <section class="section section--paper2" id="suitability">
+      <header class="section__head reveal">
+        <p class="kicker">04 · Fuzzy suitability</p>
+        <h2>How suitable is each site, <span class="hand-u hand-u--purple">from 0 to 1</span>?</h2>
+        <p class="section__lede" id="fuzzy-lede"></p>
+      </header>
+      <div class="chart-card chart-card--fuzzy reveal">
+        <div class="chart-legend" id="fuzzy-legend"></div>
+        <div class="bars" id="fuzzy-chart" role="img" aria-label="Fuzzy suitability score for every candidate"></div>
+        <aside class="annotation" id="fuzzy-annotation"></aside>
+      </div>
+    </section>
+
+    <!-- ───────── OPTIMISATION ───────── -->
+    <section class="section section--ink" id="optimisation">
+      <header class="section__head reveal">
+        <p class="kicker kicker--light">05 · Is the GA plan really the best?</p>
+        <h2>We checked all <span class="hand-u hand-u--lime" id="opt-combos">—</span> possible plans.</h2>
+        <p class="section__lede" id="opt-lede"></p>
+      </header>
+
+      <div class="verdict reveal" id="verdict"></div>
+
+      <div class="opt-grid">
+        <div class="chart-card chart-card--dark reveal">
+          <h3>Fitness of each method <span class="muted">higher is better</span></h3>
+          <div class="bars bars--methods" id="method-chart" role="img" aria-label="Fitness score by placement method"></div>
+          <p class="fineprint" id="fitness-formula"></p>
+        </div>
+        <div class="stack">
+          <div class="chart-card chart-card--dark reveal">
+            <h3>GA search, generation by generation</h3>
+            <svg class="spark" id="convergence" role="img" aria-label="Best fitness per generation"></svg>
+            <p class="fineprint" id="convergence-note"></p>
+          </div>
+          <div class="chart-card chart-card--dark reveal">
+            <h3>How many stations fit?</h3>
+            <ul class="capacity" id="capacity"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── COSTS ───────── -->
+    <section class="section" id="costs">
+      <header class="section__head reveal">
+        <p class="kicker">06 · What it costs</p>
+        <h2>The chosen stations, <span class="hand-u hand-u--orange">line by line</span>.</h2>
+      </header>
+      <div class="budget reveal" id="budget"></div>
+      <div class="cost-cards" id="cost-cards"></div>
+    </section>
+
+    <!-- ───────── DEMAND MODEL ───────── -->
+    <section class="section section--paper2" id="demand">
+      <header class="section__head reveal">
+        <p class="kicker">07 · Demand prediction model</p>
+        <h2>A GA-tuned forest that <span class="hand-u hand-u--purple">errs less</span>.</h2>
+        <p class="section__lede" id="ml-lede"></p>
+      </header>
+      <div class="ml-grid">
+        <div class="chart-card reveal">
+          <h3>Test error <span class="muted">RMSE, kWh per hour · lower is better</span></h3>
+          <div class="bars bars--ml" id="ml-chart" role="img" aria-label="Test error for three models"></div>
+        </div>
+        <div class="ml-side">
+          <div class="improve reveal" id="ml-improve"></div>
+          <div class="info-card reveal" id="ml-info"></div>
+        </div>
+      </div>
+      <div class="caveat reveal" id="ml-caveat"></div>
+    </section>
+
+    <!-- ───────── DATA ───────── -->
+    <section class="section" id="data">
+      <header class="section__head reveal">
+        <p class="kicker">08 · What’s real, what’s modelled</p>
+        <h2>Every value carries a <span class="hand-u">label</span>.</h2>
+      </header>
+      <div class="provenance" id="provenance"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <p class="hand footer__sign">thanks for scrolling ✦</p>
+      <p>Map data © OpenStreetMap contributors · Chargers © Open Charge Map contributors · Weather: Open-Meteo · Imagery © Esri</p>
+      <p class="muted" id="footer-meta"></p>
+    </div>
+  </footer>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <noscript><p class="noscript">This dashboard needs JavaScript to draw the map and charts.</p></noscript>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+  <script src="data/dashboard-data.js"></script>
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/map.js"></script>
+  <script src="assets/js/table.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

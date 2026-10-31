@@ -121,13 +121,11 @@ The key is sent in a request header, so it never appears in URLs, logs or saved 
 
 ## Running the Project
 
-**See the results straight away** — the repository includes the pipeline outputs:
+**See the results straight away.** The repository includes the pipeline outputs, so you can open either dashboard without rerunning anything:
 
-```bash
-streamlit run demo_dashboard.py      # or: make dashboard
-```
-
-Then open http://localhost:8501. You can also open `outputs/maps/campus_map.html` directly in a browser.
+- **Web dashboard** (recommended): open `web/index.html` in a browser. No server or install is needed, only an internet connection for fonts, map tiles and the Leaflet/Rough.js libraries.
+- **Streamlit dashboard**: `streamlit run demo_dashboard.py` (or `make dashboard`), then open http://localhost:8501.
+- **Shareable map**: open `outputs/maps/campus_map.html`.
 
 **Rebuild everything:**
 
@@ -145,6 +143,7 @@ python run_pipeline.py all           # or: make all  (about 3–5 minutes)
 | `python run_pipeline.py ga` | Select the stations | `data/processed/ga_solution_demo.csv`, `outputs/ga_results/` |
 | `python run_pipeline.py evaluate` | Compare with baselines and exhaustive search | `outputs/evaluation/` |
 | `python run_pipeline.py visualize` | Write the shareable map | `outputs/maps/campus_map.html` |
+| `python run_pipeline.py web` | Export the outputs for the web dashboard | `web/data/dashboard-data.js` |
 
 The OSM extract (`data/raw/osm/campus_osm.json`) and 2024 weather are included, so the pipeline runs offline. Add `--force-refresh` to the `candidates` stage to download the latest OSM data.
 
@@ -184,7 +183,14 @@ The OSM extract (`data/raw/osm/campus_osm.json`) and 2024 weather are included, 
 
 Every method picks the same number of stations under the same rules and is scored with the GA's own fitness function: greedy by fuzzy score, greedy by ML demand, greedy by lowest cost, the average of 1,000 random plans, and an exhaustive search of every possible plan.
 
-### 6. Pipeline and dashboard
+### 6. Web dashboard — `web/`
+
+- `src/visualization/web_export.py` copies the pipeline outputs into `web/data/dashboard-data.js`. It recalculates nothing, and `tests/test_web_export.py` checks the copy matches.
+- `web/index.html` with `web/assets/` is a static site: Leaflet for the map (custom markers, clustered chargers, a floating layer panel that doubles as the legend), Rough.js for the hand-drawn charts and accents, and plain JavaScript for the table, scroll reveals and counters.
+- Sections: hero with key figures, method, interactive map, sortable and searchable ranking table (click a row to fly to it on the map), fuzzy suitability, GA vs other methods with the exhaustive-search check, costs, demand model accuracy, and data provenance.
+- It adapts to desktop, tablet and phone, and respects the system's reduced-motion setting.
+
+### 7. Pipeline and Streamlit dashboard
 
 - `run_pipeline.py` is the command-line entry point; each stage is a function in `src/pipeline/campus_pipeline.py`.
 - `demo_dashboard.py` is the Streamlit app. It reloads data whenever the pipeline rewrites a file.

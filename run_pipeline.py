@@ -10,7 +10,8 @@ Stages (real VIT-AP campus):
   ga           - Pick the station set with the genetic algorithm
   evaluate     - Compare the GA plan with baselines and the exhaustive optimum
   visualize    - Write a shareable campus map (outputs/maps/campus_map.html)
-  all          - Run candidates -> ml -> fuzzy -> ga -> evaluate -> visualize
+  web          - Export data for the web dashboard (web/index.html)
+  all          - Run candidates -> ml -> fuzzy -> ga -> evaluate -> visualize -> web
 
 Legacy stages (original study area, superseded by 'candidates'):
   data-prep    - Fetch real data, generate synthetic data, create candidates
@@ -115,6 +116,13 @@ def run_visualize(args):
     return 0
 
 
+def run_web(args):
+    """Export pipeline outputs for the web dashboard."""
+    from src.visualization.web_export import build_web_data
+    build_web_data()
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="VIT-AP EV Charging Infrastructure Planning Pipeline",
@@ -123,7 +131,7 @@ def main():
     )
     parser.add_argument(
         "stage",
-        choices=["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "all", "data-prep", "validate"],
+        choices=["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "web", "all", "data-prep", "validate"],
         help="Pipeline stage to run",
     )
     parser.add_argument(
@@ -151,11 +159,12 @@ def main():
         "ga": run_ga,
         "evaluate": run_evaluate,
         "visualize": run_visualize,
+        "web": run_web,
     }
 
     if args.stage == "all":
         # Run all stages in sequence
-        for stage in ["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize"]:
+        for stage in ["candidates", "ml", "fuzzy", "ga", "evaluate", "visualize", "web"]:
             logger.info(f"\n{'='*60}\nRunning stage: {stage}\n{'='*60}")
             if stage_map[stage](args) != 0:
                 logger.error(f"Stage {stage} failed, stopping pipeline")
