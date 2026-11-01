@@ -95,6 +95,7 @@ class PlaceSettings:
     ml_day_step: int = 1             # 1 = every day of 2024; 4 = one day in four
     ml_trees: Optional[int] = None   # None = the tree count the GA tuned on VIT-AP
     exhaustive_cap: int = 200_000    # skip the exhaustive optimum check above this many valid plans
+    deadline_s: Optional[float] = None  # hosts that stop requests (Vercel: 300 s) finish early with the best plan so far
 
     @classmethod
     def fast(cls, **kw) -> "PlaceSettings":
@@ -608,8 +609,11 @@ def run_place(place: Optional[str] = None, boundary: Union[str, Dict, None] = No
         floor = min_budget.loc[min_budget["possible"], "min_cost_lakhs"].min()
         raise RuntimeError(f"Budget ₹{settings.budget_lakhs:g} L is below the minimum ₹{floor:.2f} L for one station here.")
     counts = [settings.n_stations] if settings.n_stations else list(affordable["n_stations"])
-    plans, best = [], None
+    plans, best, skipped = [], None, []
     for i, k in enumerate(counts):
+        if settings.deadline_s and best is not None and time.time() - t0 > 0.6 * settings.deadline_s:
+            skipped = [int(c) for c in counts[i:]]  # out of time: keep the best plan found so far
+            break
         step(f"GA: planning {int(k)} station{'s' if k > 1 else ''} ({i + 1} of {len(counts)})", 0.5 + 0.35 * i / len(counts))
         ga, ind, history, feasible = best_ga(scored_csv, settings, int(k))
         comps = ind.fitness_components or {}
@@ -626,7 +630,12 @@ def run_place(place: Optional[str] = None, boundary: Union[str, Dict, None] = No
     pd.DataFrame({"generation": range(len(history)), "best_fitness": history}).to_csv(out / "fitness_history.csv", index=False)
 
     step("Checking the GA against greedy, random and exhaustive search", 0.87)
-    result = evaluate(ga, list(solution["candidate_id"]), cap=settings.exhaustive_cap)
+    late = settings.deadline_s and time.time() - t0 > 0.75 * settings.deadline_s
+    result = evaluate(ga, list(solution["candidate_id"]), cap=0 if late else settings.exhaustive_cap)
+    if late:
+        result["summary"]["exhaustive_skipped"] = "not enough time left on the server"
+    if skipped:
+        result["summary"]["station_counts_not_tried"] = skipped
     result["table"].to_csv(out / "comparison.csv", index=False)
     (out / "summary.json").write_text(json.dumps(result["summary"], indent=2), encoding="utf-8")
 
@@ -634,7 +643,7 @@ def run_place(place: Optional[str] = None, boundary: Union[str, Dict, None] = No
     feats_utm = features.to_crs(UTM_CRS)
     area_utm = gpd.GeoSeries([area_wgs], crs=WGS84_CRS).to_crs(UTM_CRS).iloc[0]
     near = feats_utm.geometry.intersects(area_utm.buffer(300))
-    gpd.GeoDataFrame({"name": [info["name"]]}, geometry=[area_wgs], crs=WGS84_CRS).to_file(out / "boundary.geojson", driver="GeoJSON")
+    write_geojson(gpd.GeoDataFrame({"name": [info["name"]]}, geometry=[area_wgs], crs=WGS84_CRS), out / "boundary.geojson")
     bld = feats_utm[near & feats_utm["building"].notna() & feats_utm.geom_type.isin(["Polygon", "MultiPolygon"])]
     write_geojson(bld[["osm_id", "name", "building", "amenity", "geometry"]].to_crs(WGS84_CRS), out / "buildings.geojson")
     rd = feats_utm[near & feats_utm["highway"].notna() & (feats_utm.geom_type == "LineString")].copy()

@@ -139,7 +139,7 @@
     const skipped = items.filter((i) => !i.ga && i.value > minSel).length;
     const ann = document.getElementById("fuzzy-annotation");
     ann.innerHTML = `<p>Top score: ${escape(top.c.name)} (${top.valueText})${top.ga ? " — and the GA picked it." : "."}</p>` +
-      (skipped ? `<p>The GA skipped ${skipped} higher-scoring site${skipped > 1 ? "s" : ""} to spread its ${k} stations across campus.</p>` : "");
+      (skipped ? `<p>The GA skipped ${skipped} higher-scoring site${skipped > 1 ? "s" : ""} to spread its ${EV.count(k, "station")} across campus.</p>` : "");
     const arrow = EV.svg("svg", { viewBox: "0 0 120 40" });
     ann.prepend(arrow);
     EV.arrow(arrow, [112, 30], [6, 14], COLORS.orangeInk, 21, 0.25);
@@ -251,9 +251,9 @@
 
     const el = document.getElementById("budget");
     el.innerHTML = `<div class="budget__head"><h3>${fmt.lakh(total, 1)} of a ${fmt.lakh(budget, 0)} budget</h3>
-      <p class="budget__note">${fmt.lakh(budget - total, 1)} left · up to ${maxFit} stations would fit</p></div>
+      <p class="budget__note">${fmt.lakh(budget - total, 1)} left · up to ${EV.count(maxFit, "station")} would fit</p></div>
       <div class="budget__bar"><svg aria-hidden="true"></svg></div>
-      <div class="budget__marks"><span>₹0</span><span>${sel.length} stations · ${fmt.lakh(total, 1)}</span><span>${fmt.lakh(budget, 0)}</span></div>`;
+      <div class="budget__marks"><span>₹0</span><span>${EV.count(sel.length, "station")} · ${fmt.lakh(total, 1)}</span><span>${fmt.lakh(budget, 0)}</span></div>`;
     const svgEl = el.querySelector("svg");
     const draw = () => {
       const W = svgEl.parentElement.clientWidth, H = 54;

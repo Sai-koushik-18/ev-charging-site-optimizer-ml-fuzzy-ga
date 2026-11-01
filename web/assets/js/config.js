@@ -1,7 +1,7 @@
 /* Address of the live planner API once it is hosted. Empty = use the local server when the page is opened
    from this computer (file:// or localhost), otherwise the planner is shown as offline.
    ?api=<url> overrides it for the tab. */
-window.EV_API = "";
+window.EV_API = "https://ev-charging-planner-api.vercel.app";
 window.EV_LOCAL_API = "http://127.0.0.1:7860";
 
 (function () {

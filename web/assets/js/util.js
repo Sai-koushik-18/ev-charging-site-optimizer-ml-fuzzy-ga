@@ -7,6 +7,7 @@
   EV.place = Object.assign({ slug: "vit-ap", name: "VIT-AP University", short: "VIT-AP", chargers_scope: "in Andhra Pradesh" },
     (D && D.meta && D.meta.place) || {});
 
+  EV.count = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`; // "1 station", "3 stations"
   EV.reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ───────── data helpers ───────── */

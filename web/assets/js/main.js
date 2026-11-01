@@ -18,7 +18,7 @@
     document.getElementById("hero-eyebrow").textContent = `${place.name} · EV charging infrastructure study`;
     document.getElementById("brand-place").textContent = ` · ${place.short}`;
     document.getElementById("hero-lede").innerHTML =
-      `Where should ${escape(place.short)} build its first EV chargers? We turn real OpenStreetMap data into <strong>${D.candidates.length} candidate sites</strong>, predict demand with a GA-tuned Random Forest, score suitability with <strong>${D.fuzzy.n_rules} fuzzy rules</strong>, and let a genetic algorithm choose <strong>${D.ga.n_stations} stations</strong> within a <strong>${fmt.lakh(budget, 0)}</strong> budget.`;
+      `Where should ${escape(place.short)} build its first EV chargers? We turn real OpenStreetMap data into <strong>${D.candidates.length} candidate sites</strong>, predict demand with a GA-tuned Random Forest, score suitability with <strong>${D.fuzzy.n_rules} fuzzy rules</strong>, and let a genetic algorithm choose <strong>${EV.count(D.ga.n_stations, "station")}</strong> within a <strong>${fmt.lakh(budget, 0)}</strong> budget.`;
 
     document.getElementById("hero-status").innerHTML =
       `<span class="dot"></span><span>Pipeline complete</span><span class="status__sep">/</span>
@@ -73,7 +73,7 @@
       { title: "Map", sub: "OpenStreetMap", text: `Campus boundary, buildings, roads and parking become ${D.candidates.length} candidate sites in ${nZones} zones.`, stat: `${D.candidates.length} sites`, icon: "map", color: COLORS.blue },
       { title: "Predict", sub: "GA-tuned Random Forest", text: "Learns hourly charging demand from time, weather and location.", stat: `test RMSE ${fmt.score(ml.test_rmse)}`, icon: "brain", color: COLORS.purple },
       { title: "Score", sub: "Fuzzy logic", text: `${D.fuzzy.inputs.length} inputs and ${D.fuzzy.n_rules} expert rules give every site a score from 0 to 1.`, stat: `${D.fuzzy.n_rules} rules`, icon: "sliders", color: COLORS.purple },
-      { title: "Optimise", sub: "Genetic algorithm", text: `Evolves plans of ${D.ga.n_stations} stations under hard budget and spacing rules.`, stat: `≤ ${fmt.lakh(budget, 0)} · ≥ ${D.ga.min_spacing_m} m`, icon: "dna", color: COLORS.limeInk },
+      { title: "Optimise", sub: "Genetic algorithm", text: `Evolves plans of ${EV.count(D.ga.n_stations, "station")} under hard budget and spacing rules.`, stat: `≤ ${fmt.lakh(budget, 0)} · ≥ ${D.ga.min_spacing_m} m`, icon: "dna", color: COLORS.limeInk },
       { title: "Prove", sub: "Exhaustive search", text: "Scores every possible plan to check the GA’s answer.", stat: `${fmt.num(summary.n_combinations)} plans`, icon: "check", color: COLORS.orange },
     ];
     const ol = document.getElementById("steps");
@@ -100,7 +100,7 @@
     const k = D.ga.n_stations;
     document.getElementById("opt-combos").textContent = fmt.num(summary.n_combinations);
     document.getElementById("opt-lede").textContent =
-      `Every method below picks ${k} stations under the same budget and spacing rules and is scored with the same fitness function. With ${summary.n_sites} sites there are only ${fmt.num(summary.n_combinations)} possible plans, so we scored all of them to find the true best.`;
+      `Every method below picks ${EV.count(k, "station")} under the same budget and spacing rules and is scored with the same fitness function. With ${summary.n_sites} sites there are only ${fmt.num(summary.n_combinations)} possible plans, so we scored all of them to find the true best.`;
     const el = document.getElementById("verdict");
     el.innerHTML = `<div class="stamp" aria-hidden="true"><svg></svg><div><b>${optimum ? "TRUE<br>OPTIMUM" : "NEAR<br>OPTIMUM"}</b><small>${optimum ? "verified ✓" : "checked"}</small></div></div>
       <div><h3>${optimum ? "The genetic algorithm found the single best plan." : "The genetic algorithm beats most valid plans."}</h3>

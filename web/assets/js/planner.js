@@ -28,20 +28,65 @@
   const START_CMD = ".venv\\Scripts\\python -m uvicorn server.app:app --port 7860";
   const OFFLINE_LOCAL = `The planner server is not running on this computer. In the project folder run ${START_CMD}, then press Plan it again.`;
   let picker = null;
+  let server = null;     // the server's health answer (stream support, limits)
   const liveHref = (id) => `index.html?live=${encodeURIComponent(id)}`;
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  /* Save a finished plan: list it, and keep the newest few full results so they open offline. */
+  /* Save a finished plan: list it, and keep the newest few full results so they open offline. True when saved. */
   function remember(entry, data) {
     const index = [entry, ...readIndex().filter((e) => e.id !== entry.id)].slice(0, KEEP_LISTED);
     index.slice(KEEP_SAVED).forEach((e) => store.del("ev-live:" + e.id));
     store.set(INDEX_KEY, JSON.stringify(index));
     const text = JSON.stringify(data);
     for (let i = Math.min(index.length, KEEP_SAVED) - 1; i >= 0; i--) {
-      if (store.set("ev-live:" + entry.id, text)) return;
+      if (store.set("ev-live:" + entry.id, text)) return true;
       if (i > 0) store.del("ev-live:" + index[i].id); // make room by dropping the oldest saved result
     }
+    return false;
+  }
+
+  /* One request that runs the whole plan and streams progress lines, then the result (hosts like Vercel). */
+  async function streamPlan(req, startedAt) {
+    showRun(startedAt);
+    let res;
+    try {
+      res = await fetch(API + "/api/plan/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req) });
+    } catch (e) {
+      throw new Error(LOCAL ? OFFLINE_LOCAL : "Could not reach the planner server. Check your internet connection and try again.");
+    }
+    if (!res.ok || !res.body) {
+      let detail = null;
+      try { detail = (await res.json()).detail; } catch (e) { /* not JSON */ }
+      throw new Error(typeof detail === "string" ? detail : res.status === 422 ? "Check the area and the numbers." : `The planner server answered ${res.status}. Try again.`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "", data = null;
+    for (;;) {
+      let chunk;
+      try { chunk = await reader.read(); } catch (e) { break; }
+      if (chunk.done) break;
+      buf += decoder.decode(chunk.value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        const m = JSON.parse(line);
+        if (m.type === "progress") progress(m.progress, m.message);
+        else if (m.type === "error") throw new Error(m.error);
+        else if (m.type === "result") data = m.data;
+      }
+    }
+    if (!data) throw new Error("The server stopped before the plan finished (it allows about 5 minutes). Try a smaller area or fix the number of stations.");
+    progress(1, "Opening your plan…");
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => b.toString(16).padStart(2, "0")).join("");
+    const place = data.meta && data.meta.place;
+    const saved = remember({ id, name: (place && place.short) || req.name, budget: req.budget, stations: req.stations,
+      spacing: req.spacing, boundary: req.boundary, at: Date.now() }, data);
+    if (!saved) throw new Error("Your browser's storage is full, so the plan could not be opened. Clear this site's data and try again.");
+    location.href = liveHref(id);
   }
 
   async function api(path, opts = {}, timeout = 15000) {
@@ -72,6 +117,7 @@
     try {
       const r = await api("/api/health", {}, 9000);
       if (r.ok && r.body && r.body.ok) {
+        server = r.body;
         maxArea = r.body.max_area_km2 || maxArea;
         const busy = r.body.active_jobs;
         setServer("on", `Planner online${busy ? ` · ${busy} plan${busy > 1 ? "s" : ""} in progress` : ""} · areas up to ${fmt.num(r.body.max_area_km2)} km²`);
@@ -186,7 +232,7 @@
     if (!list.length) { el.hidden = true; return; }
     el.hidden = false;
     el.innerHTML = `<p class="planner__mine-title">Your recent plans</p><ul>${list.map((e) =>
-      `<li><a href="${liveHref(e.id)}"${e.id === window.EV_LIVE ? ' aria-current="page"' : ""}>${escape(e.name)}<small>₹${fmt.num(e.budget)} L${e.stations ? ` · ${e.stations} stations` : ""}</small></a></li>`).join("")}</ul>`;
+      `<li><a href="${liveHref(e.id)}"${e.id === window.EV_LIVE ? ' aria-current="page"' : ""}>${escape(e.name)}<small>₹${fmt.num(e.budget)} L${e.stations ? ` · ${EV.count(e.stations, "station")}` : ""}</small></a></li>`).join("")}</ul>`;
 
     // also list them in the place switcher
     const menu = document.querySelector("#place-switch .dropdown__menu");
@@ -269,9 +315,13 @@
       showRun(startedAt);
       progress(0.01, "Contacting the planner…");
       try {
-        const job = await submit(req);
-        setServer("on", "Planner online");
-        await follow(job, req, startedAt);
+        if (server && server.stream) {
+          await streamPlan(req, startedAt);
+        } else {
+          const job = await submit(req);
+          setServer("on", "Planner online");
+          await follow(job, req, startedAt);
+        }
       } catch (err) {
         fail(err.message || String(err));
       }

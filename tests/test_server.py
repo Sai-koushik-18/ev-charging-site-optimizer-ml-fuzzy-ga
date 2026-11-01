@@ -96,3 +96,24 @@ def test_pipeline_errors_reach_the_user(client):
 def test_unknown_job(client):
     assert client.get("/api/jobs/abcdef123456").status_code == 404
     assert client.get("/api/jobs/abcdef123456/result.js").text.startswith("window.EV_LIVE_ERROR = ")
+
+
+def test_stream_runs_the_plan_in_one_request(client):
+    import json
+    r = client.post("/api/plan/stream", json={"boundary": SQUARE, "name": "My campus", "budget": 200})
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/x-ndjson")
+    lines = [json.loads(line) for line in r.text.splitlines() if line.strip()]
+    assert lines[0]["type"] == "progress"
+    assert any(m["type"] == "progress" and m["message"].startswith("GA") for m in lines)
+    assert lines[-1]["type"] == "result" and lines[-1]["data"]["meta"]["place"]["short"] == "My campus (Polygon)"
+
+
+def test_stream_reports_pipeline_errors(client):
+    import json
+    r = client.post("/api/plan/stream", json={"place": "Nowhere at all", "budget": 300})
+    last = [json.loads(line) for line in r.text.splitlines() if line.strip()][-1]
+    assert last["type"] == "error" and "No area outline" in last["error"]
+
+
+def test_health_says_streaming_is_available(client):
+    assert client.get("/api/health").json()["stream"] is True

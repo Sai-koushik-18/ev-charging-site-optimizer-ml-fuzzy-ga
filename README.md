@@ -210,7 +210,20 @@ A fresh campus takes about 1–3 minutes. Jobs run one at a time; the page shows
 make serve-api        # or: python -m uvicorn server.app:app --port 7860
 ```
 
-**Hosting.** `web/` is a static site. The API can run in any Docker host: `deploy/hf-space/` has a Dockerfile and pinned requirements, and `deploy/deploy_space.py` publishes it as a Hugging Face Docker Space (Docker Spaces now need a Hugging Face PRO plan). Set `window.EV_API` in `web/assets/js/config.js` to the hosted API's address. To show nearby public chargers, give the API an `OCM_API_KEY` environment variable.
+**Live on Vercel (free Hobby plan):**
+
+- Website: **https://ev-charging-site-planner.vercel.app**
+- Planner API: https://ev-charging-planner-api.vercel.app/api/health
+
+On Vercel each plan runs inside one request (`POST /api/plan/stream`, up to 300 s) and streams its progress as JSON lines; if a run nears the limit it stops trying larger station counts and returns the best plan found so far. A fresh campus takes about 1–1.5 minutes there. Finished plans are kept in the visitor's browser. The Hobby plan allows roughly 4 CPU-hours a month (about 80–150 plans).
+
+```bash
+python deploy/deploy_vercel.py          # needs VERCEL_TOKEN (and OCM_API_KEY for chargers) and Node.js
+```
+
+`deploy_vercel.py` stages `server/`, `src/`, `config/` and the Vahan data with `deploy/vercel-api/` into `build/`, deploys it as the `ev-charging-planner-api` project, stores `OCM_API_KEY` as a Vercel environment variable, points `web/assets/js/config.js` at the API and deploys `web/` as `ev-charging-site-planner`.
+
+**Other hosts.** `web/` is a static site. The API can run in any Docker host: `deploy/hf-space/` has a Dockerfile and pinned requirements, and `deploy/deploy_space.py` publishes it as a Hugging Face Docker Space (Docker Spaces now need a Hugging Face PRO plan). Set `window.EV_API` in `web/assets/js/config.js` to the hosted API's address. To show nearby public chargers, give the API an `OCM_API_KEY` environment variable.
 
 ## Implementation Details
 
@@ -347,7 +360,7 @@ What this does and does not make real: the **amount** of demand now follows offi
 │   ├── visualization/           # standalone campus map
 │   └── pipeline/                # campus pipeline stages + legacy data prep
 ├── server/app.py                # live planner API (FastAPI)
-├── deploy/                      # Docker files for hosting the API, and a deploy script
+├── deploy/                      # Vercel and Docker files for hosting the API, deploy scripts
 ├── web/                         # static website
 ├── tests/                       # pytest suite
 ├── run_pipeline.py              # command-line entry point

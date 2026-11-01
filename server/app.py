@@ -14,6 +14,9 @@ Endpoints
     GET  /api/jobs/{job}             status, progress message and fraction
     GET  /api/jobs/{job}/result      dashboard data (JSON)
     GET  /api/jobs/{job}/result.js   the same as `window.DASHBOARD_DATA = ...;` for a <script> tag
+    POST /api/plan/stream            the same request, run inside this one request: newline-delimited JSON
+                                     progress lines, then {"type": "result", "data": ...}. For hosts such as
+                                     Vercel that keep nothing between requests.
 """
 
 import hashlib
@@ -30,7 +33,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 
 from src.pipeline.place_pipeline import PlaceSettings, run_place, slugify
@@ -38,6 +41,7 @@ from src.pipeline.place_pipeline import PlaceSettings, run_place, slugify
 WORK = Path(os.environ.get("EV_WORK_DIR", "/tmp/ev-planner"))
 MAX_QUEUE = int(os.environ.get("EV_MAX_QUEUE", "6"))
 MAX_AREA_KM2 = float(os.environ.get("EV_MAX_AREA_KM2", "12"))
+DEADLINE_S = float(os.environ["EV_DEADLINE_S"]) if os.environ.get("EV_DEADLINE_S") else None
 KEEP_RESULTS = 40
 
 app = FastAPI(title="EV charging site planner", docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -101,6 +105,26 @@ jobs: "OrderedDict[str, Job]" = OrderedDict()
 by_key: dict = {}
 pending: "queue.Queue[Job]" = queue.Queue()
 lock = threading.Lock()
+run_lock = threading.Lock()  # one pipeline run at a time (shared output folders, global random seeds)
+
+
+def plan_settings(req: PlanRequest) -> PlaceSettings:
+    return PlaceSettings.fast(budget_lakhs=req.budget, n_stations=req.stations, spacing_m=req.spacing,
+                              max_area_km2=MAX_AREA_KM2, deadline_s=DEADLINE_S)
+
+
+def run_request(req: PlanRequest, report) -> dict:
+    with run_lock:
+        return run_place(place=req.place, boundary=req.boundary, name=req.name if req.boundary else None,
+                         settings=plan_settings(req), progress=report, export_web=False,
+                         data_root=str(WORK / "data"), out_root=str(WORK / "outputs"))
+
+
+def user_error(exc: Exception) -> str:
+    if isinstance(exc, RuntimeError):  # the pipeline's own, user-readable reasons (area too big, budget too low...)
+        return str(exc)
+    traceback.print_exc()
+    return f"The planner could not finish this place ({type(exc).__name__}). Try again or draw the area again."
 
 
 def position(job: Job) -> int:
@@ -124,20 +148,13 @@ def worker() -> None:
             job.message, job.progress = msg, frac
 
         try:
-            settings = PlaceSettings.fast(budget_lakhs=job.req.budget, n_stations=job.req.stations,
-                                          spacing_m=job.req.spacing, max_area_km2=MAX_AREA_KM2)
-            res = run_place(place=job.req.place, boundary=job.req.boundary, name=job.req.name if job.req.boundary else None,
-                            settings=settings, progress=report, export_web=False,
-                            data_root=str(WORK / "data"), out_root=str(WORK / "outputs"))
+            res = run_request(job.req, report)
             path = result_path(job.id)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(res["web_data"], separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
             job.status, job.message, job.progress = "done", "Done", 1.0
-        except RuntimeError as exc:  # the pipeline's own, user-readable reasons (area too big, budget too low...)
-            job.status, job.error = "error", str(exc)
-        except Exception as exc:  # network failures, unexpected data
-            traceback.print_exc()
-            job.status, job.error = "error", f"The planner could not finish this place ({type(exc).__name__}). Try again or a more specific name."
+        except Exception as exc:
+            job.status, job.error = "error", user_error(exc)
         finally:
             job.finished = time.time()
             prune()
@@ -169,7 +186,41 @@ def get_job(job_id: str) -> Job:
 def health() -> dict:
     active = sum(1 for j in jobs.values() if j.status in ("queued", "running"))
     return {"ok": True, "service": "ev-charging-site-planner", "active_jobs": active, "max_area_km2": MAX_AREA_KM2,
-            "chargers": bool(os.environ.get("OCM_API_KEY"))}
+            "chargers": bool(os.environ.get("OCM_API_KEY")), "stream": True, "deadline_s": DEADLINE_S}
+
+
+@app.post("/api/plan/stream")
+def plan_stream(req: PlanRequest) -> StreamingResponse:
+    if req.place:
+        req.place = " ".join(req.place.split())
+    lines: "queue.Queue[Optional[dict]]" = queue.Queue()
+
+    def work() -> None:
+        try:
+            res = run_request(req, lambda msg, frac: lines.put({"type": "progress", "message": msg, "progress": round(frac, 3)}))
+            lines.put({"type": "result", "data": res["web_data"]})
+        except Exception as exc:
+            lines.put({"type": "error", "error": user_error(exc)})
+        finally:
+            lines.put(None)
+
+    def body():
+        busy = run_lock.locked()
+        yield json.dumps({"type": "progress", "progress": 0.01,
+                          "message": "Waiting for the plan before yours to finish" if busy else "Starting"}) + "\n"
+        threading.Thread(target=work, daemon=True).start()
+        while True:
+            try:
+                item = lines.get(timeout=10)
+            except queue.Empty:
+                yield '{"type":"ping"}\n'  # keeps proxies from closing a quiet connection
+                continue
+            if item is None:
+                return
+            yield json.dumps(item, separators=(",", ":"), ensure_ascii=False) + "\n"
+
+    return StreamingResponse(body(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
 @app.post("/api/plan")

@@ -84,3 +84,6 @@ outputs/ga_results/plots/
 *.backup
 *.old
 backups/
+
+# Vercel CLI project links
+.vercel/
