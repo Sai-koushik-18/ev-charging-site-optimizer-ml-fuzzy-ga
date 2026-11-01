@@ -191,7 +191,7 @@ At NIT Warangal six stations would fit the budget, but the GA chose five: a sixt
 
 ## Live Planner
 
-The website has a **Plan yours** section: search a place (OpenStreetMap Nominatim, India), the map flies there, and you **draw the boundary** — by clicking corners, or by starting from the place's OpenStreetMap outline and dragging its corners. Set a budget, and the page redraws with the plan for exactly that area. The form calls a small API (`server/app.py`, FastAPI) that runs the same place pipeline in **fast mode** on a free Hugging Face Space:
+The website has a **Plan yours** section: search a place (OpenStreetMap Nominatim, India), the map flies there, and you **draw the boundary** — by clicking corners, or by starting from the place's OpenStreetMap outline and dragging its corners. Set a budget, and the page redraws with the plan for exactly that area. The form calls a small API (`server/app.py`, FastAPI) that runs the same place pipeline in **fast mode**:
 
 | | Command line | Live planner (`--fast`) |
 |---|---|---|
@@ -202,17 +202,15 @@ The website has a **Plan yours** section: search a place (OpenStreetMap Nominati
 | Largest area | 25 km² | 12 km² |
 | Minimum budget, exhaustive check | exact | exact (check skipped above 40,000 valid plans) |
 
-A fresh campus takes about 2–3 minutes; the first request after the Space has been idle also waits about a minute for it to wake up. Jobs run one at a time; the page shows each stage as it happens. Finished plans open at `index.html?live=<id>`, are kept in the visitor's browser (last 3) and on the server (last 40), and appear in the place switcher.
+A fresh campus takes about 1–3 minutes. Jobs run one at a time; the page shows each stage as it happens. Finished plans open at `index.html?live=<id>`, are kept in the visitor's browser (last 3) and on the server (last 40), and appear in the place switcher.
+
+**Run it locally:** start the API, then open `web/index.html` — a page opened from this computer uses the local server automatically.
 
 ```bash
-make serve-api                                   # run the API locally on port 7860
-# open web/index.html?api=http://127.0.0.1:7860  (remembered for the tab)
-
-export HF_TOKEN=hf_...                           # a Write token, never stored in files
-python deploy/deploy_space.py --user <hf-username>
+make serve-api        # or: python -m uvicorn server.app:app --port 7860
 ```
 
-`deploy_space.py` creates or updates the Docker Space from `deploy/hf-space/` plus `server/`, `src/` and `config/`, and points `web/assets/js/config.js` at it. To show nearby public chargers, add `OCM_API_KEY` as a secret in the Space settings. The website itself is published to GitHub Pages by `.github/workflows/pages.yml` whenever `web/` changes on `main`.
+**Hosting.** `web/` is a static site. The API can run in any Docker host: `deploy/hf-space/` has a Dockerfile and pinned requirements, and `deploy/deploy_space.py` publishes it as a Hugging Face Docker Space (Docker Spaces now need a Hugging Face PRO plan). Set `window.EV_API` in `web/assets/js/config.js` to the hosted API's address. To show nearby public chargers, give the API an `OCM_API_KEY` environment variable.
 
 ## Implementation Details
 
@@ -349,8 +347,8 @@ What this does and does not make real: the **amount** of demand now follows offi
 │   ├── visualization/           # standalone campus map
 │   └── pipeline/                # campus pipeline stages + legacy data prep
 ├── server/app.py                # live planner API (FastAPI)
-├── deploy/                      # Hugging Face Space files and deploy script
-├── web/                         # static website (GitHub Pages)
+├── deploy/                      # Docker files for hosting the API, and a deploy script
+├── web/                         # static website
 ├── tests/                       # pytest suite
 ├── run_pipeline.py              # command-line entry point
 ├── demo_dashboard.py            # Streamlit dashboard
