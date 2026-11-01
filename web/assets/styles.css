@@ -220,7 +220,7 @@ button { font: inherit; color: inherit; }
 .step__arrow { position: absolute; right: -26px; top: 46px; width: 34px; height: 26px; z-index: 2; overflow: visible; }
 
 /* ───────── map ───────── */
-.map-shell { position: relative; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-night); background: var(--night-2); }
+.map-shell { position: relative; isolation: isolate; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-night); background: var(--night-2); }
 .map { height: clamp(460px, 74vh, 760px); width: 100%; background: var(--night-2); }
 .map-skeleton {
   position: absolute; inset: 0; z-index: 500; display: grid; place-items: center;
@@ -637,7 +637,7 @@ button { font: inherit; color: inherit; }
 .planner__area[data-state="bad"] { border-style: solid; border-color: var(--orange); color: var(--orange-ink); background: #fde8dc; }
 
 /* area picker */
-.picker { position: relative; display: flex; flex-direction: column; min-height: 520px; border-radius: var(--r-lg); overflow: hidden; border: 2px solid var(--ink); box-shadow: var(--shadow); background: var(--night); }
+.picker { position: relative; isolation: isolate; display: flex; flex-direction: column; min-height: 520px; border-radius: var(--r-lg); overflow: hidden; border: 2px solid var(--ink); box-shadow: var(--shadow); background: var(--night); }
 .picker__map { flex: 1; min-height: 420px; background: var(--night-2); }
 .picker.is-drawing .picker__map { cursor: crosshair; }
 .picker.is-locked { pointer-events: none; opacity: 0.75; }
