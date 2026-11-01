@@ -8,6 +8,36 @@
     (D && D.meta && D.meta.place) || {});
 
   EV.count = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`; // "1 station", "3 stations"
+  /* Esri has no imagery at the closest zooms in many places and serves a "Map data not yet available" picture
+     there. Ask for the tile under the map centre with blankTile=false (a missing tile then fails to load) and cap
+     the layer's native zoom at the deepest level that exists, so closer zooms enlarge real imagery instead. */
+  EV.IMAGERY = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer";
+  EV.fitImagery = function (map, layer) {
+    const known = new Map(); // ~1 km cells -> deepest zoom with imagery
+    const apply = (z) => {
+      if (layer.options.maxNativeZoom !== z) { layer.options.maxNativeZoom = z; layer.redraw(); }
+    };
+    const probe = () => {
+      if (!map.hasLayer(layer) || map.getZoom() < 15) return;
+      const c = map.getCenter();
+      const cell = `${c.lat.toFixed(2)},${c.lng.toFixed(2)}`;
+      if (known.has(cell)) return apply(known.get(cell));
+      const tryZoom = (z) => {
+        if (z < 14) return;
+        const n = 2 ** z, r = (c.lat * Math.PI) / 180;
+        const x = Math.floor(((c.lng + 180) / 360) * n);
+        const y = Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n);
+        const img = new Image();
+        img.onload = () => { known.set(cell, z); apply(z); };
+        img.onerror = () => tryZoom(z - 1);
+        img.src = `${EV.IMAGERY}/tile/${z}/${y}/${x}?blankTile=false`;
+      };
+      tryZoom(19);
+    };
+    map.on("moveend", probe);
+    probe();
+  };
+
   EV.reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ───────── data helpers ───────── */

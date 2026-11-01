@@ -41,8 +41,9 @@
     const map = L.map(el, { zoomControl: false, minZoom: 4, maxBounds: INDIA.pad(0.1), maxBoundsViscosity: 1, doubleClickZoom: true })
       .fitBounds(INDIA);
     L.control.zoom({ position: "bottomright" }).addTo(map);
-    L.tileLayer(ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, maxNativeZoom: 19, noWrap: true,
+    const imagery = L.tileLayer(ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, maxNativeZoom: 18, noWrap: true,
       attribution: "Tiles © Esri, Maxar · Search © OpenStreetMap" }).addTo(map);
+    EV.fitImagery(map, imagery);
     L.tileLayer(ESRI + "Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, maxNativeZoom: 19, noWrap: true }).addTo(map);
 
     const $ = (sel) => root.querySelector(sel);

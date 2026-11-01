@@ -6,7 +6,7 @@
   const INDIA = L.latLngBounds([5.5, 67.5], [37.5, 98.0]);
   const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
   const BASEMAPS = [
-    { key: "satellite", label: "Satellite", url: ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", maxNativeZoom: 19,
+    { key: "satellite", label: "Satellite", url: ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", maxNativeZoom: 18,
       attribution: "Tiles © Esri — Esri, Maxar, Earthstar Geographics, GIS User Community" },
     { key: "street", label: "Street", url: ESRI + "World_Street_Map/MapServer/tile/{z}/{y}/{x}", maxNativeZoom: 19,
       attribution: "Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors" },
@@ -90,6 +90,7 @@
       bases[b.key] = L.tileLayer(b.url, { maxZoom: 20, maxNativeZoom: b.maxNativeZoom, noWrap: true, bounds: INDIA, attribution: b.attribution });
     });
     let activeBase = bases.satellite.addTo(map);
+    EV.fitImagery(map, bases.satellite); // no "Map data not yet available" tiles when zoomed in
     const skeleton = document.getElementById("map-skeleton");
     activeBase.once("load", () => skeleton.classList.add("is-done"));
     setTimeout(() => skeleton.classList.add("is-done"), 6000);
