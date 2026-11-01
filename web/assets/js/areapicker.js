@@ -210,6 +210,7 @@
         render(); changed();
       },
       setEnabled(on) { root.classList.toggle("is-locked", !on); },
+      closeIfOpen() { if (drawing && points.length >= 3) finish(); },
     };
   };
 })();

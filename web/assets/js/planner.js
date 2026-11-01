@@ -24,6 +24,9 @@
   };
   const readIndex = () => { try { return JSON.parse(store.get(INDEX_KEY)) || []; } catch (e) { return []; } };
   let maxArea = 12;      // km², from the server's health answer
+  const LOCAL = /\/\/(localhost|127\.0\.0\.1)[:/]/.test(API + "/");
+  const START_CMD = ".venv\\Scripts\\python -m uvicorn server.app:app --port 7860";
+  const OFFLINE_LOCAL = `The planner server is not running on this computer. In the project folder run ${START_CMD}, then press Plan it again.`;
   let picker = null;
   const liveHref = (id) => `index.html?live=${encodeURIComponent(id)}`;
   const $ = (id) => document.getElementById(id);
@@ -63,7 +66,6 @@
   async function checkServer() {
     if (!API) {
       setServer("off", "The live planner is not connected in this copy of the site. Run plans from the command line instead (see below).");
-      $("plan-submit").disabled = true;
       return;
     }
     setServer("wait", "Checking the planner server…");
@@ -76,24 +78,36 @@
         return;
       }
     } catch (e) { /* asleep or offline */ }
-    setServer("wait", "The free server is asleep. It wakes up when you press Plan it (about a minute).");
+    if (LOCAL) setServer("off", `Planner server not running. Start it with <code>${START_CMD}</code>, then refresh.`);
+    else setServer("wait", "The free server is asleep. It wakes up when you press Plan it (about a minute).");
   }
 
   /* ───────── progress view ───────── */
   let timer = null;
+  function status(text, state) {
+    const el = $("plan-status");
+    el.hidden = !text;
+    el.dataset.state = state || "run";
+    el.innerHTML = text;
+  }
   function showRun(startedAt) {
     $("plan-run").hidden = false;
     $("plan-error").hidden = true;
+    $("plan-run").scrollIntoView({ behavior: EV.reduceMotion ? "auto" : "smooth", block: "nearest" });
     $("plan-stages").innerHTML = STAGES.map(([, label]) => `<li>${label}</li>`).join("");
     clearInterval(timer);
     timer = setInterval(() => {
       const s = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
       $("plan-time").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      if (!$("plan-status").hidden && $("plan-status").dataset.state === "run") $("plan-status-time").textContent = $("plan-time").textContent;
     }, 500);
   }
   function progress(frac, msg) {
     $("plan-bar").style.width = `${Math.max(3, frac * 100).toFixed(1)}%`;
     $("plan-msg").textContent = msg;
+    const pct = Math.round(frac * 100);
+    $("plan-submit").innerHTML = `<span class="spinner" aria-hidden="true"></span>Planning… ${pct}%`;
+    status(`<b>${escape(msg)}</b><span><span id="plan-status-time">${escape($("plan-time").textContent)}</span> · usually 1–3 minutes · progress below</span>`, "run");
     const items = $("plan-stages").children;
     STAGES.forEach(([start], i) => {
       const next = STAGES[i + 1] ? STAGES[i + 1][0] : 1.01;
@@ -107,11 +121,13 @@
     $("plan-error").hidden = false;
     $("plan-error").innerHTML = `<b>Could not plan this place.</b> ${escape(text)}`;
     lock(false);
+    status(`<b>Not started.</b> ${escape(text)}`, "error");
   }
   function lock(on) {
     $("plan-form").querySelectorAll("input, select, button").forEach((el) => { el.disabled = on; });
     if (picker) picker.setEnabled(!on);
-    $("plan-submit").innerHTML = on ? "Planning…" : `Plan it <span aria-hidden="true">→</span>`;
+    $("plan-submit").innerHTML = on ? `<span class="spinner" aria-hidden="true"></span>Planning…` : `Plan it <span aria-hidden="true">→</span>`;
+    $("plan-submit").setAttribute("aria-busy", on ? "true" : "false");
   }
 
   /* POST the plan, retrying while the sleeping Space starts (its page is not our JSON). */
@@ -124,6 +140,7 @@
         if (r.body && r.body.detail) throw new Error(typeof r.body.detail === "string" ? r.body.detail : "Check the place name and numbers.");
       } catch (e) {
         if (!(e instanceof TypeError) && e.name !== "AbortError") throw e; // our own error message
+        if (LOCAL) throw new Error(OFFLINE_LOCAL); // a local server does not need waking up
       }
       if (Date.now() > until) throw new Error("The planner server did not wake up. Try again in a few minutes.");
       progress(0.01, attempt ? "Waking the free server… this happens after it has been idle" : "Contacting the planner…");
@@ -237,6 +254,8 @@
       const budget = Number($("plan-budget").value);
       const spacing = Number($("plan-spacing").value || 300);
       const k = $("plan-stations").value;
+      if (!API) return fail("The live planner is not connected in this copy of the site.");
+      picker.closeIfOpen(); // pressing Plan it with an unclosed shape closes it
       const boundary = picker.geometry();
       if (!boundary) return fail("Draw the area's boundary on the map first (or press Use this outline after a search).");
       const km2 = $("plan-area").dataset.state;
