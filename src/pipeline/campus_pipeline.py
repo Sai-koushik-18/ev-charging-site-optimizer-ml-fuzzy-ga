@@ -172,7 +172,13 @@ def export_osm_layers(features: gpd.GeoDataFrame, out_dir: Path):
 def point_inside(poly, pt: Point, inset_m: float = 15) -> Point:
     """Return pt if it lies inside poly, else the nearest point a little inside its edge."""
     inner = poly.buffer(-inset_m)
-    return pt if inner.contains(pt) else nearest_points(inner.exterior, pt)[0]
+    if inner.is_empty:  # a sliver thinner than the inset: use the shape itself
+        inner = poly
+    if inner.contains(pt):
+        return pt
+    if inner.geom_type == "MultiPolygon":  # area in several pieces: the nearest piece's outer edge
+        inner = min(inner.geoms, key=lambda g: g.distance(pt))
+    return nearest_points(inner.exterior, pt)[0]
 
 
 def zone_members(features_utm: gpd.GeoDataFrame, campus, zone_id: str) -> gpd.GeoDataFrame:

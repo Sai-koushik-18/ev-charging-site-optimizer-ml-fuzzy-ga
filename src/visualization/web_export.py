@@ -102,13 +102,18 @@ def _ga_block(ga_cfg: dict, history: pd.DataFrame, capacity: pd.DataFrame, overr
     }
 
 
-def _write(data: dict, out_js: str, meta: dict) -> str:
+def _with_meta(data: dict, meta: dict) -> dict:
     data["meta"] = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "sources": ["OpenStreetMap", "Open-Meteo", "OpenChargeMap", "Esri World Imagery"],
                     "place": meta}
+    return _clean(data)
+
+
+def _write(data: dict, out_js: str, meta: dict) -> str:
+    data = _with_meta(data, meta)
     out = Path(out_js)
     out.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(_clean(data), separators=(",", ":"), ensure_ascii=False)
+    payload = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
     out.write_text(
         "// Generated from the pipeline outputs. Do not edit by hand.\n"
         f"window.DASHBOARD_DATA = {payload};\n",
@@ -170,10 +175,22 @@ def build_web_data(
     return path
 
 
-def build_place_web_data(out_dir: Path, meta: dict, ga_config: str = "config/ga_config_demo.yaml",
-                         fuzzy_config: str = "config/fuzzy_config.yaml") -> str:
+def build_place_web_data(out_dir: Path, meta: dict) -> str:
     """Write web/data/places/<slug>.js from a place run's outputs (outputs/places/<slug>/)."""
-    out_dir = Path(out_dir)
+    data = _place_data(Path(out_dir), meta)
+    rel = f"data/places/{meta['slug']}.js"
+    path = _write(data, f"web/{rel}", meta)
+    update_registry(meta["slug"], meta.get("short") or meta["name"], rel, meta["settings"]["budget_lakhs"])
+    return path
+
+
+def place_web_data(out_dir: Path, meta: dict) -> dict:
+    """The dashboard data for a place run as a JSON-ready dict (what the live planner API returns)."""
+    return _with_meta(_place_data(Path(out_dir), meta), meta)
+
+
+def _place_data(out_dir: Path, meta: dict, ga_config: str = "config/ga_config_demo.yaml",
+                fuzzy_config: str = "config/fuzzy_config.yaml") -> dict:
     ga_cfg = yaml.safe_load(Path(ga_config).read_text(encoding="utf-8"))["ga"]
     fuzzy_cfg = yaml.safe_load(Path(fuzzy_config).read_text(encoding="utf-8"))["fuzzy"]
     solution = pd.read_csv(out_dir / "solution.csv")
@@ -202,10 +219,7 @@ def build_place_web_data(out_dir: Path, meta: dict, ga_config: str = "config/ga_
             "state": None,
         },
     }
-    rel = f"data/places/{meta['slug']}.js"
-    path = _write(data, f"web/{rel}", meta)
-    update_registry(meta["slug"], meta.get("short") or meta["name"], rel, st["budget_lakhs"])
-    return path
+    return data
 
 
 def export_all_places(root: str = "outputs/places") -> None:

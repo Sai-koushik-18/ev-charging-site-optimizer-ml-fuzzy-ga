@@ -131,6 +131,17 @@ def score_plan(ga: GeneticAlgorithmOptimizer, idx: Sequence[int]) -> Dict:
     }
 
 
+def _fitness(ga: GeneticAlgorithmOptimizer, idx: Sequence[int]):
+    """(feasible, fitness) only: what the exhaustive loop needs, without score_plan's extra columns."""
+    chromosome = np.zeros(len(ga.candidates_df), dtype=int)
+    chromosome[list(idx)] = 1
+    fitness, comps = ga._calculate_fitness(Individual(chromosome=chromosome))
+    feasible = (comps.get("budget_violation", 1.0) == 0.0
+                and comps.get("separation_violation", 0.0) == 0.0
+                and comps.get("unknown_cost", True) is False)
+    return feasible, fitness
+
+
 def greedy_plan(ga: GeneticAlgorithmOptimizer, order: Sequence[int], k: int) -> Optional[List[int]]:
     """Take sites in the given order, skipping any that break budget or spacing."""
     budget = ga.config["fitness_params"]["budget_lakhs"]
@@ -148,7 +159,8 @@ def greedy_plan(ga: GeneticAlgorithmOptimizer, order: Sequence[int], k: int) -> 
     return None
 
 
-def evaluate(ga: GeneticAlgorithmOptimizer, ga_site_ids: Sequence[str], seed: int = 42) -> Dict:
+def evaluate(ga: GeneticAlgorithmOptimizer, ga_site_ids: Sequence[str], seed: int = 42,
+             cap: int = MAX_VALID_PLANS) -> Dict:
     """Compare the GA plan with baselines and, when small enough, the exhaustive optimum."""
     df = ga.candidates_df
     n, k = len(df), ga.config["n_stations_target"]
@@ -187,19 +199,19 @@ def evaluate(ga: GeneticAlgorithmOptimizer, ga_site_ids: Sequence[str], seed: in
     summary = {"n_sites": n, "n_stations": k, "random_valid_share": len(feasible_random) / N_RANDOM}
     n_combos = math.comb(n, k)
     summary["n_combinations"] = n_combos
-    plans, complete = valid_plans(ga, k)
+    plans, complete = valid_plans(ga, k, cap)
     if not complete:
-        summary["exhaustive_skipped"] = f"more than {MAX_VALID_PLANS:,} valid plans"
+        summary["exhaustive_skipped"] = f"more than {cap:,} valid plans"
     else:
-        valid = [(idx, s) for idx, s in ((idx, score_plan(ga, idx)) for idx in plans) if s["feasible"]]
+        valid = [(idx, fit) for idx, (ok, fit) in ((idx, _fitness(ga, idx)) for idx in plans) if ok]
         summary["n_valid_plans"] = len(valid)
         if valid:
-            best_idx, _ = max(valid, key=lambda t: t[1]["fitness"])
+            best_idx, best_fit = max(valid, key=lambda t: t[1])
             add("Exhaustive search (true optimum)", best_idx, f"checked all {n_combos:,} plans")
             if ga_idx:
                 ga_fit = score_plan(ga, ga_idx)["fitness"]
-                summary["ga_matches_optimum"] = bool(abs(ga_fit - score_plan(ga, best_idx)["fitness"]) < 1e-9)
-                summary["ga_beats_share_of_valid_plans"] = float(np.mean([s["fitness"] <= ga_fit for _, s in valid]))
+                summary["ga_matches_optimum"] = bool(abs(ga_fit - best_fit) < 1e-9)
+                summary["ga_beats_share_of_valid_plans"] = float(np.mean([fit <= ga_fit for _, fit in valid]))
     return {"table": pd.DataFrame(rows), "summary": summary}
 
 

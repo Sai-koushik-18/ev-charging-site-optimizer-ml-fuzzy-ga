@@ -22,3 +22,8 @@ folium>=0.14.0
 streamlit>=1.28.0
 streamlit-folium>=0.13.0
 plotly>=5.15.0
+
+# Live planner API (server/app.py) and its deployment
+fastapi>=0.115.0
+uvicorn>=0.32.0
+huggingface_hub>=0.26.0

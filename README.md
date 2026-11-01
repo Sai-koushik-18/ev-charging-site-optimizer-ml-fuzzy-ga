@@ -19,14 +19,15 @@ A hybrid **Machine Learning → Fuzzy Logic → Genetic Algorithm** pipeline tha
 5. [Features](#features)
 6. [Installation](#installation)
 7. [Running the Project](#running-the-project)
-8. [Implementation Details](#implementation-details)
-9. [Results](#results)
-10. [Data and Provenance](#data-and-provenance)
-11. [Project Structure](#project-structure)
-12. [Testing](#testing)
-13. [Limitations and Future Work](#limitations-and-future-work)
-14. [Acknowledgments](#acknowledgments)
-15. [License](#license)
+8. [Plan Any Place](#plan-any-place) · [Live Planner](#live-planner)
+9. [Implementation Details](#implementation-details)
+10. [Results](#results)
+11. [Data and Provenance](#data-and-provenance)
+12. [Project Structure](#project-structure)
+13. [Testing](#testing)
+14. [Limitations and Future Work](#limitations-and-future-work)
+15. [Acknowledgments](#acknowledgments)
+16. [License](#license)
 
 ---
 
@@ -186,7 +187,32 @@ What happens (`src/pipeline/place_pipeline.py`):
 
 At NIT Warangal six stations would fit the budget, but the GA chose five: a sixth would sit too close to the others and lower the plan's score.
 
-**Limits.** Results depend on how well OpenStreetMap maps the place; cost rates are the Indian defaults in `config/settings.yaml`; demand is synthetic; each run takes about 4–6 minutes, mostly retraining the demand model.
+**Limits.** Results depend on how well OpenStreetMap maps the place; cost rates are the Indian defaults in `config/settings.yaml`; demand is synthetic; each run takes about 4–6 minutes, mostly the GA's 10 runs per station count. Add `--fast` for the live planner's settings (about 2 minutes).
+
+## Live Planner
+
+The website has a **Plan yours** form: anyone types a campus and a budget, and the page redraws with their plan. The form calls a small API (`server/app.py`, FastAPI) that runs the same place pipeline in **fast mode** on a free Hugging Face Space:
+
+| | Command line | Live planner (`--fast`) |
+|---|---|---|
+| GA runs per station count | 10 | 3 |
+| Demand history for the Random Forest | every day of 2024 | 1 day in 4 (annual demand scaled back up) |
+| Trees | 300 (GA-tuned on VIT-AP) | 100 (other tuned settings kept) |
+| Station counts tried | up to 12 | up to 8 |
+| Largest area | 25 km² | 12 km² |
+| Minimum budget, exhaustive check | exact | exact (check skipped above 40,000 valid plans) |
+
+A fresh campus takes about 2–3 minutes; the first request after the Space has been idle also waits about a minute for it to wake up. Jobs run one at a time; the page shows each stage as it happens. Finished plans open at `index.html?live=<id>`, are kept in the visitor's browser (last 3) and on the server (last 40), and appear in the place switcher.
+
+```bash
+make serve-api                                   # run the API locally on port 7860
+# open web/index.html?api=http://127.0.0.1:7860  (remembered for the tab)
+
+export HF_TOKEN=hf_...                           # a Write token, never stored in files
+python deploy/deploy_space.py --user <hf-username>
+```
+
+`deploy_space.py` creates or updates the Docker Space from `deploy/hf-space/` plus `server/`, `src/` and `config/`, and points `web/assets/js/config.js` at it. To show nearby public chargers, add `OCM_API_KEY` as a secret in the Space settings. The website itself is published to GitHub Pages by `.github/workflows/pages.yml` whenever `web/` changes on `main`.
 
 ## Implementation Details
 
@@ -308,6 +334,9 @@ The model is trained on synthetic demand, so these figures show the method works
 │   ├── evaluation/              # GA vs baselines and exhaustive search
 │   ├── visualization/           # standalone campus map
 │   └── pipeline/                # campus pipeline stages + legacy data prep
+├── server/app.py                # live planner API (FastAPI)
+├── deploy/                      # Hugging Face Space files and deploy script
+├── web/                         # static website (GitHub Pages)
 ├── tests/                       # pytest suite
 ├── run_pipeline.py              # command-line entry point
 ├── demo_dashboard.py            # Streamlit dashboard
@@ -322,7 +351,7 @@ The model is trained on synthetic demand, so these figures show the method works
 python -m pytest            # or: make test (adds coverage)
 ```
 
-41 tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; candidate provenance; and the OpenChargeMap loader (key handling, parsing, search radius, state boundary).
+Tests cover: fuzzy rule coverage and monotonic behaviour, land-tier mapping and the demand-index path; GA hard constraints and agreement with exhaustive search; the GA tuner; the demand predictor; the OSM loader; candidate provenance; the OpenChargeMap loader (key handling, parsing, search radius, state boundary); the minimum-budget and valid-plan searches (against brute force), OSM tag zones and multi-part areas; the web export; and the live planner API (validation, job lifecycle, result formats).
 
 ## Limitations and Future Work
 

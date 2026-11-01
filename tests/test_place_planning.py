@@ -92,3 +92,12 @@ def test_zone_rules(tags, zone):
 def test_slugify():
     assert slugify("IIT Madras") == "iit-madras"
     assert slugify("College of Engineering, Guindy!") == "college-of-engineering-guindy"
+
+
+def test_point_inside_handles_areas_in_several_pieces():
+    from shapely.geometry import MultiPolygon, Point, box
+    from src.pipeline.campus_pipeline import point_inside
+    area = MultiPolygon([box(0, 0, 100, 100), box(300, 0, 400, 100)])
+    p = point_inside(area, Point(450, 50))           # outside, nearest the right-hand piece
+    assert box(300, 0, 400, 100).contains(p) and p.x == 385
+    assert point_inside(area, Point(50, 50)).equals(Point(50, 50))

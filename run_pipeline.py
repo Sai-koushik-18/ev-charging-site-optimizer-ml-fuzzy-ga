@@ -133,9 +133,10 @@ def run_place(args):
         logger.error("place needs --place \"Name\" or --boundary area.geojson")
         return 2
     try:
+        make = PlaceSettings.fast if args.fast else PlaceSettings
         plan(place=args.place, boundary=args.boundary, name=args.name, refresh=args.force_refresh,
-             settings=PlaceSettings(budget_lakhs=args.budget, n_stations=args.stations, spacing_m=args.spacing,
-                                    coverage_m=args.coverage, max_sites=args.max_sites, max_area_km2=args.max_area))
+             settings=make(budget_lakhs=args.budget, n_stations=args.stations, spacing_m=args.spacing,
+                           coverage_m=args.coverage, max_sites=args.max_sites, max_area_km2=args.max_area))
     except RuntimeError as exc:
         print(f"Cannot plan this place: {exc}")
         return 1
@@ -174,6 +175,8 @@ def main():
     place.add_argument("--coverage", type=float, default=250.0, help="Coverage radius in metres (default 250)")
     place.add_argument("--max-sites", type=int, default=40, help="Maximum candidate sites (default 40)")
     place.add_argument("--max-area", type=float, default=25.0, help="Largest area in km2 (default 25)")
+    place.add_argument("--fast", action="store_true",
+                       help="Quicker run used by the live web planner (3 GA runs, 1 day in 4, 100 trees, up to 8 stations)")
     args = parser.parse_args()
     setup_logging(args.verbose)
 

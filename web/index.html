@@ -28,6 +28,7 @@
       <a href="#ranking">Ranking</a>
       <a href="#optimisation">Proof</a>
       <a href="#demand">Model</a>
+      <a href="#plan" class="nav__plan">Plan yours</a>
     </nav>
     <div class="dropdown place-switch" id="place-switch">
       <button class="dropdown__btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a place">
@@ -66,9 +67,42 @@
         <div class="hero__cta reveal">
           <a class="btn btn--lime" href="#map">Explore the map <span aria-hidden="true">↓</span></a>
           <a class="btn btn--ghost" href="#optimisation">See the proof</a>
+          <a class="btn btn--ghost" href="#plan">Plan your own campus <span aria-hidden="true">→</span></a>
         </div>
       </div>
       <svg class="tear" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60V22c80-14 160 10 240 4s150-26 230-14 160 26 240 18 150-30 240-20 160 24 240 16 170-20 250-12v46z"/></svg>
+    </section>
+
+    <!-- ───────── LIVE PLANNER ───────── -->
+    <section class="section planner" id="plan">
+      <header class="section__head reveal">
+        <p class="kicker">Live planner · try it yourself</p>
+        <h2>Your campus. Your budget. <span class="hand-u">Your plan.</span></h2>
+        <p class="section__lede">Type any campus or area and a budget. The same ML → fuzzy → GA pipeline runs on a free server, then this page redraws with your result. It usually takes two to four minutes.</p>
+      </header>
+
+      <form class="planner__form reveal" id="plan-form" novalidate>
+        <label class="field field--place"><span>Campus or area</span>
+          <input id="plan-place" name="place" required minlength="3" maxlength="120" autocomplete="off" placeholder="e.g. IIT Madras, NIT Trichy, Anna University"></label>
+        <label class="field"><span>Budget (₹ lakhs)</span>
+          <input id="plan-budget" name="budget" type="number" inputmode="decimal" min="10" max="5000" step="1" value="300" required></label>
+        <label class="field"><span>Stations</span>
+          <select id="plan-stations" name="stations"><option value="">Auto (best fit)</option></select></label>
+        <label class="field"><span>Min spacing (m)</span>
+          <input id="plan-spacing" name="spacing" type="number" inputmode="numeric" min="100" max="1000" step="50" value="300"></label>
+        <button class="btn btn--lime planner__go" type="submit" id="plan-submit">Plan it <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="planner__server" id="plan-server" role="status"></p>
+
+      <div class="planner__run" id="plan-run" hidden aria-live="polite">
+        <div class="planner__head"><b id="plan-msg">Contacting the planner…</b><span class="planner__time num" id="plan-time">0:00</span></div>
+        <div class="planner__bar" aria-hidden="true"><span id="plan-bar"></span></div>
+        <ol class="planner__stages" id="plan-stages"></ol>
+      </div>
+      <p class="planner__error" id="plan-error" hidden role="alert"></p>
+
+      <div class="planner__mine" id="plan-mine" hidden></div>
+      <p class="planner__note reveal">Fast mode for the web: 3 GA runs per station count, demand history on 1 day in 4, up to 8 stations and areas up to 12 km². The minimum-budget table and the exhaustive check are exact. For full quality run <code>python run_pipeline.py place --place "…" --budget …</code>. Costs use Indian rates; results depend on how well OpenStreetMap maps the place.</p>
     </section>
 
     <!-- ───────── METHOD ───────── -->
@@ -250,20 +284,42 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+  <script src="assets/js/config.js"></script>
   <script src="data/places.js"></script>
   <script>
     // Load the chosen place's data synchronously (works when the page is opened from disk).
+    // ?live=<id> is a plan from the live planner: saved in this browser, or fetched from the API.
     (function () {
+      var q = new URLSearchParams(location.search);
+      var write = function (src) { document.write('<script src="' + src + '"><\/script>'); };
+      var live = q.get("live");
+      if (live && /^[a-f0-9]{6,32}$/.test(live)) {
+        window.EV_LIVE = live;
+        try {
+          var saved = localStorage.getItem("ev-live:" + live);
+          if (saved) window.DASHBOARD_DATA = JSON.parse(saved);
+        } catch (e) { /* storage blocked or damaged: ask the server */ }
+        if (!window.DASHBOARD_DATA && window.EV_API) write(window.EV_API + "/api/jobs/" + live + "/result.js");
+        return;
+      }
       var list = window.EV_PLACES || [];
-      var want = new URLSearchParams(location.search).get("place");
+      var want = q.get("place");
       var pick = list.filter(function (p) { return p.slug === want; })[0] || list[0];
-      document.write('<script src="' + (pick ? pick.file : "data/dashboard-data.js") + '"><\/script>');
+      write(pick ? pick.file : "data/dashboard-data.js");
     })();
+  </script>
+  <script>
+    // A live plan that could not be loaded (expired, or the server is asleep): show the default place with a note.
+    if (window.EV_LIVE && !window.DASHBOARD_DATA) {
+      window.EV_LIVE_FAILED = window.EV_LIVE_ERROR || "The planner server did not answer.";
+      document.write('<script src="' + ((window.EV_PLACES || [])[0] || { file: "data/dashboard-data.js" }).file + '"><\/script>');
+    }
   </script>
   <script src="assets/js/util.js"></script>
   <script src="assets/js/map.js"></script>
   <script src="assets/js/table.js"></script>
   <script src="assets/js/charts.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/planner.js"></script>
 </body>
 </html>

@@ -26,7 +26,7 @@ import re
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import geopandas as gpd
 import numpy as np
@@ -77,6 +77,7 @@ GATE_BUFFER_M = 60
 GATE_MERGE_M = 80
 ROADSIDE_AREA_SQM = 250
 DEFAULT_GRID_DIST_M = 250  # assumed when OSM maps no power infrastructure near the area
+OVERPASS_RACE = OVERPASS_ENDPOINTS[:2] + ["https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
 
 
 @dataclass
@@ -88,6 +89,15 @@ class PlaceSettings:
     max_sites: int = 40
     max_area_km2: float = 25
     ga_runs: int = 10
+    max_stations: int = 12
+    ml_day_step: int = 1             # 1 = every day of 2024; 4 = one day in four
+    ml_trees: Optional[int] = None   # None = the tree count the GA tuned on VIT-AP
+    exhaustive_cap: int = 200_000    # skip the exhaustive optimum check above this many valid plans
+
+    @classmethod
+    def fast(cls, **kw) -> "PlaceSettings":
+        """Quicker settings for the live web planner: 3 GA runs per count, 1 day in 4, 100 trees, up to 8 stations."""
+        return cls(**{"ga_runs": 3, "ml_day_step": 4, "ml_trees": 100, "max_stations": 8, "exhaustive_cap": 40_000, **kw})
 
 
 def write_geojson(gdf: gpd.GeoDataFrame, path: Path) -> None:
@@ -147,17 +157,37 @@ def fetch_osm_area(bbox, cache: Path, refresh: bool = False) -> Dict:
     s, w, n, e = bbox
     q = (f"[out:json][timeout:180];(way({s},{w},{n},{e});relation({s},{w},{n},{e});"
          f'node[~"^(amenity|shop|leisure|office|power|tourism|public_transport|building)$"~"."]({s},{w},{n},{e}););out geom;')
-    last = None
-    for endpoint in OVERPASS_ENDPOINTS:
-        try:
-            resp = requests.post(endpoint, data={"data": q}, headers=HEADERS, timeout=240)
-            resp.raise_for_status()
-            data = resp.json()
-            cache.write_text(json.dumps(data), encoding="utf-8")
-            return data
-        except (requests.RequestException, ValueError) as exc:
-            last = exc
-    raise RuntimeError(f"All Overpass endpoints failed: {last}")
+    data = _overpass_race(q)
+    cache.write_text(json.dumps(data), encoding="utf-8")
+    return data
+
+
+def _overpass_race(query: str, timeout: float = 180) -> Dict:
+    """Ask the public Overpass mirrors at once and keep the first good answer (their load varies a lot)."""
+    from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+    def ask(endpoint):
+        resp = requests.post(endpoint, data={"data": query}, headers=HEADERS, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        if "elements" not in data:
+            raise ValueError("no elements in the answer")
+        return data
+
+    pool = ThreadPoolExecutor(len(OVERPASS_RACE))
+    futures = {pool.submit(ask, ep): ep for ep in OVERPASS_RACE}
+    errors = []
+    try:
+        while futures:
+            done, _ = wait(futures, return_when=FIRST_COMPLETED)
+            for f in done:
+                ep = futures.pop(f)
+                if f.exception() is None:
+                    return f.result()
+                errors.append(f"{ep}: {f.exception()}")
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    raise RuntimeError("OpenStreetMap (Overpass) did not answer. Try again in a minute. " + "; ".join(errors))
 
 
 def fetch_weather(lat: float, lon: float, cache: Path, year: int = 2024) -> pd.DataFrame:
@@ -387,14 +417,25 @@ def build_candidates(features: gpd.GeoDataFrame, area_wgs, config, settings: Pla
 
 # ───────────────────────── ML demand ─────────────────────────
 
-def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config) -> (pd.DataFrame, Dict):
-    """Synthetic hourly demand for the place, a Random Forest with the VIT-AP GA-tuned settings, annual demand."""
+def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config, day_step: int = 1,
+                 trees: Optional[int] = None) -> (pd.DataFrame, Dict):
+    """Synthetic hourly demand for the place, a Random Forest with the VIT-AP GA-tuned settings, annual demand.
+
+    day_step > 1 keeps one day in day_step (every hour of those days) to train faster; annual demand
+    is scaled back up to the full year.
+    """
+    full_hours = len(weather)
+    if day_step > 1:
+        day = (weather["timestamp"].dt.normalize() - weather["timestamp"].min().normalize()).dt.days
+        weather = weather[day % day_step == 0].reset_index(drop=True)
     gen = DemandGenerator(config, seed=123)
     demand = pd.concat([gen._generate_candidate_year(c, weather, 2024) for _, c in cands.iterrows()], ignore_index=True)
 
     params = {}
     if VITAP_ML_METRICS.exists():
         params = json.loads(VITAP_ML_METRICS.read_text(encoding="utf-8")).get("ga_tuned_params", {})
+    if trees and params:
+        params = dict(params, n_estimators=trees)
     predictor = EVChargingDemandPredictor(config=config)
     if params:
         predictor.model.set_params(**params)
@@ -408,14 +449,16 @@ def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config) -> (pd.Data
     baseline_rmse = float(np.sqrt(np.mean((test["demand_kwh"] - test["baseline"].fillna(train["demand_kwh"].mean())) ** 2)))
 
     preds = predictor.predict(demand.drop(columns=["demand_kwh"]), cands)
-    annual = pd.Series(preds, index=demand.index).groupby(demand["candidate_id"]).sum()
+    annual = pd.Series(preds, index=demand.index).groupby(demand["candidate_id"]).sum() * (full_hours / len(weather))
     out = cands.copy()
     out["predicted_annual_demand_kwh"] = out["candidate_id"].map(annual)
     out["demand_index"] = 100 * out["predicted_annual_demand_kwh"] / out["predicted_annual_demand_kwh"].max()
     summary = {
-        "training_data": f"SYNTHETIC demand history ({len(cands)} sites x 2024 hourly), Open-Meteo weather",
+        "training_data": f"SYNTHETIC demand history ({len(cands)} sites x 2024 hourly"
+                         + (f", 1 day in {day_step}" if day_step > 1 else "") + "), Open-Meteo weather",
         "split": "temporal: first 80% train, last 20% test",
-        "settings": "GA-tuned on VIT-AP, reused without re-tuning" if params else "Random Forest defaults",
+        "settings": ("GA-tuned on VIT-AP, reused without re-tuning" if params else "Random Forest defaults")
+                    + (f" (fast mode: {trees} trees)" if trees and params else ""),
         "baseline_rmse": baseline_rmse,
         "ga_tuned_rf": {k: float(v) for k, v in metrics.items()},
         "ga_tuned_params": params,
@@ -450,18 +493,26 @@ def best_ga(scored_csv: str, settings: PlaceSettings, k: int):
 # ───────────────────────── run ─────────────────────────
 
 def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name: Optional[str] = None,
-              settings: Optional[PlaceSettings] = None, refresh: bool = False) -> Dict:
-    """Run the whole method for one place and write its outputs and web dashboard data."""
+              settings: Optional[PlaceSettings] = None, refresh: bool = False,
+              progress: Optional[Callable[[str, float], None]] = None, data_root: str = "data/places",
+              out_root: str = "outputs/places", export_web: bool = True) -> Dict:
+    """Run the whole method for one place and write its outputs and web dashboard data.
+
+    progress(message, fraction) is called at each stage (the live web planner shows it). With
+    export_web=False nothing is written under web/ and the dashboard data is returned as "web_data".
+    """
     t0 = time.time()
+    step = progress or (lambda msg, frac: None)
     settings = settings or PlaceSettings(budget_lakhs=300)
     config = get_config("settings")
     label = name or place or Path(boundary).stem
     slug = slugify(label)
-    cache = Path("data/places") / slug
-    out = Path("outputs/places") / slug
+    cache = Path(data_root) / slug
+    out = Path(out_root) / slug
     cache.mkdir(parents=True, exist_ok=True)
     out.mkdir(parents=True, exist_ok=True)
 
+    step("Finding the area on OpenStreetMap", 0.02)
     info = boundary_from_file(boundary, label) if boundary else geocode(place, cache / "place.json", refresh)
     area_wgs = shape(info["geometry"])
     area_km2 = gpd.GeoSeries([area_wgs], crs=WGS84_CRS).to_crs(UTM_CRS).area.iloc[0] / 1e6
@@ -470,27 +521,32 @@ def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name:
                            "(use --max-area to raise it, or a smaller boundary).")
     print(f"Place: {info['display_name']} [{info['osm']}, {info['category']}] · {area_km2:.2f} km²")
 
+    step("Downloading buildings, roads and parking", 0.06)
     pad = 0.004
     min_lon, min_lat, max_lon, max_lat = area_wgs.bounds
     features = osm_to_gdf(fetch_osm_area((min_lat - pad, min_lon - pad, max_lat + pad, max_lon + pad),
                                          cache / "osm.json", refresh))
+    step("Building candidate sites and checking nearby chargers", 0.15)
     cands, zones, chargers, grid_note, charger_note = build_candidates(features, area_wgs, config, settings, out, cache)
     print(f"Sites: {len(cands)} in zones {cands['zone'].value_counts().to_dict()}")
     print(f"Grid: {grid_note}")
     print(f"Chargers: {len(chargers)} within 5 km of the area ({charger_note})")
 
     centroid = area_wgs.centroid
+    step(f"ML: generating demand history and training the Random Forest ({len(cands)} sites)", 0.22)
     weather = fetch_weather(centroid.y, centroid.x, cache / "weather_2024.csv")
-    df_c, ml_summary = train_demand(pd.DataFrame(cands.drop(columns="geometry")), weather, config)
+    df_c, ml_summary = train_demand(pd.DataFrame(cands.drop(columns="geometry")), weather, config,
+                                    settings.ml_day_step, settings.ml_trees)
     (out / "ml_metrics.json").write_text(json.dumps(ml_summary, indent=2), encoding="utf-8")
 
+    step("Fuzzy: scoring every site with 60 rules", 0.45)
     scored = FuzzyEVChargingScorer().score_candidates(df_c)
     scored_csv = str(out / "candidates_scored.csv")
     scored.to_csv(scored_csv, index=False)
 
     # minimum budget, then the best plan for every affordable station count
     probe = make_ga(scored_csv, settings, 1, 0)
-    min_budget = min_budget_table(probe, k_max=12)
+    min_budget = min_budget_table(probe, k_max=settings.max_stations)
     min_budget.to_csv(out / "min_budget.csv", index=False)
     affordable = min_budget[min_budget["possible"] & (min_budget["min_cost_lakhs"] <= settings.budget_lakhs)]
     if affordable.empty:
@@ -498,7 +554,8 @@ def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name:
         raise RuntimeError(f"Budget ₹{settings.budget_lakhs:g} L is below the minimum ₹{floor:.2f} L for one station here.")
     counts = [settings.n_stations] if settings.n_stations else list(affordable["n_stations"])
     plans, best = [], None
-    for k in counts:
+    for i, k in enumerate(counts):
+        step(f"GA: planning {int(k)} station{'s' if k > 1 else ''} ({i + 1} of {len(counts)})", 0.5 + 0.35 * i / len(counts))
         ga, ind, history, feasible = best_ga(scored_csv, settings, int(k))
         comps = ind.fitness_components or {}
         plans.append({"n_stations": int(k), "feasible": bool(feasible), "fitness": ind.fitness,
@@ -513,7 +570,8 @@ def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name:
     solution.to_csv(out / "solution.csv", index=False)
     pd.DataFrame({"generation": range(len(history)), "best_fitness": history}).to_csv(out / "fitness_history.csv", index=False)
 
-    result = evaluate(ga, list(solution["candidate_id"]))
+    step("Checking the GA against greedy, random and exhaustive search", 0.87)
+    result = evaluate(ga, list(solution["candidate_id"]), cap=settings.exhaustive_cap)
     result["table"].to_csv(out / "comparison.csv", index=False)
     (out / "summary.json").write_text(json.dumps(result["summary"], indent=2), encoding="utf-8")
 
@@ -538,8 +596,9 @@ def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name:
             "charger_note": charger_note, "grid_note": grid_note, "settings": asdict(settings)}
     (out / "place.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    from src.visualization.web_export import build_place_web_data
-    build_place_web_data(out, meta)
+    step("Preparing the dashboard", 0.97)
+    from src.visualization.web_export import build_place_web_data, place_web_data
+    web_data = build_place_web_data(out, meta) if export_web else place_web_data(out, meta)
 
     chosen = int(len(solution))
     print(f"\n=== Minimum budget ===\n{min_budget[['n_stations', 'possible', 'min_cost_lakhs']].round(2).to_string(index=False)}")
@@ -548,5 +607,9 @@ def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name:
     print(solution[["ga_rank", "candidate_id", "name", "zone", "total_capex_inr_lakhs"]].to_string(index=False))
     s = result["summary"]
     print(f"GA matches the exhaustive optimum: {s.get('ga_matches_optimum', 'not checked: ' + s.get('exhaustive_skipped', ''))}")
-    print(f"Done in {time.time() - t0:.0f} s · outputs in {out} · dashboard: web/index.html?place={slug}")
-    return {"slug": slug, "summary": s, "solution": solution, "min_budget": min_budget, "plans": plans}
+    print(f"Done in {time.time() - t0:.0f} s · outputs in {out}" + (f" · dashboard: web/index.html?place={slug}" if export_web else ""))
+    step("Done", 1.0)
+    res = {"slug": slug, "summary": s, "solution": solution, "min_budget": min_budget, "plans": plans}
+    if not export_web:
+        res["web_data"] = web_data
+    return res
