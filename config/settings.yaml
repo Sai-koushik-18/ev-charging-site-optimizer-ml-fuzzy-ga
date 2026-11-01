@@ -80,7 +80,7 @@ costs:
     - Type2
 demand_simulation:
   base_year: 2025
-  ev_adoption_rate: 0.03
+  ev_adoption_rate: 0.03  # the EV share the base demand below was set for; real shares come from Vahan (src/data/vahan_loader.py)
   campus_population:
     students: 12000
     faculty_staff: 1500

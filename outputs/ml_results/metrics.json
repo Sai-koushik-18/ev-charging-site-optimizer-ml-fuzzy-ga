@@ -1,22 +1,35 @@
 {
-  "training_data": "SYNTHETIC demand history (21 sites x 2024 hourly), Open-Meteo weather",
+  "training_data": "SYNTHETIC demand history (21 sites x 2024 hourly), Open-Meteo weather, scaled to Andhra Pradesh's REAL EV share (Vahan)",
+  "ev_adoption": {
+    "state": "Andhra Pradesh",
+    "matched": true,
+    "asked_for": "Andhra Pradesh",
+    "year": 2025,
+    "ev_share": 0.06461609226181157,
+    "ev_registrations": 59844,
+    "all_registrations": 926147,
+    "ev_growth_vs_previous_year": 0.05933583516250085,
+    "reference_ev_share": 0.03,
+    "demand_scale": 2.153869742060386,
+    "source": "Vahan (MoRTH, Government of India), new vehicle registrations"
+  },
   "split": "temporal: first 80% train, last 20% test",
-  "baseline_rmse": 0.48903751330528183,
+  "baseline_rmse": 1.0533014684682118,
   "default_rf": {
-    "train_rmse": 0.44696933795359745,
-    "test_rmse": 0.4849590785546928,
-    "train_mae": 0.2619310820859236,
-    "test_mae": 0.29033299140257834,
-    "train_r2": 0.9318563927868341,
-    "test_r2": 0.9245666866763738
+    "train_rmse": 0.9626876099476702,
+    "test_rmse": 1.0445521107721036,
+    "train_mae": 0.5640555582808475,
+    "test_mae": 0.6252709645591829,
+    "train_r2": 0.9318604354321345,
+    "test_r2": 0.9245629812226364
   },
   "ga_tuned_rf": {
-    "train_rmse": 0.34447399985627675,
-    "test_rmse": 0.4127609614910238,
-    "train_mae": 0.2024656544815244,
-    "test_mae": 0.24408939785554853,
-    "train_r2": 0.9595254012528766,
-    "test_r2": 0.9453550255531148
+    "train_rmse": 0.7419199205610886,
+    "test_rmse": 0.8900609860653477,
+    "train_mae": 0.4359171077014689,
+    "test_mae": 0.5260254323043694,
+    "train_r2": 0.9595291194837445,
+    "test_r2": 0.9452273409469991
   },
   "ga_tuned_params": {
     "n_estimators": 300,

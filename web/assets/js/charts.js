@@ -341,6 +341,7 @@
       <dt>Training data</dt><dd>${escape(m.training_data)}</dd>
       <dt>Split</dt><dd>${escape(m.split)}</dd>
       ${m.settings ? `<dt>Settings</dt><dd>${escape(m.settings)}</dd>` : ""}
+      ${m.ev_adoption ? `<dt>Demand level</dt><dd>${escape(m.ev_adoption.state)}: ${fmt.pct(m.ev_adoption.ev_share * 100, 2)} of new vehicles electric in ${m.ev_adoption.year} (Vahan, MoRTH) → ×${fmt.num(m.ev_adoption.demand_scale, 2)} the 3% baseline${m.ev_adoption.ev_growth_vs_previous_year != null ? `; EV registrations ${m.ev_adoption.ev_growth_vs_previous_year >= 0 ? "+" : ""}${fmt.pct(m.ev_adoption.ev_growth_vs_previous_year * 100, 1)} on ${m.ev_adoption.year - 1}` : ""}</dd>` : ""}
       <dt>Train / test RMSE</dt><dd>${fmt.score(m.ga_tuned_rf.train_rmse)} / ${fmt.score(m.ga_tuned_rf.test_rmse)} kWh/h</dd>
       <dt>GA-chosen settings</dt><dd><span class="params">${Object.entries(p).map(([k, v]) => `<span>${escape(k.replaceAll("_", " "))}: ${escape(v ?? "none")}</span>`).join("")}</span></dd></dl>`;
 

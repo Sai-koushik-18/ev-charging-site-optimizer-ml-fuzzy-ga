@@ -40,6 +40,7 @@ from src.data.candidate_generator import CandidateGenerator
 from src.data.config_loader import get_config
 from src.data.provenance import Provenance, ProvenanceTracker
 from src.data.synthetic_generator import DemandGenerator
+from src.data.vahan_loader import ev_adoption
 from src.evaluation.evaluate import evaluate, min_budget_table
 from src.fuzzy.scorer import FuzzyEVChargingScorer
 from src.ga.optimizer import GeneticAlgorithmOptimizer
@@ -209,6 +210,23 @@ def _overpass_race(query: str, timeout: float = 180) -> Dict:
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
     raise RuntimeError("OpenStreetMap (Overpass) did not answer. Try again in a minute. " + "; ".join(errors))
+
+
+def state_of(lat: float, lon: float, cache: Path) -> Optional[str]:
+    """The Indian state an area lies in, from Nominatim reverse geocoding (None when unavailable)."""
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8")).get("state")
+    try:
+        resp = requests.get(NOMINATIM.replace("/search", "/reverse"), headers=HEADERS, timeout=30,
+                            params={"lat": round(lat, 5), "lon": round(lon, 5), "format": "jsonv2", "zoom": 5,
+                                    "accept-language": "en"})
+        resp.raise_for_status()
+        addr = resp.json().get("address", {})
+    except (requests.RequestException, ValueError):
+        return None  # not cached: try again next run
+    state = addr.get("state") or addr.get("territory") or addr.get("union_territory")
+    cache.write_text(json.dumps({"state": state, "country": addr.get("country_code")}), encoding="utf-8")
+    return state
 
 
 def fetch_weather(lat: float, lon: float, cache: Path, year: int = 2024) -> pd.DataFrame:
@@ -439,7 +457,7 @@ def build_candidates(features: gpd.GeoDataFrame, area_wgs, config, settings: Pla
 # ───────────────────────── ML demand ─────────────────────────
 
 def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config, day_step: int = 1,
-                 trees: Optional[int] = None) -> (pd.DataFrame, Dict):
+                 trees: Optional[int] = None, adoption: Optional[Dict] = None) -> (pd.DataFrame, Dict):
     """Synthetic hourly demand for the place, a Random Forest with the VIT-AP GA-tuned settings, annual demand.
 
     day_step > 1 keeps one day in day_step (every hour of those days) to train faster; annual demand
@@ -449,7 +467,7 @@ def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config, day_step: i
     if day_step > 1:
         day = (weather["timestamp"].dt.normalize() - weather["timestamp"].min().normalize()).dt.days
         weather = weather[day % day_step == 0].reset_index(drop=True)
-    gen = DemandGenerator(config, seed=123)
+    gen = DemandGenerator(config, seed=123, demand_scale=adoption["demand_scale"] if adoption else 1.0)
     demand = pd.concat([gen._generate_candidate_year(c, weather, 2024) for _, c in cands.iterrows()], ignore_index=True)
 
     params = {}
@@ -476,7 +494,9 @@ def train_demand(cands: pd.DataFrame, weather: pd.DataFrame, config, day_step: i
     out["demand_index"] = 100 * out["predicted_annual_demand_kwh"] / out["predicted_annual_demand_kwh"].max()
     summary = {
         "training_data": f"SYNTHETIC demand history ({len(cands)} sites x 2024 hourly"
-                         + (f", 1 day in {day_step}" if day_step > 1 else "") + "), Open-Meteo weather",
+                         + (f", 1 day in {day_step}" if day_step > 1 else "") + "), Open-Meteo weather"
+                         + (f", scaled to {adoption['state']}'s REAL EV share (Vahan)" if adoption else ""),
+        "ev_adoption": adoption,
         "split": "temporal: first 80% train, last 20% test",
         "settings": ("GA-tuned on VIT-AP, reused without re-tuning" if params else "Random Forest defaults")
                     + (f" (fast mode: {trees} trees)" if trees and params else ""),
@@ -566,8 +586,12 @@ def run_place(place: Optional[str] = None, boundary: Union[str, Dict, None] = No
     centroid = area_wgs.centroid
     step(f"ML: generating demand history and training the Random Forest ({len(cands)} sites)", 0.22)
     weather = fetch_weather(centroid.y, centroid.x, cache / "weather_2024.csv")
+    adoption = ev_adoption(state_of(centroid.y, centroid.x, cache / "state.json"))
+    if adoption:
+        print(f"EV adoption: {adoption['state']} {adoption['ev_share']:.2%} of new vehicles electric in "
+              f"{adoption['year']} (Vahan) -> demand x{adoption['demand_scale']:.2f}")
     df_c, ml_summary = train_demand(pd.DataFrame(cands.drop(columns="geometry")), weather, config,
-                                    settings.ml_day_step, settings.ml_trees)
+                                    settings.ml_day_step, settings.ml_trees, adoption)
     (out / "ml_metrics.json").write_text(json.dumps(ml_summary, indent=2), encoding="utf-8")
 
     step("Fuzzy: scoring every site with 60 rules", 0.45)

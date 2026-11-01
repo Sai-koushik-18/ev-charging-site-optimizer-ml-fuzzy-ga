@@ -126,7 +126,11 @@
       ["REAL", "Hourly weather, 2024", "Open-Meteo archive: temperature, humidity and rain feed the demand model."],
       ["REAL", "Existing public chargers", `OpenChargeMap: ${n(g.chargers)} chargers ${escape(place.chargers_scope)}.`],
       ["DERIVED", "Zones & candidate sites", `${nZones} zones and ${D.candidates.length} sites built from OSM geometry (parking lots, roadside spots, entry points).`],
-      ["SYNTHETIC", "Charging demand history", `Statistical model of hourly demand; ${place.short} has no public charging records.`],
+      ...(D.ml && D.ml.ev_adoption ? [["REAL", "EV adoption", (() => {
+        const a = D.ml.ev_adoption;
+        return `Vahan (MoRTH): ${fmt.pct(a.ev_share * 100, 2)} of new vehicles registered in ${a.state} in ${a.year} were electric (${fmt.num(a.ev_registrations)} of ${fmt.num(a.all_registrations)}). Demand is scaled to it.`;
+      })()]] : []),
+      ["SYNTHETIC", "Charging demand history", `Statistical model of hourly demand${D.ml && D.ml.ev_adoption ? `, sized by the real EV share` : ""}; ${place.short} has no public charging records.`],
       ["SYNTHETIC", "Land, construction & grid costs", `Rates from config/settings.yaml. Grid: ${place.grid_note || "the OSM-mapped campus power building"}.`],
     ];
     const el = document.getElementById("provenance");

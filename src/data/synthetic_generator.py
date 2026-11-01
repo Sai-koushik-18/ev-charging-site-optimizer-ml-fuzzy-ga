@@ -20,11 +20,13 @@ class DemandGenerator:
     Based on statistical models calibrated to Indian campus EV charging patterns.
     """
 
-    def __init__(self, config: Optional[Any] = None, seed: int = 123):
+    def __init__(self, config: Optional[Any] = None, seed: int = 123, demand_scale: float = 1.0):
         self.config = config or get_config("settings")
         self.demand_config = self.config._data['demand_simulation']
         self.cost_config = self.config.costs
         self.seed = seed
+        # real EV share of the place's state / the 3% the per-zone base demand was set for (src/data/vahan_loader.py)
+        self.demand_scale = demand_scale
         self.rng = np.random.default_rng(seed)
 
     def generate(
@@ -110,7 +112,7 @@ class DemandGenerator:
     ) -> pd.DataFrame:
         """Generate demand for one candidate for one year."""
         zone = candidate["zone"]
-        base_demand = self.demand_config['base_demand_kwh_per_hour_by_zone'].get(zone, 3.0)
+        base_demand = self.demand_config['base_demand_kwh_per_hour_by_zone'].get(zone, 3.0) * self.demand_scale
 
         # EV growth factor
         years_from_base = year - self.demand_config['base_year']
@@ -406,9 +408,10 @@ def generate_synthetic_demand(
     config: Optional[Any] = None,
     years: List[int] = [2024],
     seed: int = 123,
+    demand_scale: float = 1.0,
 ) -> pd.DataFrame:
     """Convenience function to generate synthetic demand."""
-    generator = DemandGenerator(config, seed)
+    generator = DemandGenerator(config, seed, demand_scale)
     return generator.generate(candidates, weather, years)
 
 

@@ -306,10 +306,24 @@ The model is trained on synthetic demand, so these figures show the method works
 | Campus boundary, buildings, roads, parking | OpenStreetMap | REAL |
 | Hourly weather, 2024 | Open-Meteo | REAL |
 | Zones and candidate sites | Built from OSM geometry | DERIVED |
-| Charging demand history | Statistical model | SYNTHETIC |
+| EV adoption (share of new vehicles that are electric, per state) | Vahan, MoRTH (`data/external/vahan/`, exported from the Vahan Public Report) | REAL |
+| Charging demand history | Statistical model, sized by the state's real EV share | SYNTHETIC |
 | Land, construction and grid costs | Rates in `config/settings.yaml` | SYNTHETIC |
 | Grid connection point | OSM campus power building (no transformer is mapped) | SYNTHETIC assumption |
 | Existing public chargers | OpenChargeMap API, filtered to the Andhra Pradesh boundary (OSM relation 2022095): 83 chargers; 3 within 50 km of campus, the nearest 18.9 km away in Vijayawada; none within 3 km of any site | REAL |
+
+### Real EV adoption (Vahan)
+
+The demand model's per-zone base demand was set for a 3% EV share. Each place's demand is now scaled by its **state's real share of new registrations that are electric** (battery, pure and plug-in hybrid EVs) in 2025, from the Government of India's Vahan registration data (`src/data/vahan_loader.py`). The state comes from a free OpenStreetMap reverse lookup of the area's centre; an unknown state uses the all-India figure.
+
+| | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026* |
+|---|---|---|---|---|---|---|---|
+| Andhra Pradesh, EV share of new vehicles | 0.17% | 1.02% | 3.46% | 3.69% | 6.20% | 6.46% | 10.47% |
+| of which cars (light motor vehicles) | 0.06% | 0.29% | 0.65% | 1.33% | 3.77% | 4.49% | 8.45% |
+
+\*2026 is part of the year. In 2025 the share was 8.05% for all of India, from 0.07% (Ladakh) to 18.3% (Tripura); Delhi 13.9%, Karnataka 10.7%, Telangana 8.1%, Tamil Nadu 7.9%, Andhra Pradesh 6.5% (demand ×2.15).
+
+What this does and does not make real: the **amount** of demand now follows official registrations; **when** people charge (hour, weekday, exam weeks) is still the statistical model. Because every site in a place is scaled by the same factor, the ranking of sites and the GA's plan do not depend on it; the kWh figures do.
 
 ## Project Structure
 

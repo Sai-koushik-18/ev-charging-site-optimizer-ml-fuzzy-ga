@@ -104,7 +104,7 @@ def _ga_block(ga_cfg: dict, history: pd.DataFrame, capacity: pd.DataFrame, overr
 
 def _with_meta(data: dict, meta: dict) -> dict:
     data["meta"] = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    "sources": ["OpenStreetMap", "Open-Meteo", "OpenChargeMap", "Esri World Imagery"],
+                    "sources": ["OpenStreetMap", "Open-Meteo", "OpenChargeMap", "Vahan (MoRTH)", "Esri World Imagery"],
                     "place": meta}
     return _clean(data)
 

@@ -33,6 +33,7 @@ from src.data.candidate_generator import CandidateGenerator
 from src.data.config_loader import get_config
 from src.data.ocm_loader import OCMDataLoader
 from src.data.provenance import Provenance, ProvenanceTracker
+from src.data.vahan_loader import ev_adoption
 from src.data.synthetic_generator import generate_synthetic_demand
 from src.data.weather_loader import WeatherLoader
 from src.fuzzy.scorer import FuzzyEVChargingScorer
@@ -403,7 +404,8 @@ def add_ml_demand(cands: pd.DataFrame, config) -> Tuple[pd.DataFrame, dict]:
         raise RuntimeError("Weather data unavailable (Open-Meteo); cannot generate demand history")
     weather["timestamp"] = pd.to_datetime(weather["timestamp"])
 
-    demand = generate_synthetic_demand(cands, weather, config)
+    adoption = ev_adoption("Andhra Pradesh")  # real share of new vehicles that are electric (Vahan)
+    demand = generate_synthetic_demand(cands, weather, config, demand_scale=adoption["demand_scale"] if adoption else 1.0)
     df_c = pd.DataFrame(cands.drop(columns="geometry", errors="ignore"))
 
     default_metrics = EVChargingDemandPredictor(config=config).train(demand, df_c, test_size=0.2, temporal_split=True)
@@ -440,9 +442,14 @@ def add_ml_demand(cands: pd.DataFrame, config) -> Tuple[pd.DataFrame, dict]:
     print(f"Random Forest, default settings:          RMSE {default_metrics['test_rmse']:.3f} kWh/h | R^2 {default_metrics['test_r2']:.3f}")
     print(f"Random Forest, GA-tuned settings:         RMSE {metrics['test_rmse']:.3f} kWh/h | R^2 {metrics['test_r2']:.3f}")
     print(f"GA-tuned settings: {best_params}")
+    if adoption:
+        print(f"Demand level: {adoption['state']} EV share {adoption['ev_share']:.2%} in {adoption['year']} (Vahan) "
+              f"-> x{adoption['demand_scale']:.2f} of the 3% baseline")
 
     summary = {
-        "training_data": f"SYNTHETIC demand history ({len(df_c)} sites x 2024 hourly), Open-Meteo weather",
+        "training_data": f"SYNTHETIC demand history ({len(df_c)} sites x 2024 hourly), Open-Meteo weather"
+                         + (f", scaled to {adoption['state']}'s REAL EV share (Vahan)" if adoption else ""),
+        "ev_adoption": adoption,
         "split": "temporal: first 80% train, last 20% test",
         "baseline_rmse": baseline_rmse,
         "default_rf": {k: float(v) for k, v in default_metrics.items()},

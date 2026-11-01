@@ -21,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SPACE_FILES = ROOT / "deploy" / "hf-space"
 COPY_DIRS = ["server", "src", "config"]
+COPY_DIRS += ["data/external/vahan"]  # real EV adoption per state (Vahan exports)
 COPY_FILES = ["outputs/ml_results/metrics.json"]  # the VIT-AP GA-tuned Random Forest settings the planner reuses
 CONFIG_JS = ROOT / "web" / "assets" / "js" / "config.js"
 
