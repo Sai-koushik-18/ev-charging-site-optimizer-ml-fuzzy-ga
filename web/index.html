@@ -78,12 +78,32 @@
       <header class="section__head reveal">
         <p class="kicker">Live planner · try it yourself</p>
         <h2>Your campus. Your budget. <span class="hand-u">Your plan.</span></h2>
-        <p class="section__lede">Type any campus or area and a budget. The same ML → fuzzy → GA pipeline runs on a free server, then this page redraws with your result. It usually takes two to four minutes.</p>
+        <p class="section__lede">Search a place, draw its boundary on the map, and set a budget. The same ML → fuzzy → GA pipeline runs on exactly that area, then this page redraws with your result in two to four minutes.</p>
       </header>
 
-      <form class="planner__form reveal" id="plan-form" novalidate>
-        <label class="field field--place"><span>Campus or area</span>
-          <input id="plan-place" name="place" required minlength="3" maxlength="120" autocomplete="off" placeholder="e.g. IIT Madras, NIT Trichy, Anna University"></label>
+      <div class="planner__grid">
+      <div class="picker" id="picker">
+        <form class="picker__search" role="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input type="search" placeholder="Search a campus or place in India" aria-label="Search a place" autocomplete="off">
+          <button type="submit" class="picker__go">Search</button>
+          <ul class="picker__results" hidden></ul>
+        </form>
+        <div class="picker__map" role="region" aria-label="Map: draw the area to plan"></div>
+        <div class="picker__tools">
+          <button type="button" class="tool-btn tool-btn--white js-outline" hidden>Use this outline</button>
+          <button type="button" class="tool-btn tool-btn--lime js-draw">Draw boundary</button>
+          <button type="button" class="tool-btn js-undo">Undo</button>
+          <button type="button" class="tool-btn js-clear">Clear</button>
+        </div>
+        <p class="picker__hint" aria-live="polite"></p>
+      </div>
+
+      <form class="planner__form" id="plan-form" novalidate>
+        <ol class="planner__steps"><li><b>1</b> Find it</li><li><b>2</b> Draw it</li><li><b>3</b> Plan it</li></ol>
+        <label class="field field--place"><span>Area name</span>
+          <input id="plan-place" name="name" required maxlength="80" autocomplete="off" placeholder="e.g. NIT Trichy main campus"></label>
+        <p class="planner__area" id="plan-area" data-state="none">No area yet: search a place and draw its boundary on the map.</p>
         <label class="field"><span>Budget (₹ lakhs)</span>
           <input id="plan-budget" name="budget" type="number" inputmode="decimal" min="10" max="5000" step="1" value="300" required></label>
         <label class="field"><span>Stations</span>
@@ -92,6 +112,7 @@
           <input id="plan-spacing" name="spacing" type="number" inputmode="numeric" min="100" max="1000" step="50" value="300"></label>
         <button class="btn btn--lime planner__go" type="submit" id="plan-submit">Plan it <span aria-hidden="true">→</span></button>
       </form>
+      </div>
       <p class="planner__server" id="plan-server" role="status"></p>
 
       <div class="planner__run" id="plan-run" hidden aria-live="polite">
@@ -320,6 +341,7 @@
   <script src="assets/js/table.js"></script>
   <script src="assets/js/charts.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/areapicker.js"></script>
   <script src="assets/js/planner.js"></script>
 </body>
 </html>

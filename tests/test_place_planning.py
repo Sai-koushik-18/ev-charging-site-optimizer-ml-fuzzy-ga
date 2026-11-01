@@ -94,6 +94,15 @@ def test_slugify():
     assert slugify("College of Engineering, Guindy!") == "college-of-engineering-guindy"
 
 
+def test_drawn_boundary_is_cleaned_and_checked():
+    from src.pipeline.place_pipeline import boundary_from_geometry
+    bowtie = {"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [1, 0], [0, 1], [0, 0]]]}  # crosses itself
+    info = boundary_from_geometry(bowtie, "Bow tie")
+    assert info["geometry"]["type"] == "MultiPolygon" and info["osm"] == "user-drawn"
+    with pytest.raises(RuntimeError):
+        boundary_from_geometry({"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [0, 0]]]}, "Line")
+
+
 def test_point_inside_handles_areas_in_several_pieces():
     from shapely.geometry import MultiPolygon, Point, box
     from src.pipeline.campus_pipeline import point_inside

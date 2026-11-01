@@ -191,7 +191,7 @@ At NIT Warangal six stations would fit the budget, but the GA chose five: a sixt
 
 ## Live Planner
 
-The website has a **Plan yours** form: anyone types a campus and a budget, and the page redraws with their plan. The form calls a small API (`server/app.py`, FastAPI) that runs the same place pipeline in **fast mode** on a free Hugging Face Space:
+The website has a **Plan yours** section: search a place (OpenStreetMap Nominatim, India), the map flies there, and you **draw the boundary** — by clicking corners, or by starting from the place's OpenStreetMap outline and dragging its corners. Set a budget, and the page redraws with the plan for exactly that area. The form calls a small API (`server/app.py`, FastAPI) that runs the same place pipeline in **fast mode** on a free Hugging Face Space:
 
 | | Command line | Live planner (`--fast`) |
 |---|---|---|

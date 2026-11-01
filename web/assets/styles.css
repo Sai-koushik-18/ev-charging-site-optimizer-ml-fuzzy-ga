@@ -622,10 +622,47 @@ button { font: inherit; color: inherit; }
 /* ───────── live planner ───────── */
 .nav__plan { color: var(--orange-ink) !important; }
 .planner { padding-top: clamp(56px, 7vw, 96px); }
+.planner__grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr); gap: 20px; align-items: stretch; }
 .planner__form {
-  display: grid; grid-template-columns: minmax(240px, 2.2fr) repeat(3, minmax(130px, 1fr)) auto; gap: 14px; align-items: end;
-  padding: clamp(18px, 3vw, 28px); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--shadow); border: 2px solid var(--ink);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start;
+  padding: clamp(18px, 3vw, 26px); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--shadow); border: 2px solid var(--ink);
 }
+.planner__form .field--place, .planner__form .planner__area, .planner__form .planner__steps, .planner__go { grid-column: 1 / -1; }
+.planner__steps { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; font-weight: 800; font-size: 13px; color: var(--ink-2); }
+.planner__steps li { display: flex; align-items: center; gap: 6px; }
+.planner__steps li + li::before { content: "→"; color: var(--muted); margin-right: 2px; }
+.planner__steps b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--lime); font-size: 12px; }
+.planner__area { margin: -4px 0 0; padding: 10px 12px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1.5px dashed var(--line); color: var(--muted); }
+.planner__area[data-state="ok"] { border-style: solid; border-color: #2e9e6b; color: #1d6b48; background: rgba(46, 158, 107, 0.08); }
+.planner__area[data-state="bad"] { border-style: solid; border-color: var(--orange); color: var(--orange-ink); background: #fde8dc; }
+
+/* area picker */
+.picker { position: relative; display: flex; flex-direction: column; min-height: 520px; border-radius: var(--r-lg); overflow: hidden; border: 2px solid var(--ink); box-shadow: var(--shadow); background: var(--night); }
+.picker__map { flex: 1; min-height: 420px; background: var(--night-2); }
+.picker.is-drawing .picker__map { cursor: crosshair; }
+.picker.is-locked { pointer-events: none; opacity: 0.75; }
+.picker__search { position: absolute; z-index: 600; top: 14px; left: 14px; right: 14px; display: flex; gap: 8px; }
+.picker__search > svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); fill: none; stroke: var(--muted); stroke-width: 2.4; pointer-events: none; }
+.picker__search input { flex: 1; min-width: 0; padding: 12px 14px 12px 42px; border-radius: 12px; border: 2px solid var(--ink); background: var(--card); font: 700 15px var(--body); color: var(--ink); box-shadow: 0 8px 22px -10px rgba(0,0,0,.5); }
+.picker__search input:focus { outline: none; box-shadow: 4px 4px 0 var(--lime); }
+.picker__go { padding: 0 16px; border-radius: 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--lime); font: 800 14px var(--body); cursor: pointer; }
+.picker__results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; max-height: 300px; overflow: auto; margin: 0; padding: 6px; list-style: none; border-radius: 12px; background: var(--card); border: 2px solid var(--ink); box-shadow: var(--shadow); }
+.picker__results button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 8px; background: none; cursor: pointer; font: 600 14px var(--body); color: var(--ink); }
+.picker__results button:hover, .picker__results button:focus-visible { background: var(--paper-2); }
+.picker__results small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker__results .is-note { padding: 8px 10px; font-size: 14px; color: var(--ink-2); }
+.picker__tools { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; background: var(--night); }
+.tool-btn { padding: 9px 14px; border-radius: 10px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); font: 800 13px var(--body); cursor: pointer; box-shadow: 3px 3px 0 var(--ink); transition: transform 0.15s var(--ease); }
+.tool-btn:hover:not(:disabled) { transform: translate(-1px, -1px); }
+.tool-btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+.tool-btn--lime { background: var(--lime); }
+.tool-btn--lime.is-on { background: var(--orange); }
+.tool-btn--white { background: #fff; }
+.picker__hint { margin: 0; padding: 10px 14px 12px; font-size: 13px; font-weight: 700; color: var(--on-night); background: var(--night); }
+.picker__vertex { border-radius: 50%; background: #fff; border: 3px solid var(--ink); box-shadow: 0 0 0 2px var(--lime); }
+.picker__vertex.is-first { background: var(--lime); transform: scale(1.25); cursor: pointer; }
+.picker .leaflet-control-attribution { max-width: calc(100vw - 80px); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker__mid { border-radius: 50%; background: rgba(255, 255, 255, 0.75); border: 2px solid var(--ink); cursor: grab; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field > span { font-weight: 800; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); }
 .field input, .field select {
@@ -668,14 +705,14 @@ button { font: inherit; color: inherit; }
 .planner__note code { font-size: 13px; background: var(--paper-2); padding: 1px 6px; border-radius: 6px; }
 .live-chip { padding: 2px 10px; border-radius: 99px; background: var(--orange); color: var(--ink); font-weight: 800; }
 .dropdown__sep { cursor: default !important; padding: 12px 12px 4px !important; font-size: 11px !important; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); margin-top: 6px; border-radius: 0 !important; background: none !important; }
-@media (max-width: 1100px) {
-  .planner__form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .field--place { grid-column: 1 / -1; }
-  .planner__go { grid-column: 1 / -1; }
+@media (max-width: 1000px) {
+  .planner__grid { grid-template-columns: 1fr; }
+  .picker { min-height: 460px; }
 }
 @media (max-width: 640px) {
-  .planner__form { grid-template-columns: 1fr 1fr; }
-  .field--place, .planner__go { grid-column: 1 / -1; }
+  .picker { min-height: 420px; }
+  .picker__map { min-height: 340px; }
+  .tool-btn { padding: 8px 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

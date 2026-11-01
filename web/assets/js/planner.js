@@ -23,6 +23,8 @@
     del(k) { try { sessionStorage.removeItem(k); } catch (e) { /* ignore */ } },
   };
   const readIndex = () => { try { return JSON.parse(store.get(INDEX_KEY)) || []; } catch (e) { return []; } };
+  let maxArea = 12;      // km², from the server's health answer
+  let picker = null;
   const liveHref = (id) => `index.html?live=${encodeURIComponent(id)}`;
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -68,6 +70,7 @@
     try {
       const r = await api("/api/health", {}, 9000);
       if (r.ok && r.body && r.body.ok) {
+        maxArea = r.body.max_area_km2 || maxArea;
         const busy = r.body.active_jobs;
         setServer("on", `Planner online${busy ? ` · ${busy} plan${busy > 1 ? "s" : ""} in progress` : ""} · areas up to ${fmt.num(r.body.max_area_km2)} km²`);
         return;
@@ -107,6 +110,7 @@
   }
   function lock(on) {
     $("plan-form").querySelectorAll("input, select, button").forEach((el) => { el.disabled = on; });
+    if (picker) picker.setEnabled(!on);
     $("plan-submit").innerHTML = on ? "Planning…" : `Plan it <span aria-hidden="true">→</span>`;
   }
 
@@ -153,7 +157,8 @@
     const r = await api(`/api/jobs/${job.job}/result`, {}, 60000);
     if (!r.ok || !r.body) return fail("The plan finished but could not be downloaded. Try again.");
     const place = r.body.meta && r.body.meta.place;
-    remember({ id: job.job, name: (place && place.short) || req.place, budget: req.budget, stations: req.stations, at: Date.now() }, r.body);
+    remember({ id: job.job, name: (place && place.short) || req.name, budget: req.budget, stations: req.stations,
+      spacing: req.spacing, boundary: req.boundary, at: Date.now() }, r.body);
     session.del(RUNNING_KEY);
     location.href = liveHref(job.job);
   }
@@ -182,35 +187,64 @@
     }
     if (window.EV_LIVE_FAILED) {
       const entry = readIndex().find((e) => e.id === window.EV_LIVE);
-      if (entry) {
-        $("plan-place").value = entry.name;
-        $("plan-budget").value = entry.budget;
-        $("plan-stations").value = entry.stations || "";
-      }
+      if (entry) restore(entry);
       $("plan-error").hidden = false;
       $("plan-error").innerHTML = `<b>That live plan is not available any more.</b> ${escape(window.EV_LIVE_FAILED)} Showing ${escape(EV.place.short)} instead. Press Plan it to run it again.`;
       setTimeout(() => $("plan").scrollIntoView(), 300);
     }
   }
 
+  /* Put a saved request back in the form and on the map (plan again, or resume after a reload). */
+  function restore(req) {
+    $("plan-place").value = req.name || "";
+    if (req.budget) $("plan-budget").value = req.budget;
+    if (req.spacing) $("plan-spacing").value = req.spacing;
+    $("plan-stations").value = req.stations || "";
+    if (req.boundary && picker) picker.setGeometry(req.boundary);
+  }
+
+  function areaChanged(a) {
+    const el = $("plan-area");
+    if (!window.EV_LIVE_FAILED) $("plan-error").hidden = true; // the user is acting on the last message
+    if (!a.closed) {
+      el.dataset.state = "none";
+      el.textContent = a.points ? `Drawing… ${a.points} corner${a.points > 1 ? "s" : ""}` : "No area yet: search a place and draw its boundary on the map.";
+      return;
+    }
+    const big = a.km2 > maxArea, small = a.km2 < 0.01;
+    el.dataset.state = big || small ? "bad" : "ok";
+    el.textContent = `${a.km2 < 1 ? fmt.num(a.km2 * 100, 0) + " ha" : fmt.num(a.km2, 2) + " km²"} · ${a.points} corners` +
+      (big ? ` · too big (limit ${fmt.num(maxArea)} km²)` : small ? " · too small" : " · ready");
+  }
+
   function init() {
     if (!$("plan-form")) return;
     const stations = $("plan-stations");
     for (let k = 1; k <= 8; k++) stations.insertAdjacentHTML("beforeend", `<option value="${k}">${k} station${k > 1 ? "s" : ""}</option>`);
+    let nameAuto = true; // the name follows the search until the user types their own
+    $("plan-place").addEventListener("input", () => { nameAuto = !$("plan-place").value; });
+    picker = EV.areaPicker($("picker"), {
+      onChange: areaChanged,
+      onPlace: (n) => { if (nameAuto) $("plan-place").value = n; },
+    });
     mine();
     liveNotes();
     checkServer();
 
     $("plan-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const place = $("plan-place").value.trim().replace(/\s+/g, " ");
+      const name = $("plan-place").value.trim().replace(/\s+/g, " ");
       const budget = Number($("plan-budget").value);
       const spacing = Number($("plan-spacing").value || 300);
       const k = $("plan-stations").value;
-      if (place.length < 3) return fail("Type the name of a campus or area (at least 3 letters).");
+      const boundary = picker.geometry();
+      if (!boundary) return fail("Draw the area's boundary on the map first (or press Use this outline after a search).");
+      const km2 = $("plan-area").dataset.state;
+      if (km2 === "bad") return fail(`The drawn area must be between 1 hectare and ${fmt.num(maxArea)} km². Adjust the boundary.`);
+      if (!name) return fail("Give the area a name.");
       if (!(budget >= 10 && budget <= 5000)) return fail("Budget must be between ₹10 L and ₹5,000 L.");
       if (!(spacing >= 100 && spacing <= 1000)) return fail("Spacing must be between 100 m and 1,000 m.");
-      const req = { place, budget, spacing, stations: k ? Number(k) : null };
+      const req = { name, boundary, budget, spacing, stations: k ? Number(k) : null };
       lock(true);
       const startedAt = Date.now();
       showRun(startedAt);
@@ -228,9 +262,8 @@
     try {
       const running = JSON.parse(session.get(RUNNING_KEY));
       if (running && API) {
+        restore(running.req);
         lock(true);
-        $("plan-place").value = running.req.place;
-        $("plan-budget").value = running.req.budget;
         follow({ job: running.job }, running.req, running.startedAt);
       }
     } catch (e) { session.del(RUNNING_KEY); }

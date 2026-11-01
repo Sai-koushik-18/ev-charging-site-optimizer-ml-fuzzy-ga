@@ -10,12 +10,13 @@ thread; the page polls for progress.
 
 Endpoints
     GET  /api/health                 server is up, queue length
-    POST /api/plan                   {"place", "budget", "stations"?, "spacing"?} -> {"job"}
+    POST /api/plan                   {"boundary" + "name" | "place", "budget", "stations"?, "spacing"?} -> {"job"}
     GET  /api/jobs/{job}             status, progress message and fraction
     GET  /api/jobs/{job}/result      dashboard data (JSON)
     GET  /api/jobs/{job}/result.js   the same as `window.DASHBOARD_DATA = ...;` for a <script> tag
 """
 
+import hashlib
 import json
 import os
 import queue
@@ -25,12 +26,12 @@ import traceback
 import uuid
 from collections import OrderedDict
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from src.pipeline.place_pipeline import PlaceSettings, run_place, slugify
 
@@ -43,11 +44,31 @@ app = FastAPI(title="EV charging site planner", docs_url="/api/docs", openapi_ur
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
 
+MAX_BOUNDARY_BYTES = 200_000
+
+
 class PlanRequest(BaseModel):
-    place: str = Field(min_length=3, max_length=120)
+    place: Optional[str] = Field(default=None, min_length=3, max_length=120, description="Name to search for")
+    boundary: Optional[Dict[str, Any]] = Field(default=None, description="GeoJSON Polygon/MultiPolygon drawn on the map")
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80, description="Display name for a drawn area")
     budget: float = Field(ge=10, le=5000, description="Budget in INR lakhs")
     stations: Optional[int] = Field(default=None, ge=1, le=8, description="Fixed count; empty = best the budget allows")
     spacing: float = Field(default=300, ge=100, le=1000, description="Minimum metres between stations")
+
+    @model_validator(mode="after")
+    def area_given(self):
+        if not self.place and not self.boundary:
+            raise ValueError("Give a place name or draw the area on the map.")
+        if self.boundary is not None:
+            if self.boundary.get("type") not in ("Polygon", "MultiPolygon") or not self.boundary.get("coordinates"):
+                raise ValueError("The boundary must be a GeoJSON Polygon or MultiPolygon.")
+            if len(json.dumps(self.boundary)) > MAX_BOUNDARY_BYTES:
+                raise ValueError("The boundary has too many points. Draw it with fewer points.")
+        return self
+
+    @property
+    def label(self) -> str:
+        return " ".join((self.name or self.place or "Drawn area").split())
 
 
 class Job:
@@ -66,12 +87,13 @@ class Job:
     @property
     def key(self) -> str:
         r = self.req
-        return f"{slugify(r.place)}|{r.budget:g}|{r.stations or 'auto'}|{r.spacing:g}"
+        area = hashlib.sha1(json.dumps(r.boundary, sort_keys=True).encode()).hexdigest()[:12] if r.boundary else ""
+        return f"{slugify(r.label)}|{area}|{r.budget:g}|{r.stations or 'auto'}|{r.spacing:g}"
 
     def public(self) -> dict:
         now = self.finished or time.time()
         return {"job": self.id, "status": self.status, "message": self.message, "progress": round(self.progress, 3),
-                "error": self.error, "place": self.req.place, "budget": self.req.budget, "stations": self.req.stations,
+                "error": self.error, "place": self.req.label, "budget": self.req.budget, "stations": self.req.stations,
                 "position": position(self), "elapsed_s": round(now - (self.started or now), 1)}
 
 
@@ -104,7 +126,8 @@ def worker() -> None:
         try:
             settings = PlaceSettings.fast(budget_lakhs=job.req.budget, n_stations=job.req.stations,
                                           spacing_m=job.req.spacing, max_area_km2=MAX_AREA_KM2)
-            res = run_place(place=job.req.place, settings=settings, progress=report, export_web=False,
+            res = run_place(place=job.req.place, boundary=job.req.boundary, name=job.req.name if job.req.boundary else None,
+                            settings=settings, progress=report, export_web=False,
                             data_root=str(WORK / "data"), out_root=str(WORK / "outputs"))
             path = result_path(job.id)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,7 +174,8 @@ def health() -> dict:
 
 @app.post("/api/plan")
 def plan(req: PlanRequest, request: Request) -> JSONResponse:
-    req.place = " ".join(req.place.split())
+    if req.place:
+        req.place = " ".join(req.place.split())
     probe = Job(req, request.client.host if request.client else "?")
     with lock:
         same = by_key.get(probe.key)

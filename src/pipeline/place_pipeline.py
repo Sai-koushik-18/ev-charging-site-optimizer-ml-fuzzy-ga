@@ -19,6 +19,7 @@ Caches go to data/places/<slug>/, results to outputs/places/<slug>/, and the
 web dashboard data to web/data/places/<slug>.js.
 """
 
+import hashlib
 import json
 import math
 import random
@@ -26,13 +27,13 @@ import re
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import requests
-from shapely.geometry import Point, shape
+from shapely.geometry import Point, mapping, shape
 from shapely.ops import nearest_points, unary_union
 
 from src.data.candidate_generator import CandidateGenerator
@@ -143,9 +144,29 @@ def geocode(query: str, cache: Path, refresh: bool = False) -> Dict:
 def boundary_from_file(path: str, name: str) -> Dict:
     """Use an area the user drew (GeoJSON file with one or more polygons)."""
     gdf = gpd.read_file(path).to_crs(WGS84_CRS)
-    geom = gdf.geometry.union_all()
-    return {"query": path, "name": name, "display_name": name, "osm": "user-drawn", "category": "user area",
-            "geometry": json.loads(gpd.GeoSeries([geom]).to_json())["features"][0]["geometry"]}
+    return boundary_from_geometry(gdf.geometry.union_all(), name, query=str(path))
+
+
+def boundary_from_geometry(geom, name: str, query: str = "drawn on the map") -> Dict:
+    """Use an area drawn on the website's map (a GeoJSON Polygon or MultiPolygon in WGS84)."""
+    from shapely.validation import make_valid
+
+    g = shape(geom) if isinstance(geom, dict) else geom
+    if not g.is_valid:
+        g = make_valid(g)  # e.g. a boundary drawn crossing itself
+    parts = [p for p in getattr(g, "geoms", [g]) if p.geom_type in ("Polygon", "MultiPolygon") and not p.is_empty]
+    g = unary_union(parts) if parts else None
+    if g is None or g.is_empty or g.area == 0:
+        raise RuntimeError("The drawn area is not a valid shape. Draw at least three points around the area.")
+    lon, lat = g.centroid.x, g.centroid.y
+    if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+        raise RuntimeError("The drawn area's coordinates are not longitude/latitude.")
+    return {"query": query, "name": name, "display_name": name, "osm": "user-drawn", "category": "user area",
+            "geometry": mapping(g)}
+
+
+def _geometry_hash(geometry: Dict) -> str:
+    return hashlib.sha1(json.dumps(geometry, sort_keys=True, default=list).encode()).hexdigest()[:8]
 
 
 # ───────────────────────── data fetching ─────────────────────────
@@ -492,28 +513,38 @@ def best_ga(scored_csv: str, settings: PlaceSettings, k: int):
 
 # ───────────────────────── run ─────────────────────────
 
-def run_place(place: Optional[str] = None, boundary: Optional[str] = None, name: Optional[str] = None,
+def run_place(place: Optional[str] = None, boundary: Union[str, Dict, None] = None, name: Optional[str] = None,
               settings: Optional[PlaceSettings] = None, refresh: bool = False,
               progress: Optional[Callable[[str, float], None]] = None, data_root: str = "data/places",
               out_root: str = "outputs/places", export_web: bool = True) -> Dict:
     """Run the whole method for one place and write its outputs and web dashboard data.
 
-    progress(message, fraction) is called at each stage (the live web planner shows it). With
+    The area is a place name to search for, or `boundary`: a GeoJSON file path or a GeoJSON geometry
+    dict (an area drawn on the website's map). progress(message, fraction) is called at each stage (the live web planner shows it). With
     export_web=False nothing is written under web/ and the dashboard data is returned as "web_data".
     """
     t0 = time.time()
     step = progress or (lambda msg, frac: None)
     settings = settings or PlaceSettings(budget_lakhs=300)
     config = get_config("settings")
-    label = name or place or Path(boundary).stem
-    slug = slugify(label)
+    step("Finding the area on OpenStreetMap", 0.02)
+    if isinstance(boundary, dict):
+        label = name or "Drawn area"
+        info = boundary_from_geometry(boundary, label)
+    elif boundary:
+        label = name or Path(boundary).stem
+        info = boundary_from_file(boundary, label)
+    else:
+        label = name or place
+        info = None
+    # a drawn area's caches are keyed by its shape too, so a redrawn area never reuses old downloads
+    slug = slugify(label) + (f"-{_geometry_hash(info['geometry'])}" if info else "")
     cache = Path(data_root) / slug
     out = Path(out_root) / slug
     cache.mkdir(parents=True, exist_ok=True)
     out.mkdir(parents=True, exist_ok=True)
-
-    step("Finding the area on OpenStreetMap", 0.02)
-    info = boundary_from_file(boundary, label) if boundary else geocode(place, cache / "place.json", refresh)
+    if info is None:
+        info = geocode(place, cache / "place.json", refresh)
     area_wgs = shape(info["geometry"])
     area_km2 = gpd.GeoSeries([area_wgs], crs=WGS84_CRS).to_crs(UTM_CRS).area.iloc[0] / 1e6
     if area_km2 > settings.max_area_km2:

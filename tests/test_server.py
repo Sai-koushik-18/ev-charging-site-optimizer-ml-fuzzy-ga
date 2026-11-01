@@ -15,8 +15,10 @@ def client(tmp_path, monkeypatch):
     srv.jobs.clear()
     srv.by_key.clear()
 
-    def fake_run_place(place, settings, progress, **kw):
+    def fake_run_place(place, settings, progress, boundary=None, name=None, **kw):
         progress("GA: planning 1 station (1 of 1)", 0.5)
+        if boundary is not None:
+            place = f"{name} ({boundary['type']})"
         if place == "Nowhere at all":
             raise RuntimeError("No area outline found for 'Nowhere at all'.")
         assert settings.ga_runs == 3 and settings.ml_day_step == 4  # fast mode
@@ -61,6 +63,27 @@ def test_plan_runs_and_returns_dashboard_data(client):
     assert js.startswith("window.DASHBOARD_DATA = {")
     # the identical request reuses the finished job instead of running again
     assert client.post("/api/plan", json={"place": "IIT Madras", "budget": 250}).json()["job"] == job
+
+
+SQUARE = {"type": "Polygon", "coordinates": [[[80.49, 16.49], [80.50, 16.49], [80.50, 16.50], [80.49, 16.50], [80.49, 16.49]]]}
+
+
+def test_plan_a_drawn_area(client):
+    job = client.post("/api/plan", json={"boundary": SQUARE, "name": "My campus", "budget": 200}).json()["job"]
+    assert wait(client, job)["status"] == "done"
+    assert client.get(f"/api/jobs/{job}/result").json()["meta"]["place"]["short"] == "My campus (Polygon)"
+    # the same name with a different shape is a different job
+    other = dict(SQUARE, coordinates=[[[80.49, 16.49], [80.51, 16.49], [80.51, 16.50], [80.49, 16.49]]])
+    assert client.post("/api/plan", json={"boundary": other, "name": "My campus", "budget": 200}).json()["job"] != job
+
+
+@pytest.mark.parametrize("payload", [
+    {"budget": 200},                                                         # no area at all
+    {"boundary": {"type": "Point", "coordinates": [80.5, 16.5]}, "budget": 200},
+    {"boundary": {"type": "Polygon", "coordinates": []}, "budget": 200},
+])
+def test_rejects_bad_areas(client, payload):
+    assert client.post("/api/plan", json=payload).status_code == 422
 
 
 def test_pipeline_errors_reach_the_user(client):
